@@ -37,7 +37,7 @@ public:
         next = other.next; 
     }
 
-    bool operator==(const SymbolInfo& other) const { return name == other.name && type == other.type ; }
+    bool operator==(const SymbolInfo& other) const { return name == other.name ; }
 
     friend ostream& operator<<(ostream& out, const SymbolInfo& symbolInfo){
         out << "(" << symbolInfo.name << "," << symbolInfo.type << ")";

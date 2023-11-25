@@ -43,4 +43,8 @@ public:
         out << "(" << symbolInfo.name << "," << symbolInfo.type << ")";
         return out;
     }
+
+    string print(){
+        return "(" + name + "," + type + ")";
+    }
 };

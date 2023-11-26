@@ -15,6 +15,17 @@ void print(LinkedList<pair<int,int>>& ll){
     ll.setToPos(currPos);
 }
 
+LinkedList<pair<int,int>> genll(){
+    LinkedList<pair<int,int>> ll;
+
+    for(int i=0; i < 6; i++){
+        if(i%2)ll.pushBack({i,i});
+        else ll.push({i,i});
+    }
+
+    return ll;
+}
+
 int main(){
     LinkedList<pair<int,int>> ll;
     pair<int,int> p(1,2);
@@ -56,5 +67,15 @@ int main(){
         print(ll);
         cout <<" -> ("<< q.first << "," << q.second << ")\n";
     }
+
+    LinkedList<pair<int,int>> llfunc = genll();
+
+    print(llfunc);
+
+    cout<<endl;
+
+    ll = llfunc;
+
+    print(ll);
 
 }

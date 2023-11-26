@@ -8,9 +8,14 @@ class Node{
 
 public:
 
-    Node(E element, Node<E>* next) : element(element) , next(next) {}
+    Node(E element, Node<E>* next = nullptr) {
+        this->element = element;
+        this->next = next;
+    }
     
-    Node(Node<E>* next) : next(next) { }
+    Node(Node<E>* next = nullptr){ 
+        this->next = next;
+    }
 
     E getElement() const { return element; }
     void setElement(E element) { this->element = element; }
@@ -19,8 +24,7 @@ public:
     void setNext(Node<E>* next) { this->next = next; }
 
     ~Node() {
-        element = NULL;
-        this->next = NULL;
+        this->next = nullptr;
     }
 
 };

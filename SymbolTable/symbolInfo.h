@@ -1,5 +1,6 @@
+#pragma once
+
 #include<iostream>
-#include<cstring>
 using namespace std;
 
 class SymbolInfo{
@@ -8,7 +9,7 @@ class SymbolInfo{
     SymbolInfo* next;
 
 public:
-    SymbolInfo(string name, string type,SymbolInfo* next=NULL) :
+    SymbolInfo(string name = "", string type = "",SymbolInfo* next = nullptr) :
         name(name),
         type(type),
         next(next) { }
@@ -28,7 +29,6 @@ public:
         next(other.next) { }
 
     ~SymbolInfo() {
-        next = NULL;
     }
 
     void operator=(const SymbolInfo& other) { 

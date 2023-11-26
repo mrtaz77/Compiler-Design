@@ -1,5 +1,6 @@
+#pragma once
+
 #include <iostream>
-#include <cstring>
 #include "Node.h"
 using namespace std;
 
@@ -27,7 +28,6 @@ public:
     }
 
     LinkedList(const LinkedList& ll){
-        cout << "In copy constructor" << endl;
         this->size = ll.size;
         this->head = ll.head;
         this->current = ll.current;
@@ -35,7 +35,6 @@ public:
     }
 
     void operator=(const LinkedList& ll){
-        cout << "In equal operator" << endl;
         this->size = ll.size;
         this->head = ll.head;
         this->current = ll.current;

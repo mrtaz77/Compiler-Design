@@ -15,7 +15,7 @@ static uint64_t sdbm_hash(string str) {
 }
 
 int main(){
-    freopen("hashText.txt", "r", stdin);
+    // freopen("hashText.txt", "r", stdin);
 
     string name;
     cin >> name ;

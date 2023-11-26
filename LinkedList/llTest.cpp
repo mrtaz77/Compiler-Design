@@ -9,9 +9,10 @@ void print(LinkedList<pair<int,int>>& ll){
         ll.setToPos(i);
         pair<int,int> q = ll.getValue();
         if(i == currPos)cout<< "| ";
-        cout << "(" << q.first << " " << q.second << ") ";
-        if(i == ll.length() - 1)cout<< "> ";
+        cout << "(" << q.first << " " << q.second << ")";
+        if(i != ll.length() - 1)cout<< " ";
     }
+    cout<<">";
     ll.setToPos(currPos);
 }
 
@@ -77,5 +78,26 @@ int main(){
     ll = llfunc;
 
     print(ll);
+    cout<<endl;
+
+    ll.clear();
+
+    print(ll);
+    cout<<endl;
+
+    for(int i=0;i<3;i++){
+        ll.push({i,i});
+        print(ll);
+        cout<<endl;    
+    }
+
+    for(int i=0;i<3;i++){
+        ll.erase();
+        print(ll);
+        cout<<endl;    
+    }
+
+
+
 
 }

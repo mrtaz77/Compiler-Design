@@ -25,7 +25,11 @@ public:
     }
 
     ~SymbolTable(){
-        delete currentScope;
+        while(currentScope != nullptr){
+            ScopeTable* temp = currentScope;
+            currentScope = currentScope->getParentScope();
+            delete temp;
+        }
     }
 
     SymbolTable(SymbolTable& other) {

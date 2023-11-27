@@ -2,7 +2,7 @@
 
 #include"symbolInfo.h"
 
-#define SPACE "	"
+#define SPACE "\t"
 #define DEFAULT_BUCKET_SIZE 10
 
 class ScopeTable{
@@ -39,10 +39,10 @@ public:
             hashTable[i] = nullptr;
         }
         numOfChildren = 0;
+        cout << SPACE << "ScopeTable# " << id << " created" << endl;
     }
 
     ~ScopeTable(){
-        id = "";
         for(int i = 0; i < total_buckets; i++){
             SymbolInfo* current = hashTable[i];
 
@@ -51,11 +51,12 @@ public:
                 delete current;
                 current = next;
             }
-
         }
         numOfChildren = 0;
         delete [] hashTable;
         total_buckets = 0;
+
+        cout << SPACE << "ScopeTable# " << id << " deleted" << endl;
     }
 
     ScopeTable(const ScopeTable& other) : 

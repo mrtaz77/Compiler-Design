@@ -20,20 +20,20 @@ int numOftoken(string& line,char delimiter){
 
 int main(){
 
-    // freopen("input.txt", "r", stdin);
-    // freopen("output.txt", "w", stdout);
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
 
     int bucketSize;
     cin >> bucketSize >> ws;
 
     SymbolTable table(bucketSize);
 
-    cout << SPACE << "ScopeTable# "  << table.getCurrentScopeId() << " created" << endl;
+    // cout << SPACE << "ScopeTable# "  << table.getCurrentScopeId() << " created" << endl;
 
-    char cmd;
+    char cmd = ' ';
     int cmdLine = 0;
     string line;
-    while (getline(cin, line)) {
+    while (getline(cin, line) && cmd != 'Q') {
         istringstream iss(line);
         char cmd;
         cmdLine++;
@@ -151,11 +151,6 @@ int main(){
                     cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
                 }else {
                     table.enterScope();
-                    cout << SPACE 
-                        << "ScopeTable# " 
-                        << table.getCurrentScopeId() 
-                        << " created" 
-                        << endl;
                 }
             }
             break;
@@ -166,19 +161,12 @@ int main(){
                 }else {
                     auto id = table.getCurrentScopeId();
                     auto flag = table.exitScope();
-                    if(flag){
-                        cout << SPACE 
-                            << "ScopeTable# "
-                            << id 
-                            << " deleted"
-                            << endl;
-                    }else {
+                    if(!flag){
                         cout << SPACE
                             << "ScopeTable# "
                             << id
                             << " cannot be deleted"
                             << endl;
-
                     }
                 }
             }
@@ -188,16 +176,7 @@ int main(){
                 if(numOftoken(line,' ') != 1){
                     cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
                 }else {
-                    string id;
-                    do{
-                        id = table.getCurrentScopeId();
-                        table.exitScope();
-                        cout << SPACE 
-                            << "ScopeTable# "
-                            << id 
-                            << " deleted"
-                            << endl;
-                    }while(id != "1");
+                    table.~SymbolTable();
                 }
             }
             break;

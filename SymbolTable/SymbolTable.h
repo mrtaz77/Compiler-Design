@@ -1,7 +1,6 @@
 #pragma once
 
 #include"ScopeTable.h"
-using namespace std;
 
 class SymbolTable{
     ScopeTable* currentScope;

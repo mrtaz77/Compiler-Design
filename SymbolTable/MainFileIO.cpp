@@ -1,6 +1,5 @@
 #include<iostream>
 #include<cstring>
-#include<fstream>
 #include<sstream>
 #include"SymbolTable.h"
 
@@ -28,7 +27,7 @@ int main(){
 
     SymbolTable table(bucketSize);
 
-    // cout << SPACE << "ScopeTable# "  << table.getCurrentScopeId() << " created" << endl;
+    // cout << TAB << "ScopeTable# "  << table.getCurrentScopeId() << " created" << endl;
 
     char cmd = ' ';
     int cmdLine = 0;
@@ -41,7 +40,7 @@ int main(){
         cout << "Cmd " << cmdLine << ": "<< line << endl;
 
         if (!(iss >> cmd)) {
-            cout << SPACE << "Error reading command." << endl;
+            cout << TAB << "Error reading command." << endl;
             continue;
         }
 
@@ -49,11 +48,11 @@ int main(){
             case 'I': {
                 string name, type;
                 if (!(iss >> name >> type) || numOftoken(line,' ') != 3) {
-                    cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arguments for the command " << cmd << endl;
                 } else {
                     auto flag = table.insert(new SymbolInfo(name, type));
                     if(flag){
-                        cout << SPACE
+                        cout << TAB
                             << "Inserted  at position <" 
                             << table.getBucketIndex(name)
                             << ", " 
@@ -62,7 +61,7 @@ int main(){
                             << table.getScopeIdOfSymbol(name)
                             << endl;
                     }else{
-                        cout << SPACE
+                        cout << TAB
                             << "'"
                             << name 
                             << "' already exists in the current ScopeTable# "
@@ -76,11 +75,11 @@ int main(){
             case 'L': {
                 string name;
                 if (!(iss >> name) || numOftoken(line,' ') != 2) {
-                    cout << SPACE << "Wrong number of arugments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arugments for the command " << cmd << endl;
                 } else {
                     auto found = table.lookUp(name);
                     if(found){
-                        cout << SPACE
+                        cout << TAB
                             << "'"
                             << name 
                             << "' found at position <"
@@ -91,7 +90,7 @@ int main(){
                             << table.getScopeIdOfSymbol(name)
                             << endl;
                     }else{
-                        cout << SPACE
+                        cout << TAB
                             << "'"
                             << name 
                             << "' not found in any of the ScopeTables"
@@ -104,13 +103,13 @@ int main(){
             case 'D': {
                 string name;
                 if (!(iss >> name) || numOftoken(line,' ') != 2) {
-                    cout << SPACE << "Wrong number of arugments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arugments for the command " << cmd << endl;
                 } else {
                     long row = table.getBucketIndex(name);
                     long col = table.getPositionInBucket(name);
                     string scopeId = table.getScopeIdOfSymbol(name);
                     if(table.erase(name)){
-                        cout << SPACE
+                        cout << TAB
                             << "Deleted '"
                             << name 
                             << "' from position <"
@@ -121,7 +120,7 @@ int main(){
                             << scopeId
                             << endl;
                     }else{
-                        cout << SPACE
+                        cout << TAB
                             << "Not found in the current ScopeTable# "
                             << table.getCurrentScopeId()
                             << endl;
@@ -133,14 +132,14 @@ int main(){
             case 'P': {
                 char printOption;
                 if (!(iss >> printOption)  || numOftoken(line,' ') != 2) {
-                    cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arguments for the command " << cmd << endl;
                 } else {
                     if (printOption == 'A') {
                         cout << table.printAllScopes() ;
                     } else if (printOption == 'C'){
                         cout << table.printCurrentScope() ;
                     } else{
-                        cout << SPACE << "Invalid argument for the command " << cmd << endl;
+                        cout << TAB << "Invalid argument for the command " << cmd << endl;
                     }
                 }
             }
@@ -148,7 +147,7 @@ int main(){
 
             case 'S': {
                 if(numOftoken(line,' ') != 1){
-                    cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arguments for the command " << cmd << endl;
                 }else {
                     table.enterScope();
                 }
@@ -157,12 +156,12 @@ int main(){
 
             case 'E': {
                 if(numOftoken(line,' ') != 1){
-                    cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arguments for the command " << cmd << endl;
                 }else {
                     auto id = table.getCurrentScopeId();
                     auto flag = table.exitScope();
                     if(!flag){
-                        cout << SPACE
+                        cout << TAB
                             << "ScopeTable# "
                             << id
                             << " cannot be deleted"
@@ -174,7 +173,7 @@ int main(){
 
             case 'Q': {
                 if(numOftoken(line,' ') != 1){
-                    cout << SPACE << "Wrong number of arguments for the command " << cmd << endl;
+                    cout << TAB << "Wrong number of arguments for the command " << cmd << endl;
                 }else {
                     table.~SymbolTable();
                 }

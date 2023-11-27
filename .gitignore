@@ -1,5 +1,8 @@
 .lh
 .vscode
+*.txt
+.cph
+*.bin
 
 # Prerequisites
 *.d

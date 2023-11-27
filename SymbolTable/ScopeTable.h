@@ -10,6 +10,7 @@ class ScopeTable{
     ScopeTable* parentScope;
     uint64_t total_buckets;
     SymbolInfo** hashTable;
+    int numOfChildren;
 
     uint64_t sdbm_hash(string str) {
         uint64_t hash = 0;
@@ -29,7 +30,7 @@ class ScopeTable{
     }
 
 public:
-    ScopeTable(string id = "",ScopeTable* parentScope = nullptr, long total_buckets = DEFAULT_BUCKET_SIZE) :
+    ScopeTable(string id = "", uint64_t total_buckets = DEFAULT_BUCKET_SIZE,ScopeTable* parentScope = nullptr) :
         id(id),
         parentScope(parentScope), 
         total_buckets(total_buckets){
@@ -37,6 +38,7 @@ public:
         for(int i = 0; i < total_buckets; i++){
             hashTable[i] = nullptr;
         }
+        numOfChildren = 0;
     }
 
     ~ScopeTable(){
@@ -51,6 +53,7 @@ public:
             }
 
         }
+        numOfChildren = 0;
         delete [] hashTable;
         total_buckets = 0;
     }
@@ -58,7 +61,8 @@ public:
     ScopeTable(const ScopeTable& other) : 
         id(id),
         parentScope(parentScope), 
-        total_buckets(total_buckets){
+        total_buckets(total_buckets),
+        numOfChildren(numOfChildren) {
         hashTable = new SymbolInfo*[total_buckets];
         for(int i = 0; i < other.total_buckets; i++){
             hashTable[i] = other.hashTable[i];
@@ -69,6 +73,7 @@ public:
         this->id = other.id;
         this->total_buckets = other.total_buckets;
         this->parentScope = other.parentScope;
+        this->numOfChildren = other.numOfChildren;
         this->hashTable = new SymbolInfo*[this->total_buckets];
         for(int i = 0; i < other.total_buckets; i++){
             hashTable[i] = other.hashTable[i];
@@ -79,6 +84,9 @@ public:
     void setId(string id) { this->id = id; }
 
     int getNumBuckets() { return total_buckets; }
+
+    int getNumOfChildren() const { return numOfChildren; }
+    void setNumOfChildren(int numOfChildren) { this->numOfChildren = numOfChildren; }
 
     ScopeTable* getParentScope() { return parentScope; }
     void setParentScope(ScopeTable *parentScope) { this->parentScope = parentScope; }
@@ -101,12 +109,12 @@ public:
         else return -1;
     }
 
-    uint64_t getPositionInBucket(string name) {
+    long getPositionInBucket(string name) {
         uint64_t hash = getHash(name);
 
         SymbolInfo *itr = hashTable[hash];
 
-        int i = 1;
+        long i = 1;
         while(itr != nullptr) {
             if(itr->getName() == name)return i;
             itr = itr->getNext();
@@ -156,16 +164,16 @@ public:
         return false;
     }
 
-    friend ostream& operator<<(ostream& out, const ScopeTable& scopeTable){
+    string print(){
         string str = "";
 
-        str += SPACE + string("ScopeTable# ") + scopeTable.id + "\n";
+        str += SPACE + string("ScopeTable# ") + id + "\n";
 
         int i ;
-        for(i = 1; i <= scopeTable.total_buckets; i++){
+        for(i = 1; i <= total_buckets; i++){
             str += SPACE + to_string(i);
 
-            SymbolInfo *itr = scopeTable.hashTable[i-1];
+            SymbolInfo *itr = hashTable[i-1];
 
             while(itr != nullptr){
                 str += " --> " + itr->print();
@@ -174,8 +182,6 @@ public:
             str += "\n";
         }
 
-        out << str;
-
-        return out; 
+        return str; 
     }
 };

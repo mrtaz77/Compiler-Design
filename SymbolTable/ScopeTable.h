@@ -1,6 +1,6 @@
 #pragma once
 
-#include"symbolInfo.h"
+#include"SymbolInfo.h"
 
 #define TAB "\t"
 #define DEFAULT_BUCKET_SIZE 10

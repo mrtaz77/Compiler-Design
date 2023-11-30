@@ -3,6 +3,8 @@
 *.txt
 .cph
 *.bin
+*.zip
+2005020/
 
 # Prerequisites
 *.d

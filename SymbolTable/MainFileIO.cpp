@@ -179,6 +179,11 @@ int main(){
                 }
             }
             break;
+
+            default: {
+                cout << TAB << "Invalid Command : " << cmd << endl;
+            }
+            break;
         }
     }
 }

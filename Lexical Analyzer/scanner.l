@@ -13,13 +13,23 @@
 
 SymbolTable table(BUCKET_SIZE);
 
+unsigned long errorCount = 0;
+unsigned long warningCount = 0;
+
 FILE *log_out;
 FILE *token_out;
 
-// files
+void writeToToken(string token){
+    fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
+}
+
+void writeToLog(string token){
+    fprintf(log_out,"Line no %d: TOKEN %s Lexeme %s found\n",yylineno,token.c_str(),yytext);
+}
+
 void writeToFile(string token){
-	fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
-	fprintf(log_out,"Line no %d: TOKEN %s Lexeme %s found\n",yylineno,token.c_str(),yytext);
+	writeToToken(token);
+	writeToLog(token);
 }
 
 string extractCharacter(string lexeme) {
@@ -65,29 +75,37 @@ void writeToFileChar(){
 	fprintf(log_out,"Line no %d: TOKEN CONST_CHAR Lexeme %s found\n",yylineno,lexeme.c_str());
 }
 
+void writeErrorToLog(string error){
+    errorCount++;
+    fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+}
+
 %}
 
 /* regex section */
 
 DIGIT [0-9]
-INT {DIGIT}+
-LETTER [a-zA-Z_]
-EXP [Ee][+-]?{INT}
-FLOAT1 {INT}.{INT}?{EXP}? 
-FLOAT2 {INT}{EXP}
-FLOAT3 .{INT}{EXP}? 
-ID {LETTER}({LETTER}|{DIGIT})*
+DIGITS ({DIGIT}+)
+INT {DIGITS}
+
+EXP ([Ee][+-]?{DIGITS})
+FLOAT {DIGITS}\.{DIGITS}?{EXP}?|\.{DIGITS}{EXP}?|{DIGITS}{EXP}
+
+LETTER [_a-zA-Z]
+ID {LETTER}({LETTER}|[0-9])*
 PRINTABLE '[ -~]'
 BACKSLASH '\\[\\'"abfnrtv0?]'
+CHAR {PRINTABLE}|{BACKSLASH}
 
 ADDOP [+-]
 MULOP [*/%]
 INCOP [+][+]|[-][-]
 ASSIGNOP [=]
-GREATER_LESSER_EQUAL [<>]{ASSIGNOP}?
-EQUAL_NOT_EQUAL [!=]{ASSIGNOP}
+RELOP [<>]{ASSIGNOP}?|[!=]{ASSIGNOP}
 
 NEWLINE [\n]
+
+INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
 
 %%
 
@@ -111,16 +129,10 @@ continue { writeToFile("CONTINUE"); }
 {ADDOP} { writeToFile("ADDOP"); }
 {MULOP} { writeToFile("MULOP"); }
 {INCOP} { writeToFile("INCOP"); }
-{EQUAL_NOT_EQUAL} |
-{GREATER_LESSER_EQUAL} { writeToFile("RELOP"); }
+{RELOP} { writeToFile("RELOP"); }
 {ASSIGNOP} { writeToFile("ASSIGNOP"); }
-"&&" |
-"||" { writeToFile("LOGICOP"); }
-"&" |
-"|" |
-"^" |
-"<<" |
-">>" { writeToFile("BITOP"); }
+"&&"|"||" { writeToFile("LOGICOP"); }
+"&"|"|"|"^"|"<<"|">>" { writeToFile("BITOP"); }
 "!" { writeToFile("NOT"); }
 "(" { writeToFile("LPAREN"); }
 ")" { writeToFile("RPAREN"); }
@@ -139,17 +151,11 @@ continue { writeToFile("CONTINUE"); }
     writeToFile("SEMICOLON");
 }
 
-
 {INT} { writeToFile("INT"); }
 
-{FLOAT1} |
-{FLOAT2} |
-{FLOAT3} { writeToFile("CONST_FLOAT"); }
+{FLOAT} { writeToFile("CONST_FLOAT"); }
 
-{PRINTABLE} |
-{BACKSLASH} {
-    writeToFileChar();
-}
+{CHAR} { writeToFileChar(); }
 
 {ID}  {
     writeToFile("ID"); 
@@ -162,8 +168,10 @@ continue { writeToFile("CONTINUE"); }
     }
 }
 
-{NEWLINE} {
-    yylineno++;
+{NEWLINE} {yylineno++;}
+
+{INVALID_ID_SUFFIX_NUM_PREFIX} { 
+    writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); 
 }
 
 %%
@@ -189,6 +197,10 @@ int main(int argc,char *argv[]){
 
 	yyin= fin;
 	yylex();
+
+    fprintf(log_out,"Total lines: %d\n",yylineno);
+    fprintf(log_out,"Total errors: %d\n",errorCount);
+    fprintf(log_out,"Total warnings: %d\n",warningCount);
 
 	fclose(yyin);
 	fclose(token_out);

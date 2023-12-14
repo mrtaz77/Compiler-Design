@@ -1,5 +1,15 @@
 /* Option section */
 %option noyywrap
+%option noinput
+
+/* States for strings and comments */
+%x SINGLE_LINE_COMMENT
+
+%x SINGLE_LINE_STRING
+%x MULTI_LINE_STRING
+
+%x MULTI_LINE_COMMENT1
+%x MULTI_LINE_COMMENT2
 
 /* Cpp code section for includes and variables */
 %{
@@ -8,6 +18,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
+#include<iostream>
+#include<sstream>
 #include <cstdint>
 #include"SymbolTable/SymbolTable.h"
 
@@ -19,12 +31,15 @@ unsigned long warningCount = 0;
 FILE *log_out;
 FILE *token_out;
 
+string stringLiteral = "";
+string buffer = "";
+
 void writeToToken(string token){
     fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
 }
 
 void writeToLog(string token){
-    fprintf(log_out,"Line no %d: TOKEN %s Lexeme %s found\n",yylineno,token.c_str(),yytext);
+    fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
 }
 
 void writeToFile(string token){
@@ -32,52 +47,88 @@ void writeToFile(string token){
 	writeToLog(token);
 }
 
-string extractCharacter(string lexeme) {
-    if(lexeme.length() == 3) return lexeme.substr(1, lexeme.length() - 2);
+
+
+char convertCharConstantInString(string constant){
+    char backslashConstant = constant[1];
+    switch (backslashConstant) {
+        case 'a':
+            return '\a';
+        case 'b':
+            return '\b';
+        case 'f':
+            return '\f';
+        case 'n':
+            return '\n';
+        case 'r':
+            return '\r';
+        case 't':
+            return '\t';
+        case 'v':
+            return '\v';
+        case '0':
+            return '\0';
+        case '?':
+            return '\?';
+        case '\\':
+            return '\\';
+        case '\'':
+            return '\'';
+        case '\"':
+            return '\"';
+        default:
+            return 'U';
+    }
+}
+
+char extractCharacter(string lexeme) {
+    if(lexeme.length() == 3) return lexeme[1];
     if (lexeme.length() == 4 && lexeme[0] == '\'' && lexeme[1] == '\\' && lexeme[lexeme.length() - 1] == '\'') {
-        char backslashConstant = lexeme[2];
-        switch (backslashConstant) {
-            case 'a':
-                return "\a";
-            case 'b':
-                return "\b";
-            case 'f':
-                return "\f";
-            case 'n':
-                return "\n";
-            case 'r':
-                return "\r";
-            case 't':
-                return "\t";
-            case 'v':
-                return "\v";
-            case '0':
-                return "\0";
-            case '?':
-                return "\?";
-			case '\\':
-                return "\\";
-			case '\'':
-                return "\'";
-			case '\"':
-                return "\"";
-            default:
-                return "Unknown";
-        }
+        string backslashConstant = "";
+        backslashConstant += lexeme[2];
+        return convertCharConstantInString(backslashConstant);
     }
 
-    return lexeme.substr(1, lexeme.length() - 2);
+    return lexeme[1];
 }
 
 void writeToFileChar(){
-	string lexeme = extractCharacter(yytext);
-	fprintf(token_out,"<CONST_CHAR, %s>\n",lexeme.c_str());
-	fprintf(log_out,"Line no %d: TOKEN CONST_CHAR Lexeme %s found\n",yylineno,lexeme.c_str());
+	char lexeme = extractCharacter(yytext);
+	fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
+	fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
 }
 
 void writeErrorToLog(string error){
     errorCount++;
     fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+}
+
+void checkIndentation(string indent){
+    string id = table.getCurrentScopeId();
+
+    unsigned long expectedTab = 0;
+
+    for(int i = 0; i < id.length(); i++){
+        if(id[i] == '.')expectedTab++;
+    }
+
+    if(expectedTab > 0){
+        unsigned long space = 0;
+        unsigned long tab = 0;
+        for(int i = 0; i < indent.length(); i++){
+            if(indent[i] == ' ')space++;
+            else if(indent[i] == '\t')tab++;
+        }
+
+        if(space > 0){
+            warningCount++;
+            fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+        }
+        else if(tab != expectedTab){
+            warningCount++;
+            fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+        }
+    }
 }
 
 %}
@@ -92,9 +143,9 @@ EXP ([Ee][+-]?{DIGITS})
 FLOAT {DIGITS}\.{DIGITS}?{EXP}?|\.{DIGITS}{EXP}?|{DIGITS}{EXP}
 
 LETTER [_a-zA-Z]
-ID {LETTER}({LETTER}|[0-9])*
-PRINTABLE '[ -~]'
-BACKSLASH '\\[\\'"abfnrtv0?]'
+ID {LETTER}({LETTER}|{DIGIT})*
+PRINTABLE '[\x20-\x26\x28-\x5b\x5d-\x7e]'
+BACKSLASH '\\[\\'"abfnrtv0]'
 CHAR {PRINTABLE}|{BACKSLASH}
 
 ADDOP [+-]
@@ -106,6 +157,15 @@ RELOP [<>]{ASSIGNOP}?|[!=]{ASSIGNOP}
 NEWLINE [\n]
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
+TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
+/* TODO Illformed exponent */
+
+UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][?]'
+EMPTY_CONST_CHAR ''
+UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
+MULTICHAR_CONST_CHAR '[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x3e\x40-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]([\x20-\x26\x28-\x7e]*)'|'[\x5c][\\"abfnrtv0?]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
+
+/* TODO deal with double quotes */
 
 %%
 
@@ -151,7 +211,7 @@ continue { writeToFile("CONTINUE"); }
     writeToFile("SEMICOLON");
 }
 
-{INT} { writeToFile("INT"); }
+{INT} { writeToFile("CONST_INT"); }
 
 {FLOAT} { writeToFile("CONST_FLOAT"); }
 
@@ -164,19 +224,179 @@ continue { writeToFile("CONTINUE"); }
         fprintf(log_out,"%s",table.printAllScopes().c_str());
     }else{
         string tab = TAB;
-        fprintf(log_out,"%s%s already exists in the current ScopeTable",tab.c_str(),yytext);
+        fprintf(log_out,"%s%s already exists in the current ScopeTable\n",tab.c_str(),yytext);
     }
 }
 
-{NEWLINE} {yylineno++;}
+{NEWLINE}([ \t]*)([\x7d]) {
+    yylineno++;
+    fprintf(token_out,"<RCURL, }>\n");
+    fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
+    table.exitScope();
+    checkIndentation(yytext);
+}
 
-{INVALID_ID_SUFFIX_NUM_PREFIX} { 
-    writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); 
+{NEWLINE}([ \t]*) {
+    yylineno++;
+    checkIndentation(yytext);
+}
+
+
+
+
+
+{INVALID_ID_SUFFIX_NUM_PREFIX} { writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); }
+{TOO_MANY_DECIMAL_POINTS} { writeErrorToLog("TOO_MANY_DECIMAL_POINTS"); }
+
+{UNRECOGNIZED_CHAR} { writeErrorToLog("UNRECOGNIZED_CHAR"); }
+{EMPTY_CONST_CHAR} { writeErrorToLog("EMPTY_CONST_CHAR"); }
+{UNFINISHED_CONST_CHAR} { writeErrorToLog("UNFINISHED_CONST_CHAR"); }
+{MULTICHAR_CONST_CHAR} { writeErrorToLog("MULTICHAR_CONST_CHAR"); }
+
+[\x2f][\x2f] {
+    buffer = yytext;
+    BEGIN SINGLE_LINE_COMMENT;
+}
+
+<SINGLE_LINE_COMMENT>[^\xd\x5c] {
+    buffer += yytext;
+}
+
+<SINGLE_LINE_COMMENT><<EOF>> |
+<SINGLE_LINE_COMMENT>[\xd] {
+    fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",yylineno,buffer.c_str());
+    buffer = "";
+    BEGIN INITIAL;
+}
+
+<SINGLE_LINE_COMMENT>([\\][\xd][\n]) {
+    buffer += yytext;
+    yylineno++;
+}
+
+<SINGLE_LINE_COMMENT>([\\][^\xd]) {
+    buffer += yytext;
+}
+
+[\x2f][\x2a] {
+    BEGIN MULTI_LINE_COMMENT1;
+    buffer = yytext;
+}
+
+<MULTI_LINE_COMMENT1>([^\x2a\n]+) {
+    buffer += yytext;
+}
+
+<MULTI_LINE_COMMENT1>[\n] {
+    buffer += yytext;
+    yylineno++;
+}
+
+<MULTI_LINE_COMMENT2>[\n] {
+    buffer += yytext;
+    yylineno++;
+    BEGIN MULTI_LINE_COMMENT1;
+}
+
+<MULTI_LINE_COMMENT1>[\x2a] {
+    buffer += yytext;
+    BEGIN MULTI_LINE_COMMENT2;
+}
+
+<MULTI_LINE_COMMENT2>[^\x2a\x2f\n] {
+    buffer += yytext;
+    BEGIN MULTI_LINE_COMMENT1;
+}
+
+<MULTI_LINE_COMMENT2>[\x2a] {
+    buffer += yytext;
+}
+
+<MULTI_LINE_COMMENT2>[\x2f] {
+    fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    buffer = "";
+    BEGIN INITIAL;
+}
+
+<MULTI_LINE_COMMENT1><<EOF>> |
+<MULTI_LINE_COMMENT2><<EOF>> {
+    errorCount++;
+    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
+    buffer = "";
+    BEGIN INITIAL;
+}
+
+[\x22] {
+    BEGIN SINGLE_LINE_STRING;
+    buffer = yytext;
+    stringLiteral = "";
+}
+
+<MULTI_LINE_STRING>[^\x5c\n\x22] |
+<SINGLE_LINE_STRING>[^\x5c\n\x22] {
+    buffer += yytext;
+    stringLiteral += yytext;
+}
+
+<MULTI_LINE_STRING>([\\][\\'"abfnrtv0]) |
+<SINGLE_LINE_STRING>([\\][\\'"abfnrtv0]) {
+    buffer += yytext;
+    stringLiteral += convertCharConstantInString(yytext); 
+}
+
+<MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
+<SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
+    buffer += yytext;
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    buffer = "";
+    stringLiteral = "";
+    BEGIN INITIAL;
+}
+
+<MULTI_LINE_STRING><<EOF>> |
+<SINGLE_LINE_STRING><<EOF>> {
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    buffer = "";
+    stringLiteral = "";
+    BEGIN INITIAL;
+}
+
+<MULTI_LINE_STRING>[\n] |
+<SINGLE_LINE_STRING>[\n] {
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    buffer = "";
+    stringLiteral = "";
+    yylineno++;
+    BEGIN INITIAL;
+}
+
+<SINGLE_LINE_STRING>[\x22] {
+    fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
+    buffer = "";
+    stringLiteral = "";
+    BEGIN INITIAL;
+}
+
+<MULTI_LINE_STRING>([\\][\xd][\n]) |
+<SINGLE_LINE_STRING>([\\][\xd][\n]) {
+    BEGIN MULTI_LINE_STRING;
+    buffer += yytext;
+    yylineno++;
+    stringLiteral += yytext;
+}
+
+<MULTI_LINE_STRING>[\x22] {
+    fprintf(log_out,"Line no %d: TOKEN <MULTI LINE STRING> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
+    buffer = "";
+    stringLiteral = "";
+    BEGIN INITIAL;
 }
 
 %%
 
-/* Main Driver */
+/* Main Driver */ 
 int main(int argc,char *argv[]){
 	
 	if(argc!=2){
@@ -198,9 +418,13 @@ int main(int argc,char *argv[]){
 	yyin= fin;
 	yylex();
 
+    fprintf(log_out,"%s",table.printAllScopes().c_str());
+
     fprintf(log_out,"Total lines: %d\n",yylineno);
     fprintf(log_out,"Total errors: %d\n",errorCount);
     fprintf(log_out,"Total warnings: %d\n",warningCount);
+
+    table.~SymbolTable();
 
 	fclose(yyin);
 	fclose(token_out);

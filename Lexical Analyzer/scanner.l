@@ -18,8 +18,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
-#include<iostream>
-#include<sstream>
 #include <cstdint>
 #include"SymbolTable/SymbolTable.h"
 
@@ -27,6 +25,9 @@ SymbolTable table(BUCKET_SIZE);
 
 unsigned long errorCount = 0;
 unsigned long warningCount = 0;
+
+unsigned long startString = 0;
+unsigned long startComment = 0;
 
 FILE *log_out;
 FILE *token_out;
@@ -47,11 +48,8 @@ void writeToFile(string token){
 	writeToLog(token);
 }
 
-
-
-char convertCharConstantInString(string constant){
-    char backslashConstant = constant[1];
-    switch (backslashConstant) {
+char getBackSlashCharConstant(char constant){
+    switch (constant) {
         case 'a':
             return '\a';
         case 'b':
@@ -81,12 +79,16 @@ char convertCharConstantInString(string constant){
     }
 }
 
+char convertCharConstantInString(string constant){
+    char backslashConstant = constant[1];
+    return getBackSlashCharConstant(backslashConstant);
+}
+
 char extractCharacter(string lexeme) {
     if(lexeme.length() == 3) return lexeme[1];
     if (lexeme.length() == 4 && lexeme[0] == '\'' && lexeme[1] == '\\' && lexeme[lexeme.length() - 1] == '\'') {
-        string backslashConstant = "";
-        backslashConstant += lexeme[2];
-        return convertCharConstantInString(backslashConstant);
+        char backslashConstant = lexeme[2];
+        return getBackSlashCharConstant(backslashConstant);
     }
 
     return lexeme[1];
@@ -164,8 +166,6 @@ UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][?]'
 EMPTY_CONST_CHAR ''
 UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
 MULTICHAR_CONST_CHAR '[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x3e\x40-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]([\x20-\x26\x28-\x7e]*)'|'[\x5c][\\"abfnrtv0?]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
-
-/* TODO deal with double quotes */
 
 %%
 
@@ -254,6 +254,7 @@ continue { writeToFile("CONTINUE"); }
 {MULTICHAR_CONST_CHAR} { writeErrorToLog("MULTICHAR_CONST_CHAR"); }
 
 [\x2f][\x2f] {
+    startComment = yylineno;
     buffer = yytext;
     BEGIN SINGLE_LINE_COMMENT;
 }
@@ -262,16 +263,17 @@ continue { writeToFile("CONTINUE"); }
     buffer += yytext;
 }
 
-<SINGLE_LINE_COMMENT><<EOF>> |
-<SINGLE_LINE_COMMENT>[\xd] {
-    fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",yylineno,buffer.c_str());
-    buffer = "";
-    BEGIN INITIAL;
-}
-
 <SINGLE_LINE_COMMENT>([\\][\xd][\n]) {
     buffer += yytext;
     yylineno++;
+}
+
+<SINGLE_LINE_COMMENT><<EOF>> |
+<SINGLE_LINE_COMMENT>[\xd] {
+    fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
+    buffer = "";
+    startComment = 0;
+    BEGIN INITIAL;
 }
 
 <SINGLE_LINE_COMMENT>([\\][^\xd]) {
@@ -279,6 +281,7 @@ continue { writeToFile("CONTINUE"); }
 }
 
 [\x2f][\x2a] {
+    startComment = yylineno;
     BEGIN MULTI_LINE_COMMENT1;
     buffer = yytext;
 }
@@ -313,7 +316,7 @@ continue { writeToFile("CONTINUE"); }
 }
 
 <MULTI_LINE_COMMENT2>[\x2f] {
-    fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
     buffer = "";
     BEGIN INITIAL;
 }
@@ -321,12 +324,13 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_COMMENT1><<EOF>> |
 <MULTI_LINE_COMMENT2><<EOF>> {
     errorCount++;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",startComment,buffer.c_str());
     buffer = "";
     BEGIN INITIAL;
 }
 
 [\x22] {
+    startString = yylineno;
     BEGIN SINGLE_LINE_STRING;
     buffer = yytext;
     stringLiteral = "";
@@ -347,34 +351,38 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
 <SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
     buffer += yytext;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
     buffer = "";
     stringLiteral = "";
+    startString = 0;
     BEGIN INITIAL;
 }
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
     buffer = "";
     stringLiteral = "";
+    startString = 0;
     BEGIN INITIAL;
 }
 
 <MULTI_LINE_STRING>[\n] |
 <SINGLE_LINE_STRING>[\n] {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
     buffer = "";
     stringLiteral = "";
+    startString = 0;
     yylineno++;
     BEGIN INITIAL;
 }
 
 <SINGLE_LINE_STRING>[\x22] {
-    fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
     fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
     buffer = "";
     stringLiteral = "";
+    startString = 0;
     BEGIN INITIAL;
 }
 
@@ -383,14 +391,15 @@ continue { writeToFile("CONTINUE"); }
     BEGIN MULTI_LINE_STRING;
     buffer += yytext;
     yylineno++;
-    stringLiteral += yytext;
+    // stringLiteral += yytext;
 }
 
 <MULTI_LINE_STRING>[\x22] {
-    fprintf(log_out,"Line no %d: TOKEN <MULTI LINE STRING> Lexeme %s%s found\n",yylineno,buffer.c_str(),yytext);
+    fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
     fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
     buffer = "";
     stringLiteral = "";
+    startString = 0;
     BEGIN INITIAL;
 }
 

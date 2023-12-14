@@ -8,25 +8,25 @@
 class ScopeTable{
     string id;
     ScopeTable* parentScope;
-    uint64_t total_buckets;
+    unsigned long long total_buckets;
     SymbolInfo** hashTable;
     int numOfChildren;
 
-    uint64_t sdbm_hash(string str) {
-        uint64_t hash = 0;
-        uint64_t i = 0;
-        uint64_t len = str.length();
+    unsigned long long sdbm_hash(string str) {
+        unsigned long long hash = 0;
+        unsigned long long i = 0;
+        unsigned long long len = str.length();
 
         for (i = 0; i < len; i++)
         {
-            hash = ((str[i]) + (hash << 6) + (hash << 16) - hash)%total_buckets;
+            hash = ((str[i]) + (hash << 6) + (hash << 16) - hash);
         }
 
-        return hash;
+        return hash%total_buckets;
     }
 
 public:
-    ScopeTable(string id = "", uint64_t total_buckets = DEFAULT_BUCKET_SIZE,ScopeTable* parentScope = nullptr) :
+    ScopeTable(string id = "", unsigned long long total_buckets = DEFAULT_BUCKET_SIZE,ScopeTable* parentScope = nullptr) :
         id(id),
         parentScope(parentScope), 
         total_buckets(total_buckets){
@@ -80,7 +80,7 @@ public:
     string getId() { return id; }
     void setId(string id) { this->id = id; }
 
-    uint64_t getNumBuckets() { return total_buckets; }
+    unsigned long long getNumBuckets() { return total_buckets; }
 
     int getNumOfChildren() const { return numOfChildren; }
     void setNumOfChildren(int numOfChildren) { this->numOfChildren = numOfChildren; }
@@ -89,7 +89,7 @@ public:
     void setParentScope(ScopeTable *parentScope) { this->parentScope = parentScope; }
 
     SymbolInfo* lookUp(string name){
-        uint64_t hash = sdbm_hash(name);
+        unsigned long long hash = sdbm_hash(name);
 
         SymbolInfo *itr = hashTable[hash];
 
@@ -101,13 +101,13 @@ public:
         return nullptr;
     }
 
-    uint64_t getBucketIndex(string name) {
+    unsigned long long getBucketIndex(string name) {
         if(lookUp(name) != nullptr)return sdbm_hash(name) + 1;
         else return -1;
     }
 
     long getPositionInBucket(string name) {
-        uint64_t hash = sdbm_hash(name);
+        unsigned long long hash = sdbm_hash(name);
 
         SymbolInfo *itr = hashTable[hash];
 
@@ -123,7 +123,7 @@ public:
 
     bool insert(SymbolInfo* symbol){
         string name = symbol->getName();
-        uint64_t hash = sdbm_hash(name);
+        unsigned long long hash = sdbm_hash(name);
 
         SymbolInfo *itr = hashTable[hash];
         SymbolInfo *prev = nullptr;
@@ -142,7 +142,7 @@ public:
 
     bool erase(string name){
 
-        uint64_t hash = sdbm_hash(name);
+        unsigned long long hash = sdbm_hash(name);
 
         SymbolInfo *itr = hashTable[hash];
         SymbolInfo *prev = nullptr;

@@ -4,12 +4,11 @@
 
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
+%x MULTI_LINE_COMMENT1
+%x MULTI_LINE_COMMENT2
 
 %x SINGLE_LINE_STRING
 %x MULTI_LINE_STRING
-
-%x MULTI_LINE_COMMENT1
-%x MULTI_LINE_COMMENT2
 
 /* Cpp code section for includes and variables */
 %{
@@ -79,12 +78,12 @@ char getBackSlashCharConstant(char constant){
     }
 }
 
-char convertCharConstantInString(string constant){
+char replaceConstCharInString(string constant){
     char backslashConstant = constant[1];
     return getBackSlashCharConstant(backslashConstant);
 }
 
-char extractCharacter(string lexeme) {
+char getTokenFromConstChar(string lexeme) {
     if(lexeme.length() == 3) return lexeme[1];
     if (lexeme.length() == 4 && lexeme[0] == '\'' && lexeme[1] == '\\' && lexeme[lexeme.length() - 1] == '\'') {
         char backslashConstant = lexeme[2];
@@ -95,7 +94,7 @@ char extractCharacter(string lexeme) {
 }
 
 void writeToFileChar(){
-	char lexeme = extractCharacter(yytext);
+	char lexeme = getTokenFromConstChar(yytext);
 	fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
 	fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
 }
@@ -124,7 +123,7 @@ void checkIndentation(string indent){
 
         if(space > 0){
             warningCount++;
-            fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+            fprintf(log_out, "Line# %d: Warning, tab required but got space.\n",yylineno);
         }
         else if(tab != expectedTab){
             warningCount++;
@@ -164,12 +163,10 @@ TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
 ILLFORMED_EXP [Ee][+-]?([0-9]*)[\.]([0-9]*)
 ILLFORMED_NUMBER {DIGITS}\.{DIGITS}?{ILLFORMED_EXP}|\.{DIGITS}{ILLFORMED_EXP}|{DIGITS}{ILLFORMED_EXP}
 
-/* TODO Illformed exponent */
-
-UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][?]'
+UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
 EMPTY_CONST_CHAR ''
-UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
-MULTICHAR_CONST_CHAR '[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x3e\x40-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]([\x20-\x26\x28-\x7e]*)'|'[\x5c][\\"abfnrtv0?]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
+UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e])
+MULTICHAR_CONST_CHAR '[\x5c][\x20-\x7e]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
 
 %%
 
@@ -323,7 +320,7 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_COMMENT1><<EOF>> |
 <MULTI_LINE_COMMENT2><<EOF>> {
     errorCount++;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",startComment,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
     buffer = "";
     BEGIN INITIAL;
 }
@@ -344,13 +341,13 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_STRING>([\\][\\'"abfnrtv0]) |
 <SINGLE_LINE_STRING>([\\][\\'"abfnrtv0]) {
     buffer += yytext;
-    stringLiteral += convertCharConstantInString(yytext); 
+    stringLiteral += replaceConstCharInString(yytext); 
 }
 
 <MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
 <SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
     buffer += yytext;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
     buffer = "";
     stringLiteral = "";
     startString = 0;
@@ -359,7 +356,7 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
     buffer = "";
     stringLiteral = "";
     startString = 0;
@@ -368,7 +365,7 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING>[\n] |
 <SINGLE_LINE_STRING>[\n] {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",startString,buffer.c_str());
+    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
     buffer = "";
     stringLiteral = "";
     startString = 0;
@@ -431,8 +428,6 @@ int main(int argc,char *argv[]){
     fprintf(log_out,"Total lines: %d\n",yylineno);
     fprintf(log_out,"Total errors: %d\n",errorCount);
     fprintf(log_out,"Total warnings: %d\n",warningCount);
-
-    table.~SymbolTable();
 
 	fclose(yyin);
 	fclose(token_out);

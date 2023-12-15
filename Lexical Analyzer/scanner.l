@@ -144,6 +144,7 @@ INT {DIGITS}
 EXP ([Ee][+-]?{DIGITS})
 FLOAT {DIGITS}\.{DIGITS}?{EXP}?|\.{DIGITS}{EXP}?|{DIGITS}{EXP}
 
+
 LETTER [_a-zA-Z]
 ID {LETTER}({LETTER}|{DIGIT})*
 PRINTABLE '[\x20-\x26\x28-\x5b\x5d-\x7e]'
@@ -160,6 +161,9 @@ NEWLINE [\n]
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
 TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
+ILLFORMED_EXP [Ee][+-]?([0-9]*)[\.]([0-9]*)
+ILLFORMED_NUMBER {DIGITS}\.{DIGITS}?{ILLFORMED_EXP}|\.{DIGITS}{ILLFORMED_EXP}|{DIGITS}{ILLFORMED_EXP}
+
 /* TODO Illformed exponent */
 
 UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][?]'
@@ -207,9 +211,7 @@ continue { writeToFile("CONTINUE"); }
 "[" { writeToFile("LSQUARE"); }
 "]" { writeToFile("RSQUARE"); }
 "," { writeToFile("COMMA"); }
-";" { 
-    writeToFile("SEMICOLON");
-}
+";" { writeToFile("SEMICOLON"); }
 
 {INT} { writeToFile("CONST_INT"); }
 
@@ -241,12 +243,9 @@ continue { writeToFile("CONTINUE"); }
     checkIndentation(yytext);
 }
 
-
-
-
-
 {INVALID_ID_SUFFIX_NUM_PREFIX} { writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); }
 {TOO_MANY_DECIMAL_POINTS} { writeErrorToLog("TOO_MANY_DECIMAL_POINTS"); }
+{ILLFORMED_NUMBER} { writeErrorToLog("ILLFORMED_NUMBER"); }
 
 {UNRECOGNIZED_CHAR} { writeErrorToLog("UNRECOGNIZED_CHAR"); }
 {EMPTY_CONST_CHAR} { writeErrorToLog("EMPTY_CONST_CHAR"); }

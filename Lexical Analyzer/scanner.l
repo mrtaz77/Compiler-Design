@@ -1,6 +1,5 @@
 /* Option section */
 %option noyywrap
-%option noinput
 
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
@@ -13,6 +12,8 @@
 /* Cpp code section for includes and variables */
 %{
 #define BUCKET_SIZE 10
+#define LOG_FILE "log.txt"
+#define TOKEN_FILE "token.txt"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -65,8 +66,8 @@ char getBackSlashCharConstant(char constant){
             return '\v';
         case '0':
             return '\0';
-        case '?':
-            return '\?';
+        /* case '?':
+            return '\?'; */
         case '\\':
             return '\\';
         case '\'':
@@ -95,8 +96,8 @@ char getTokenFromConstChar(string lexeme) {
 
 void writeToFileChar(){
 	char lexeme = getTokenFromConstChar(yytext);
-	fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
-	fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
+	fprintf(token_out,"<CONST_CHAR, %s>\n",lexeme);
+	fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %s found\n",yylineno,lexeme);
 }
 
 void writeErrorToLog(string error){
@@ -127,7 +128,7 @@ void checkIndentation(string indent){
         }
         else if(tab != expectedTab){
             warningCount++;
-            fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+            fprintf(log_out, "Line# %d: Warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
         }
     }
 }
@@ -166,7 +167,7 @@ ILLFORMED_NUMBER {DIGITS}\.{DIGITS}?{ILLFORMED_EXP}|\.{DIGITS}{ILLFORMED_EXP}|{D
 UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
 EMPTY_CONST_CHAR ''
 UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
-MULTICHAR_CONST_CHAR '[\x5c][\x20-\x26\x28-\x7e]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
+MULTICHAR_CONST_CHAR '([\x5c][\x20-\x26\x28-\x7e]|[\x20-\x26\x28-\x5b\x5d-\x7e])([\x20-\x26\x28-\x7e]+)'
 
 %%
 
@@ -227,7 +228,7 @@ continue { writeToFile("CONTINUE"); }
     }
 }
 
-{NEWLINE}([\xd]) {
+{NEWLINE}([ \t]*[\xd]) {
     yylineno++;
 }
 
@@ -419,8 +420,8 @@ int main(int argc,char *argv[]){
 		return 0;
 	}
 	
-	log_out = fopen("log.txt","w");
-	token_out = fopen("token.txt","w");
+	log_out = fopen(LOG_FILE,"w");
+	token_out = fopen(TOKEN_FILE,"w");
 
     yylineno = 1;
 

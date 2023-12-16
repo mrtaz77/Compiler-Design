@@ -165,8 +165,8 @@ ILLFORMED_NUMBER {DIGITS}\.{DIGITS}?{ILLFORMED_EXP}|\.{DIGITS}{ILLFORMED_EXP}|{D
 
 UNRECOGNIZED_CHAR [#$.:?@\\`~]|'[\x27]'|'[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
 EMPTY_CONST_CHAR ''
-UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e])
-MULTICHAR_CONST_CHAR '[\x5c][\x20-\x7e]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
+UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
+MULTICHAR_CONST_CHAR '[\x5c][\x20-\x26\x28-\x7e]([\x20-\x26\x28-\x7e]+)'|'[\x20-\x26\x28-\x5b\x5d-\x7e]([\x20-\x26\x28-\x7e]+)'
 
 %%
 
@@ -225,6 +225,10 @@ continue { writeToFile("CONTINUE"); }
         string tab = TAB;
         fprintf(log_out,"%s%s already exists in the current ScopeTable\n",tab.c_str(),yytext);
     }
+}
+
+{NEWLINE}([\xd]) {
+    yylineno++;
 }
 
 {NEWLINE}([ \t]*)([\x7d]) {

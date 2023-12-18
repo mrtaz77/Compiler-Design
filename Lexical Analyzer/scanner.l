@@ -148,7 +148,9 @@ PRINTABLE '[\x20-\x26\x28-\x5b\x5d-\x7e]'
 BACKSLASH '\\[\\'"abfnrtv0]'
 CHAR {PRINTABLE}|{BACKSLASH}
 
-NEWLINE [\xa]
+LINE_FEED [\xa]
+CARRIAGE_RETURN [\xd]
+NEWLINE {CARRIAGE_RETURN}?{LINE_FEED}
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
 TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
@@ -219,15 +221,16 @@ continue { writeToFile("CONTINUE"); }
 	}
 }
 
-{NEWLINE} { yylineno++; }
-
-^([ \t]*)([\xd]) {}
+{NEWLINE} |
+^([ \t]*){NEWLINE} {
+	yylineno++;
+}
 
 ^([ \t]*)"}" {
-	fprintf(token_out,"<RCURL, }>\n");
-	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 	table.exitScope();
 	checkIndentation(yytext);
+	fprintf(token_out,"<RCURL, }>\n");
+	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
 ^([ \t]*) {
@@ -253,13 +256,13 @@ continue { writeToFile("CONTINUE"); }
 	buffer += yytext;
 }
 
-<SINGLE_LINE_COMMENT>([\\][\xd][\n]) {
+<SINGLE_LINE_COMMENT>([\\]{NEWLINE}) {
 	buffer += yytext;
 	yylineno++;
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> |
-<SINGLE_LINE_COMMENT>[\xd] {
+<SINGLE_LINE_COMMENT>{NEWLINE} {
 	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
@@ -280,12 +283,12 @@ continue { writeToFile("CONTINUE"); }
 	buffer += yytext;
 }
 
-<MULTI_LINE_COMMENT1>[\n] {
+<MULTI_LINE_COMMENT1>{NEWLINE} {
 	buffer += yytext;
 	yylineno++;
 }
 
-<MULTI_LINE_COMMENT2>[\n] {
+<MULTI_LINE_COMMENT2>{NEWLINE} {
 	buffer += yytext;
 	yylineno++;
 	BEGIN MULTI_LINE_COMMENT1;
@@ -340,6 +343,7 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
 <SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
+	errorCount++;
 	buffer += yytext;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
@@ -350,6 +354,7 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
+	errorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
@@ -357,8 +362,9 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN INITIAL;
 }
 
-<MULTI_LINE_STRING>[\n] |
-<SINGLE_LINE_STRING>[\n] {
+<MULTI_LINE_STRING>{NEWLINE} |
+<SINGLE_LINE_STRING>{NEWLINE} {
+	errorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
@@ -376,12 +382,11 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN INITIAL;
 }
 
-<MULTI_LINE_STRING>([\\][\xd][\n]) |
-<SINGLE_LINE_STRING>([\\][\xd][\n]) {
+<MULTI_LINE_STRING>([\\]){NEWLINE} |
+<SINGLE_LINE_STRING>([\\]){NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
 	yylineno++;
-	// stringLiteral += yytext;
 }
 
 <MULTI_LINE_STRING>[\x22] {
@@ -394,6 +399,9 @@ continue { writeToFile("CONTINUE"); }
 }
 
 %%
+#define LOG_FILE "log.txt"
+#define TOKEN_FILE "token.txt"
+
 
 /* Main Driver */ 
 int main(int argc,char *argv[]){
@@ -409,8 +417,8 @@ int main(int argc,char *argv[]){
 		return 0;
 	}
 	
-	log_out = fopen("log.txt","w");
-	token_out = fopen("token.txt","w");
+	log_out = fopen(LOG_FILE,"w");
+	token_out = fopen(TOKEN_FILE,"w");
 
 	yylineno = 1;
 

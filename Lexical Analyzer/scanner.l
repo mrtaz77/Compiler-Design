@@ -148,12 +148,6 @@ PRINTABLE '[\x20-\x26\x28-\x5b\x5d-\x7e]'
 BACKSLASH '\\[\\'"abfnrtv0]'
 CHAR {PRINTABLE}|{BACKSLASH}
 
-ADDOP [+-]
-MULOP [*/%]
-INCOP [+][+]|[-][-]
-ASSIGNOP [=]
-RELOP [<>]{ASSIGNOP}?|[!=]{ASSIGNOP}
-
 NEWLINE [\n]
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
@@ -185,11 +179,11 @@ return  { writeToFile("RETURN"); }
 case    { writeToFile("CASE"); }
 continue { writeToFile("CONTINUE"); }
 
-{ADDOP} { writeToFile("ADDOP"); }
-{MULOP} { writeToFile("MULOP"); }
-{INCOP} { writeToFile("INCOP"); }
-{RELOP} { writeToFile("RELOP"); }
-{ASSIGNOP} { writeToFile("ASSIGNOP"); }
+"+"|"-" { writeToFile("ADDOP"); }
+"*"|"/"|"%" { writeToFile("MULOP"); }
+"++"|"--" { writeToFile("INCOP"); }
+">"|">="|"<"|"<="|"==" { writeToFile("RELOP"); }
+"=" { writeToFile("ASSIGNOP"); }
 "&&"|"||" { writeToFile("LOGICOP"); }
 "&"|"|"|"^"|"<<"|">>" { writeToFile("BITOP"); }
 "!" { writeToFile("NOT"); }

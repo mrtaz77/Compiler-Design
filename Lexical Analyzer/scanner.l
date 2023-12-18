@@ -35,11 +35,11 @@ string stringLiteral = "";
 string buffer = "";
 
 void writeToToken(string token){
-    fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
+	fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
 }
 
 void writeToLog(string token){
-    fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
+	fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
 }
 
 void writeToFile(string token){
@@ -48,49 +48,48 @@ void writeToFile(string token){
 }
 
 char getBackSlashCharConstant(char constant){
-    switch (constant) {
-        case 'a':
-            return '\a';
-        case 'b':
-            return '\b';
-        case 'f':
-            return '\f';
-        case 'n':
-            return '\n';
-        case 'r':
-            return '\r';
-        case 't':
-            return '\t';
-        case 'v':
-            return '\v';
-        case '0':
-            return '\0';
-        case '?':
-            return '\?';
-        case '\\':
-            return '\\';
-        case '\'':
-            return '\'';
-        case '\"':
-            return '\"';
-        default:
-            return 'U';
-    }
+	switch (constant) {
+		case 'a':
+			return '\a';
+		case 'b':
+			return '\b';
+		case 'f':
+			return '\f';
+		case 'n':
+			return '\n';
+		case 'r':
+			return '\r';
+		case 't':
+			return '\t';
+		case 'v':
+			return '\v';
+		case '0':
+			return '\0';
+		case '?':
+			return '\?';
+		case '\\':
+			return '\\';
+		case '\'':
+			return '\'';
+		case '\"':
+			return '\"';
+		default:
+			return 'U';
+	}
 }
 
 char replaceConstCharInString(string constant){
-    char backslashConstant = constant[1];
-    return getBackSlashCharConstant(backslashConstant);
+	char backslashConstant = constant[1];
+	return getBackSlashCharConstant(backslashConstant);
 }
 
 char getTokenFromConstChar(string lexeme) {
-    if(lexeme.length() == 3) return lexeme[1];
-    if (lexeme.length() == 4 && lexeme[0] == '\'' && lexeme[1] == '\\' && lexeme[lexeme.length() - 1] == '\'') {
-        char backslashConstant = lexeme[2];
-        return getBackSlashCharConstant(backslashConstant);
-    }
-
-    return lexeme[1];
+	if(lexeme.length() == 3) return lexeme[1];
+	if (lexeme.length() == 4 && lexeme[0] == '\'' && lexeme[1] == '\\' && lexeme[lexeme.length() - 1] == '\'') {
+		char backslashConstant = lexeme[2];
+		return getBackSlashCharConstant(backslashConstant);
+	}
+	return lexeme[1];
 }
 
 void writeToFileChar(){
@@ -100,34 +99,35 @@ void writeToFileChar(){
 }
 
 void writeErrorToLog(string error){
-    errorCount++;
-    fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+	errorCount++;
+	fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
 }
 
 void checkIndentation(string indent){
-    string id = table.getCurrentScopeId();
+	string id = table.getCurrentScopeId();
 
-    unsigned long expectedTab = 0;
+	unsigned long expectedTab = 0;
 
-    for(int i = 0; i < id.length(); i++){
-        if(id[i] == '.')expectedTab++;
-    }
+	for(int i = 0; i < id.length(); i++){
+		if(id[i] == '.')expectedTab++;
+	}
 
-    unsigned long space = 0;
-    unsigned long tab = 0;
-    for(int i = 0; i < indent.length(); i++){
-        if(indent[i] == ' ')space++;
-        else if(indent[i] == '\t')tab++;
-    }
+	unsigned long space = 0;
+	unsigned long tab = 0;
+	for(int i = 0; i < indent.length(); i++){
+		if(indent[i] == ' ')space++;
+		else if(indent[i] == '\t')tab++;
+	}
 
-    if(space > 0){
-        warningCount++;
-        fprintf(log_out, "Line# %d: Warning, tab required but got space.\n",yylineno);
-    }
-    else if(tab != expectedTab){
-        warningCount++;
-        fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
-    }
+
+	if(space > 0){
+		warningCount++;
+		fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+	}
+	else if(tab != expectedTab){
+		warningCount++;
+		fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+	}
 }
 
 %}
@@ -190,12 +190,12 @@ continue { writeToFile("CONTINUE"); }
 "(" { writeToFile("LPAREN"); }
 ")" { writeToFile("RPAREN"); }
 "{" { 
-    writeToFile("LCURL"); 
-    table.enterScope();
+	writeToFile("LCURL"); 
+	table.enterScope();
 }
 "}" { 
-    writeToFile("RCURL"); 
-    table.exitScope();
+	writeToFile("RCURL"); 
+	table.exitScope();
 }
 "[" { writeToFile("LSQUARE"); }
 "]" { writeToFile("RSQUARE"); }
@@ -209,31 +209,29 @@ continue { writeToFile("CONTINUE"); }
 {CHAR} { writeToFileChar(); }
 
 {ID}  {
-    writeToFile("ID"); 
-    bool isInserted = table.insert(new SymbolInfo(yytext,"ID"));
-    if(isInserted){
-        fprintf(log_out,"%s",table.printAllScopes().c_str());
-    }else{
-        string tab = TAB;
-        fprintf(log_out,"%s%s already exists in the current ScopeTable\n",tab.c_str(),yytext);
-    }
+	writeToFile("ID"); 
+	bool isInserted = table.insert(new SymbolInfo(yytext,"ID"));
+	if(isInserted){
+		fprintf(log_out,"%s",table.printAllScopes().c_str());
+	}else{
+		string tab = TAB;
+		fprintf(log_out,"%s%s already exists in the current ScopeTable\n",tab.c_str(),yytext);
+	}
 }
 
-{NEWLINE}([ \t]*)([\xd]) {
-    yylineno++;
+{NEWLINE} { yylineno++; }
+
+^([ \t]*)([\xd]) {}
+
+^([ \t]*)"}" {
+	fprintf(token_out,"<RCURL, }>\n");
+	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
+	table.exitScope();
+	checkIndentation(yytext);
 }
 
-{NEWLINE}([ \t]*)([\x7d]) {
-    yylineno++;
-    fprintf(token_out,"<RCURL, }>\n");
-    fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
-    table.exitScope();
-    checkIndentation(yytext);
-}
-
-{NEWLINE}([ \t]*) {
-    yylineno++;
-    checkIndentation(yytext);
+^([ \t]*) {
+	checkIndentation(yytext);
 }
 
 {INVALID_ID_SUFFIX_NUM_PREFIX} { writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); }
@@ -246,153 +244,153 @@ continue { writeToFile("CONTINUE"); }
 {MULTICHAR_CONST_CHAR} { writeErrorToLog("MULTICHAR_CONST_CHAR"); }
 
 [\x2f][\x2f] {
-    startComment = yylineno;
-    buffer = yytext;
-    BEGIN SINGLE_LINE_COMMENT;
+	startComment = yylineno;
+	buffer = yytext;
+	BEGIN SINGLE_LINE_COMMENT;
 }
 
 <SINGLE_LINE_COMMENT>[^\xd\x5c] {
-    buffer += yytext;
+	buffer += yytext;
 }
 
 <SINGLE_LINE_COMMENT>([\\][\xd][\n]) {
-    buffer += yytext;
-    yylineno++;
+	buffer += yytext;
+	yylineno++;
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> |
 <SINGLE_LINE_COMMENT>[\xd] {
-    fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
-    buffer = "";
-    startComment = 0;
-    BEGIN INITIAL;
+	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
+	buffer = "";
+	startComment = 0;
+	BEGIN INITIAL;
 }
 
 <SINGLE_LINE_COMMENT>([\\][^\xd]) {
-    buffer += yytext;
+	buffer += yytext;
 }
 
 [\x2f][\x2a] {
-    startComment = yylineno;
-    BEGIN MULTI_LINE_COMMENT1;
-    buffer = yytext;
+	startComment = yylineno;
+	BEGIN MULTI_LINE_COMMENT1;
+	buffer = yytext;
 }
 
 <MULTI_LINE_COMMENT1>([^\x2a\n]+) {
-    buffer += yytext;
+	buffer += yytext;
 }
 
 <MULTI_LINE_COMMENT1>[\n] {
-    buffer += yytext;
-    yylineno++;
+	buffer += yytext;
+	yylineno++;
 }
 
 <MULTI_LINE_COMMENT2>[\n] {
-    buffer += yytext;
-    yylineno++;
-    BEGIN MULTI_LINE_COMMENT1;
+	buffer += yytext;
+	yylineno++;
+	BEGIN MULTI_LINE_COMMENT1;
 }
 
 <MULTI_LINE_COMMENT1>[\x2a] {
-    buffer += yytext;
-    BEGIN MULTI_LINE_COMMENT2;
+	buffer += yytext;
+	BEGIN MULTI_LINE_COMMENT2;
 }
 
 <MULTI_LINE_COMMENT2>[^\x2a\x2f\n] {
-    buffer += yytext;
-    BEGIN MULTI_LINE_COMMENT1;
+	buffer += yytext;
+	BEGIN MULTI_LINE_COMMENT1;
 }
 
 <MULTI_LINE_COMMENT2>[\x2a] {
-    buffer += yytext;
+	buffer += yytext;
 }
 
 <MULTI_LINE_COMMENT2>[\x2f] {
-    fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
-    buffer = "";
-    BEGIN INITIAL;
+	fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
+	buffer = "";
+	BEGIN INITIAL;
 }
 
 <MULTI_LINE_COMMENT1><<EOF>> |
 <MULTI_LINE_COMMENT2><<EOF>> {
-    errorCount++;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
-    buffer = "";
-    BEGIN INITIAL;
+	errorCount++;
+	fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
+	buffer = "";
+	BEGIN INITIAL;
 }
 
 [\x22] {
-    startString = yylineno;
-    BEGIN SINGLE_LINE_STRING;
-    buffer = yytext;
-    stringLiteral = "";
+	startString = yylineno;
+	BEGIN SINGLE_LINE_STRING;
+	buffer = yytext;
+	stringLiteral = "";
 }
 
 <MULTI_LINE_STRING>[^\x5c\n\x22] |
 <SINGLE_LINE_STRING>[^\x5c\n\x22] {
-    buffer += yytext;
-    stringLiteral += yytext;
+	buffer += yytext;
+	stringLiteral += yytext;
 }
 
 <MULTI_LINE_STRING>([\\][\\'"abfnrtv0]) |
 <SINGLE_LINE_STRING>([\\][\\'"abfnrtv0]) {
-    buffer += yytext;
-    stringLiteral += replaceConstCharInString(yytext); 
+	buffer += yytext;
+	stringLiteral += replaceConstCharInString(yytext); 
 }
 
 <MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
 <SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
-    buffer += yytext;
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
-    buffer = "";
-    stringLiteral = "";
-    startString = 0;
-    BEGIN INITIAL;
+	buffer += yytext;
+	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	buffer = "";
+	stringLiteral = "";
+	startString = 0;
+	BEGIN INITIAL;
 }
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
-    buffer = "";
-    stringLiteral = "";
-    startString = 0;
-    BEGIN INITIAL;
+	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	buffer = "";
+	stringLiteral = "";
+	startString = 0;
+	BEGIN INITIAL;
 }
 
 <MULTI_LINE_STRING>[\n] |
 <SINGLE_LINE_STRING>[\n] {
-    fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
-    buffer = "";
-    stringLiteral = "";
-    startString = 0;
-    yylineno++;
-    BEGIN INITIAL;
+	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	buffer = "";
+	stringLiteral = "";
+	startString = 0;
+	yylineno++;
+	BEGIN INITIAL;
 }
 
 <SINGLE_LINE_STRING>[\x22] {
-    fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-    fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
-    buffer = "";
-    stringLiteral = "";
-    startString = 0;
-    BEGIN INITIAL;
+	fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
+	buffer = "";
+	stringLiteral = "";
+	startString = 0;
+	BEGIN INITIAL;
 }
 
 <MULTI_LINE_STRING>([\\][\xd][\n]) |
 <SINGLE_LINE_STRING>([\\][\xd][\n]) {
-    BEGIN MULTI_LINE_STRING;
-    buffer += yytext;
-    yylineno++;
-    // stringLiteral += yytext;
+	BEGIN MULTI_LINE_STRING;
+	buffer += yytext;
+	yylineno++;
+	// stringLiteral += yytext;
 }
 
 <MULTI_LINE_STRING>[\x22] {
-    fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-    fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
-    buffer = "";
-    stringLiteral = "";
-    startString = 0;
-    BEGIN INITIAL;
+	fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
+	buffer = "";
+	stringLiteral = "";
+	startString = 0;
+	BEGIN INITIAL;
 }
 
 %%
@@ -414,16 +412,16 @@ int main(int argc,char *argv[]){
 	log_out = fopen("log.txt","w");
 	token_out = fopen("token.txt","w");
 
-    yylineno = 1;
+	yylineno = 1;
 
 	yyin= fin;
 	yylex();
 
-    fprintf(log_out,"%s",table.printAllScopes().c_str());
+	fprintf(log_out,"%s",table.printAllScopes().c_str());
 
-    fprintf(log_out,"Total lines: %d\n",yylineno);
-    fprintf(log_out,"Total errors: %d\n",errorCount);
-    fprintf(log_out,"Total warnings: %d\n",warningCount);
+	fprintf(log_out,"Total lines: %d\n",yylineno);
+	fprintf(log_out,"Total errors: %d\n",errorCount);
+	fprintf(log_out,"Total warnings: %d\n",warningCount);
 
 	fclose(yyin);
 	fclose(token_out);

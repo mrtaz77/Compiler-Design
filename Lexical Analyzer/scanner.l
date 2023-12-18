@@ -113,22 +113,20 @@ void checkIndentation(string indent){
         if(id[i] == '.')expectedTab++;
     }
 
-    if(expectedTab > 0){
-        unsigned long space = 0;
-        unsigned long tab = 0;
-        for(int i = 0; i < indent.length(); i++){
-            if(indent[i] == ' ')space++;
-            else if(indent[i] == '\t')tab++;
-        }
+    unsigned long space = 0;
+    unsigned long tab = 0;
+    for(int i = 0; i < indent.length(); i++){
+        if(indent[i] == ' ')space++;
+        else if(indent[i] == '\t')tab++;
+    }
 
-        if(space > 0){
-            warningCount++;
-            fprintf(log_out, "Line# %d: Warning, tab required but got space.\n",yylineno);
-        }
-        else if(tab != expectedTab){
-            warningCount++;
-            fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
-        }
+    if(space > 0){
+        warningCount++;
+        fprintf(log_out, "Line# %d: Warning, tab required but got space.\n",yylineno);
+    }
+    else if(tab != expectedTab){
+        warningCount++;
+        fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
     }
 }
 

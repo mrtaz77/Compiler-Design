@@ -1,6 +1,6 @@
 /* Option section */
 %option noyywrap
-%option noinput
+%option noinput nounput
 
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
@@ -141,26 +141,28 @@ INT {DIGITS}
 EXP ([Ee][+-]?{DIGITS})
 FLOAT {DIGITS}\.{DIGITS}?{EXP}?|\.{DIGITS}{EXP}?|{DIGITS}{EXP}
 
-
 LETTER [_a-zA-Z]
 ID {LETTER}({LETTER}|{DIGIT})*
 PRINTABLE '[\x20-\x26\x28-\x5b\x5d-\x7e]'
-BACKSLASH '\\[\\'"abfnrtv0]'
-CHAR {PRINTABLE}|{BACKSLASH}
+BACKSLASH_CONST '\\[\\'"abfnrtv0]'
+CHAR {PRINTABLE}|{BACKSLASH_CONST}
 
 LINE_FEED [\xa]
 CARRIAGE_RETURN [\xd]
 NEWLINE {CARRIAGE_RETURN}?{LINE_FEED}
+BACKSLASH [\\]
+ASTERISK [*]
+SLASH [/]
 
-INVALID_ID_SUFFIX_NUM_PREFIX ({INT}{ID})
+INVALID_ID_SUFFIX_NUM_PREFIX ({INT}|{FLOAT}){ID}
 TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
 ILLFORMED_EXP [Ee][+-]?([0-9]*)[\.]([0-9]*)
-ILLFORMED_NUMBER {DIGITS}\.{DIGITS}?{ILLFORMED_EXP}|\.{DIGITS}{ILLFORMED_EXP}|{DIGITS}{ILLFORMED_EXP}
+ILLFORMED_NUMBER ({DIGITS}\.{DIGITS}?|\.{DIGITS}|{DIGITS}){ILLFORMED_EXP}
 
-UNRECOGNIZED_CHAR [#$\.:?@\\`~]|'[\x27]'|'[\x5c][\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
+UNRECOGNIZED_CHAR [#$\.:?@\\`~]|'[\x27]'|'{BACKSLASH}[\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
 EMPTY_CONST_CHAR ''
-UNFINISHED_CONST_CHAR '[\x5c]'|'([\x20-\x26\x28-\x7e]?)
-MULTICHAR_CONST_CHAR '([\x5c][\x20-\x26\x28-\x7e]|[\x20-\x26\x28-\x5b\x5d-\x7e])([\x20-\x26\x28-\x7e]+)'
+UNFINISHED_CONST_CHAR '([\x20-\x26\x28-\x5b\x5d-\x7e]?)|'{BACKSLASH}[\x20-\x7e]?
+MULTICHAR_CONST_CHAR '(({BACKSLASH}[\x20-\x26\x28-\x7e])|[\x20-\x26\x28-\x5b\x5d-\x7e])([\x20-\x26\x28-\x7e]+)'
 
 %%
 
@@ -184,7 +186,7 @@ continue { writeToFile("CONTINUE"); }
 "+"|"-" { writeToFile("ADDOP"); }
 "*"|"/"|"%" { writeToFile("MULOP"); }
 "++"|"--" { writeToFile("INCOP"); }
-">"|">="|"<"|"<="|"==" { writeToFile("RELOP"); }
+">"|">="|"<"|"<="|"=="|"!=" { writeToFile("RELOP"); }
 "=" { writeToFile("ASSIGNOP"); }
 "&&"|"||" { writeToFile("LOGICOP"); }
 "&"|"|"|"^"|"<<"|">>" { writeToFile("BITOP"); }
@@ -221,19 +223,20 @@ continue { writeToFile("CONTINUE"); }
 	}
 }
 
-{NEWLINE} |
-^([ \t]*){NEWLINE} {
-	yylineno++;
+{NEWLINE}([ \t]*[\xd]?)$ {
+    yylineno++;
 }
 
-^([ \t]*)"}" {
+{NEWLINE}([ \t]*)"}" {
+	yylineno++;
 	table.exitScope();
 	checkIndentation(yytext);
 	fprintf(token_out,"<RCURL, }>\n");
 	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
-^([ \t]*) {
+{NEWLINE}([ \t]*) {
+	yylineno++;
 	checkIndentation(yytext);
 }
 
@@ -246,40 +249,44 @@ continue { writeToFile("CONTINUE"); }
 {UNFINISHED_CONST_CHAR} { writeErrorToLog("UNFINISHED_CONST_CHAR"); }
 {MULTICHAR_CONST_CHAR} { writeErrorToLog("MULTICHAR_CONST_CHAR"); }
 
-[\x2f][\x2f] {
+{SLASH}{2} {
 	startComment = yylineno;
 	buffer = yytext;
 	BEGIN SINGLE_LINE_COMMENT;
 }
 
-<SINGLE_LINE_COMMENT>[^\xd\x5c] {
+<SINGLE_LINE_COMMENT>({BACKSLASH}[^\xd\xa]) |
+<SINGLE_LINE_COMMENT>[^\xd\xa\x5c] {
 	buffer += yytext;
 }
 
-<SINGLE_LINE_COMMENT>([\\]{NEWLINE}) {
+<SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
 	yylineno++;
 }
 
-<SINGLE_LINE_COMMENT><<EOF>> |
-<SINGLE_LINE_COMMENT>{NEWLINE} {
+<SINGLE_LINE_COMMENT><<EOF>> {
 	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
 }
 
-<SINGLE_LINE_COMMENT>([\\][^\xd]) {
-	buffer += yytext;
+<SINGLE_LINE_COMMENT>{NEWLINE} {
+	yylineno++;
+	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
+	buffer = "";
+	startComment = 0;
+	BEGIN INITIAL;
 }
 
-[\x2f][\x2a] {
+{SLASH}{ASTERISK} {
 	startComment = yylineno;
 	BEGIN MULTI_LINE_COMMENT1;
 	buffer = yytext;
 }
 
-<MULTI_LINE_COMMENT1>([^\x2a\n]+) {
+<MULTI_LINE_COMMENT1>([^\x2a\xa\xd]+) {
 	buffer += yytext;
 }
 
@@ -294,23 +301,24 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN MULTI_LINE_COMMENT1;
 }
 
-<MULTI_LINE_COMMENT1>[\x2a] {
+<MULTI_LINE_COMMENT1>{ASTERISK} {
 	buffer += yytext;
 	BEGIN MULTI_LINE_COMMENT2;
 }
 
-<MULTI_LINE_COMMENT2>[^\x2a\x2f\n] {
+<MULTI_LINE_COMMENT2>[^\x2a\x2f\xa\xd] {
 	buffer += yytext;
 	BEGIN MULTI_LINE_COMMENT1;
 }
 
-<MULTI_LINE_COMMENT2>[\x2a] {
+<MULTI_LINE_COMMENT2>{ASTERISK} {
 	buffer += yytext;
 }
 
-<MULTI_LINE_COMMENT2>[\x2f] {
+<MULTI_LINE_COMMENT2>{SLASH} {
 	fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
 	buffer = "";
+	startComment = 0;
 	BEGIN INITIAL;
 }
 
@@ -319,8 +327,13 @@ continue { writeToFile("CONTINUE"); }
 	errorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
 	buffer = "";
+	startComment = 0;
 	BEGIN INITIAL;
 }
+
+%{
+	// TODO Debug Strings
+%}
 
 [\x22] {
 	startString = yylineno;
@@ -335,14 +348,14 @@ continue { writeToFile("CONTINUE"); }
 	stringLiteral += yytext;
 }
 
-<MULTI_LINE_STRING>([\\][\\'"abfnrtv0]) |
-<SINGLE_LINE_STRING>([\\][\\'"abfnrtv0]) {
+<MULTI_LINE_STRING>{BACKSLASH}([\\'"abfnrtv0]) |
+<SINGLE_LINE_STRING>{BACKSLASH}([\\'"abfnrtv0]) {
 	buffer += yytext;
 	stringLiteral += replaceConstCharInString(yytext); 
 }
 
-<MULTI_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) |
-<SINGLE_LINE_STRING>([\\][^\\'"abfnrtv0\xd]) {
+<MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
+<SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
 	errorCount++;
 	buffer += yytext;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
@@ -382,8 +395,8 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN INITIAL;
 }
 
-<MULTI_LINE_STRING>([\\]){NEWLINE} |
-<SINGLE_LINE_STRING>([\\]){NEWLINE} {
+<MULTI_LINE_STRING>{BACKSLASH}{NEWLINE} |
+<SINGLE_LINE_STRING>{BACKSLASH}{NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
 	yylineno++;

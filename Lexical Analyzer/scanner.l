@@ -154,6 +154,7 @@ BACKSLASH [\\]
 ASTERISK [*]
 SLASH [/]
 DOUBLE_QUOTE [\x22]
+WS ([ \t]*)
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}|{FLOAT}){ID}
 TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
@@ -224,11 +225,11 @@ continue { writeToFile("CONTINUE"); }
 	}
 }
 
-{NEWLINE}([ \t]*[\xd]?)$ {
+{NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
     yylineno++;
 }
 
-{NEWLINE}([ \t]*)"}" {
+{NEWLINE}{WS}"}" {
 	yylineno++;
 	table.exitScope();
 	checkIndentation(yytext);
@@ -236,7 +237,7 @@ continue { writeToFile("CONTINUE"); }
 	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
-{NEWLINE}([ \t]*) {
+{NEWLINE}{WS} {
 	yylineno++;
 	checkIndentation(yytext);
 }
@@ -274,10 +275,10 @@ continue { writeToFile("CONTINUE"); }
 }
 
 <SINGLE_LINE_COMMENT>{NEWLINE} {
-	yylineno++;
 	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
+	yyless(0);
 	BEGIN INITIAL;
 }
 
@@ -343,7 +344,7 @@ continue { writeToFile("CONTINUE"); }
 	stringLiteral = "";
 }
 
-<MULTI_LINE_STRING>[^\x5c\n\x22] |
+<MULTI_LINE_STRING>[^\x5c\xa\xd\x22] |
 <SINGLE_LINE_STRING>[^\x5c\n\x22] {
 	buffer += yytext;
 	stringLiteral += yytext;
@@ -383,7 +384,7 @@ continue { writeToFile("CONTINUE"); }
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
-	yylineno++;
+	yyless(0);
 	BEGIN INITIAL;
 }
 
@@ -436,7 +437,7 @@ int main(int argc,char *argv[]){
 
 	yylineno = 1;
 
-	yyin= fin;
+	yyin = fin;
 	yylex();
 
 	fprintf(log_out,"%s",table.printAllScopes().c_str());

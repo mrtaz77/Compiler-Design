@@ -153,13 +153,14 @@ NEWLINE {CARRIAGE_RETURN}?{LINE_FEED}
 BACKSLASH [\\]
 ASTERISK [*]
 SLASH [/]
+DOUBLE_QUOTE [\x22]
 
 INVALID_ID_SUFFIX_NUM_PREFIX ({INT}|{FLOAT}){ID}
 TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
 ILLFORMED_EXP [Ee][+-]?([0-9]*)[\.]([0-9]*)
 ILLFORMED_NUMBER ({DIGITS}\.{DIGITS}?|\.{DIGITS}|{DIGITS}){ILLFORMED_EXP}
 
-UNRECOGNIZED_CHAR [#$\.:?@\\`~]|'[\x27]'|'{BACKSLASH}[\x20\x21\x23-\x26\x28-\x2f\x31-\x5b\x5d-\x60\x63-\x65\x67-\x6d\x6f-\x71\x73\x75\x77-\x7e]'
+UNRECOGNIZED_CHAR [#$\.:?@\\`~]|'[\x27]'|'{BACKSLASH}[^\\'"abfnrtv0]'
 EMPTY_CONST_CHAR ''
 UNFINISHED_CONST_CHAR '([\x20-\x26\x28-\x5b\x5d-\x7e]?)|'{BACKSLASH}[\x20-\x7e]?
 MULTICHAR_CONST_CHAR '(({BACKSLASH}[\x20-\x26\x28-\x7e])|[\x20-\x26\x28-\x5b\x5d-\x7e])([\x20-\x26\x28-\x7e]+)'
@@ -335,7 +336,7 @@ continue { writeToFile("CONTINUE"); }
 	// TODO Debug Strings
 %}
 
-[\x22] {
+{DOUBLE_QUOTE} {
 	startString = yylineno;
 	BEGIN SINGLE_LINE_STRING;
 	buffer = yytext;
@@ -386,7 +387,7 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN INITIAL;
 }
 
-<SINGLE_LINE_STRING>[\x22] {
+<SINGLE_LINE_STRING>{DOUBLE_QUOTE} {
 	fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
 	fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";
@@ -402,7 +403,7 @@ continue { writeToFile("CONTINUE"); }
 	yylineno++;
 }
 
-<MULTI_LINE_STRING>[\x22] {
+<MULTI_LINE_STRING>{DOUBLE_QUOTE} {
 	fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
 	fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";

@@ -4,8 +4,7 @@
 
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
-%x MULTI_LINE_COMMENT1
-%x MULTI_LINE_COMMENT2
+%x MULTI_LINE_COMMENT
 
 %x SINGLE_LINE_STRING
 %x MULTI_LINE_STRING
@@ -288,48 +287,27 @@ continue { writeToFile("CONTINUE"); }
 
 {SLASH}{ASTERISK} {
 	startComment = yylineno;
-	BEGIN MULTI_LINE_COMMENT1;
+	BEGIN MULTI_LINE_COMMENT;
 	buffer = yytext;
 }
 
-<MULTI_LINE_COMMENT1>([^\x2a\xa\xd]+) {
+<MULTI_LINE_COMMENT>([^\xa\xd]) {
 	buffer += yytext;
 }
 
-<MULTI_LINE_COMMENT1>{NEWLINE} {
-	buffer += yytext;
-	yylineno++;
-}
-
-<MULTI_LINE_COMMENT2>{NEWLINE} {
+<MULTI_LINE_COMMENT>{NEWLINE} {
 	buffer += yytext;
 	yylineno++;
-	BEGIN MULTI_LINE_COMMENT1;
 }
 
-<MULTI_LINE_COMMENT1>{ASTERISK} {
-	buffer += yytext;
-	BEGIN MULTI_LINE_COMMENT2;
-}
-
-<MULTI_LINE_COMMENT2>[^\x2a\x2f\xa\xd] {
-	buffer += yytext;
-	BEGIN MULTI_LINE_COMMENT1;
-}
-
-<MULTI_LINE_COMMENT2>{ASTERISK} {
-	buffer += yytext;
-}
-
-<MULTI_LINE_COMMENT2>{SLASH} {
+<MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
 	fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
 }
 
-<MULTI_LINE_COMMENT1><<EOF>> |
-<MULTI_LINE_COMMENT2><<EOF>> {
+<MULTI_LINE_COMMENT><<EOF>> {
 	errorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
 	buffer = "";

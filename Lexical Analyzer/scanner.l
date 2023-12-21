@@ -1,6 +1,5 @@
 /* Option section */
 %option noyywrap
-%option noinput nounput
 
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
@@ -16,7 +15,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
-#include <cstdint>
 #include"SymbolTable/SymbolTable.h"
 
 SymbolTable table(BUCKET_SIZE);
@@ -160,7 +158,7 @@ TOO_MANY_DECIMAL_POINTS ({DIGIT}*[\.]{DIGIT}*[\.])([\.0-9]*)({EXP}?)
 ILLFORMED_EXP [Ee][+-]?([0-9]*)[\.]([0-9]*)
 ILLFORMED_NUMBER ({DIGITS}\.{DIGITS}?|\.{DIGITS}|{DIGITS}){ILLFORMED_EXP}
 
-UNRECOGNIZED_CHAR [#$\.:?@\\`~]|'[\x27]'|'{BACKSLASH}[^\\'"abfnrtv0]'
+UNRECOGNIZED_CHAR [#$\.:?@`~\\]|'[\x27]'|'{BACKSLASH}[^\\'"abfnrtv0]'
 EMPTY_CONST_CHAR ''
 UNFINISHED_CONST_CHAR '([\x20-\x26\x28-\x5b\x5d-\x7e]?)|'{BACKSLASH}[\x20-\x7e]?
 MULTICHAR_CONST_CHAR '(({BACKSLASH}[\x20-\x26\x28-\x7e])|[\x20-\x26\x28-\x5b\x5d-\x7e])([\x20-\x26\x28-\x7e]+)'
@@ -220,7 +218,7 @@ continue { writeToFile("CONTINUE"); }
 		fprintf(log_out,"%s",table.printAllScopes().c_str());
 	}else{
 		string tab = TAB;
-		fprintf(log_out,"%s%s already exists in the current ScopeTable\n",tab.c_str(),yytext);
+		fprintf(log_out,"\t%s already exists in the current ScopeTable\n",yytext);
 	}
 }
 
@@ -236,9 +234,20 @@ continue { writeToFile("CONTINUE"); }
 	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
+{NEWLINE}{WS}{SLASH}{ASTERISK} |
+{NEWLINE}{WS}{SLASH}{2} {
+	yylineno++;
+	yyless(strlen(yytext)-2);
+}
+
 {NEWLINE}{WS} {
 	yylineno++;
 	checkIndentation(yytext);
+}
+
+^{WS}{SLASH}{ASTERISK} |
+^{WS}{SLASH}{2} {
+	yyless(strlen(yytext)-2);
 }
 
 ^{WS} {
@@ -406,7 +415,7 @@ int main(int argc,char *argv[]){
 		printf("Cannot open specified file\n");
 		return 0;
 	}
-	
+
 	log_out = fopen(LOG_FILE,"w");
 	token_out = fopen(TOKEN_FILE,"w");
 
@@ -420,6 +429,8 @@ int main(int argc,char *argv[]){
 	fprintf(log_out,"Total lines: %d\n",yylineno);
 	fprintf(log_out,"Total errors: %d\n",errorCount);
 	fprintf(log_out,"Total warnings: %d\n",warningCount);
+
+	// table.~SymbolTable();
 
 	fclose(yyin);
 	fclose(token_out);

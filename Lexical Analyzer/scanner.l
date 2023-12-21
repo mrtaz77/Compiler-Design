@@ -336,13 +336,10 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
-	errorCount++;
+	warningCount++;
+	fprintf(log_out, "Line# %d: Warning, UNRECOGNIZED_CHAR \'%s\'\n",yylineno,yytext);
 	buffer += yytext;
-	fprintf(log_out,"Error at line# %d: UNRECOGNIZED_CHAR_IN_STRING %s\n",yylineno,buffer.c_str());
-	buffer = "";
-	stringLiteral = "";
-	startString = 0;
-	BEGIN INITIAL;
+	stringLiteral += yytext[strlen(yytext) - 1];
 }
 
 <MULTI_LINE_STRING><<EOF>> |

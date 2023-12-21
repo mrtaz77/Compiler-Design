@@ -242,6 +242,10 @@ continue { writeToFile("CONTINUE"); }
 	checkIndentation(yytext);
 }
 
+^{WS} {
+	checkIndentation(yytext);
+}
+
 {INVALID_ID_SUFFIX_NUM_PREFIX} { writeErrorToLog("INVALID_ID_SUFFIX_NUM_PREFIX"); }
 {TOO_MANY_DECIMAL_POINTS} { writeErrorToLog("TOO_MANY_DECIMAL_POINTS"); }
 {ILLFORMED_NUMBER} { writeErrorToLog("ILLFORMED_NUMBER"); }
@@ -333,10 +337,6 @@ continue { writeToFile("CONTINUE"); }
 	BEGIN INITIAL;
 }
 
-%{
-	// TODO Debug Strings
-%}
-
 {DOUBLE_QUOTE} {
 	startString = yylineno;
 	BEGIN SINGLE_LINE_STRING;
@@ -345,7 +345,7 @@ continue { writeToFile("CONTINUE"); }
 }
 
 <MULTI_LINE_STRING>[^\x5c\xa\xd\x22] |
-<SINGLE_LINE_STRING>[^\x5c\n\x22] {
+<SINGLE_LINE_STRING>[^\x5c\xa\xd\x22] {
 	buffer += yytext;
 	stringLiteral += yytext;
 }
@@ -360,7 +360,7 @@ continue { writeToFile("CONTINUE"); }
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
 	errorCount++;
 	buffer += yytext;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	fprintf(log_out,"Error at line# %d: UNRECOGNIZED_CHAR_IN_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;

@@ -337,7 +337,7 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
 	warningCount++;
-	fprintf(log_out, "Line# %d: Warning, UNRECOGNIZED_CHAR \'%s\'\n",yylineno,yytext);
+	fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
 	buffer += yytext;
 	stringLiteral += yytext[strlen(yytext) - 1];
 }

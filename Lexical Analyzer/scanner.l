@@ -238,7 +238,7 @@ continue { writeToFile("CONTINUE"); }
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
 {NEWLINE}{WS}{SLASH}{2} {
 	yylineno++;
-	yyless(strlen(yytext)-2);
+	yyless(yyleng-2);
 }
 
 {NEWLINE}{WS} {
@@ -248,7 +248,7 @@ continue { writeToFile("CONTINUE"); }
 
 ^{WS}{SLASH}{ASTERISK} |
 ^{WS}{SLASH}{2} {
-	yyless(strlen(yytext)-2);
+	yyless(yyleng-2);
 }
 
 ^{WS} {
@@ -349,7 +349,7 @@ continue { writeToFile("CONTINUE"); }
 	warningCount++;
 	fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
 	buffer += yytext;
-	stringLiteral += yytext[strlen(yytext) - 1];
+	stringLiteral += yytext[yyleng - 1];
 }
 
 <MULTI_LINE_STRING><<EOF>> |

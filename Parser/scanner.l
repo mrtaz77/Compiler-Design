@@ -10,14 +10,17 @@
 
 /* Cpp code section for includes and variables */
 %{
-#define BUCKET_SIZE 10
+#define BUCKET_SIZE 11
 
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
-#include"SymbolTable/SymbolTable.h"
+#include "SymbolTable/SymbolTable.h"
+#include "SymbolTable/SymbolInfo.h"
+#include "y.tab.h"
 
-SymbolTable table(BUCKET_SIZE);
+extern YYSTYPE yylval;
+extern SymbolTable table(BUCKET_SIZE);
 
 unsigned long errorCount = 0;
 unsigned long warningCount = 0;
@@ -166,54 +169,57 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 %%
 
-if      { writeToFile("IF"); }
-else    { writeToFile("ELSE"); }
-for     { writeToFile("FOR"); }
-do      { writeToFile("DO"); }
-int     { writeToFile("INT"); }
-float   { writeToFile("FLOAT"); }
-void    { writeToFile("VOID"); }
-switch  { writeToFile("SWITCH"); }
-default { writeToFile("DEFAULT"); }
-while   { writeToFile("WHILE"); }
-break   { writeToFile("BREAK"); }
-char    { writeToFile("CHAR"); }
-double  { writeToFile("DOUBLE"); }
-return  { writeToFile("RETURN"); }
-case    { writeToFile("CASE"); }
-continue { writeToFile("CONTINUE"); }
+"if" { return IF; }
+"else" { return ELSE; }
+"for" { return FOR; }
+"do" { return DO; }
+"int" { return INT; }
+"float" { return FLOAT; }
+"void" { return VOID; }
+"switch" { return SWITCH; }
+"default" { return DEFAULT; }
+"while" { return WHILE; }
+"break" { return BREAK; }
+"char" { return CHAR; }
+"double" { return DOUBLE; }
+"return" { return RETURN; }
+"case" { return CASE; }
+"continue" { return CONTINUE; }
+"main"	{ return MAIN; }
+"println"	{ return PRINTLN; }
 
-"+"|"-" { writeToFile("ADDOP"); }
-"*"|"/"|"%" { writeToFile("MULOP"); }
-"++"|"--" { writeToFile("INCOP"); }
-">"|">="|"<"|"<="|"=="|"!=" { writeToFile("RELOP"); }
-"=" { writeToFile("ASSIGNOP"); }
-"&&"|"||" { writeToFile("LOGICOP"); }
-"&"|"|"|"^"|"<<"|">>" { writeToFile("BITOP"); }
-"!" { writeToFile("NOT"); }
-"(" { writeToFile("LPAREN"); }
-")" { writeToFile("RPAREN"); }
+"+"|"-" { return ADDOP; }
+"*"|"/"|"%" { return MULOP; }
+"++" { return INCOP; }
+"--" { return DECOP; }
+">"|">="|"<"|"<="|"=="|"!=" { return RELOP; }
+"=" { return ASSIGNOP; }
+"&&"|"||" { return LOGICOP; }
+"&"|"|"|"^"|"<<"|">>" { return BITOP; }
+"!" { return NOT; }
+"(" { return LPAREN; }
+")" { return RPAREN; }
 "{" { 
-	writeToFile("LCURL"); 
+	return LCURL; 
 	table.enterScope();
 }
 "}" { 
-	writeToFile("RCURL"); 
+	return RCURL; 
 	table.exitScope();
 }
-"[" { writeToFile("LSQUARE"); }
-"]" { writeToFile("RSQUARE"); }
-"," { writeToFile("COMMA"); }
-";" { writeToFile("SEMICOLON"); }
+"[" { return LTHIRD; }
+"]" { return RTHIRD; }
+"," { return COMMA; }
+";" { return SEMICOLON; }
 
-{INT} { writeToFile("CONST_INT"); }
+{INT} { return CONST_INT; }
 
-{FLOAT} { writeToFile("CONST_FLOAT"); }
+{FLOAT} { return CONST_FLOAT; }
 
 {CHAR} { writeToFileChar(); }
 
 {ID}  {
-	writeToFile("ID"); 
+	return ID; 
 	bool isInserted = table.insert(new SymbolInfo(yytext,"ID"));
 	if(isInserted){
 		fprintf(log_out,"%s",table.printAllScopes().c_str());

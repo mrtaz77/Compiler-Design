@@ -28,6 +28,8 @@ unsigned long warningCount = 0;
 unsigned long startString = 0;
 unsigned long startComment = 0;
 
+yylineno = 1;
+
 FILE *log_out;
 FILE *token_out;
 
@@ -35,11 +37,11 @@ string stringLiteral = "";
 string buffer = "";
 
 void writeToToken(string token){
-	fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
+	// fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
 }
 
 void writeToLog(string token){
-	fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
+	// fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
 }
 
 void writeToFile(string token){
@@ -94,13 +96,13 @@ char getTokenFromConstChar(string lexeme) {
 
 void writeToFileChar(){
 	char lexeme = getTokenFromConstChar(yytext);
-	fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
-	fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
+	// fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
+	// fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
 }
 
 void writeErrorToLog(string error){
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+	// fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
 }
 
 void checkIndentation(string indent){
@@ -122,11 +124,11 @@ void checkIndentation(string indent){
 
 	if(space > 0){
 		warningCount++;
-		fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+		// fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
 	}
 	else if(tab != expectedTab){
 		warningCount++;
-		fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+		// fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
 	}
 }
 
@@ -212,21 +214,28 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 "," { return COMMA; }
 ";" { return SEMICOLON; }
 
-{INT} { return CONST_INT; }
+{INT} { 
+	SymbolInfo* symbol = new SymbolInfo(yytext,"CONST_INT");
+	yylval = (YYStype)symbol;
+	return CONST_INT; 
+}
 
-{FLOAT} { return CONST_FLOAT; }
+{FLOAT} {
+	SymbolInfo* symbol = new SymbolInfo(yytext,"CONST_FLOAT");
+	yylval = (YYStype)symbol;
+	return CONST_FLOAT; 
+}
 
 {CHAR} { writeToFileChar(); }
 
 {ID}  {
-	return ID; 
-	bool isInserted = table.insert(new SymbolInfo(yytext,"ID"));
-	if(isInserted){
-		fprintf(log_out,"%s",table.printAllScopes().c_str());
-	}else{
-		string tab = TAB;
-		fprintf(log_out,"\t%s already exists in the current ScopeTable\n",yytext);
+	SymbolInfo* symbol = table.lookUp(yytext);
+	if(symbol == nullptr){
+		// fprintf(log_out,"%s",table.printAllScopes().c_str());
+		symbol = new SymbolInfo(yytext,"ID");
 	}
+	yylval = (YYStype)symbol;
+	return ID; 
 }
 
 {NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
@@ -237,8 +246,8 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 	yylineno++;
 	table.exitScope();
 	checkIndentation(yytext);
-	fprintf(token_out,"<RCURL, }>\n");
-	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
+	// fprintf(token_out,"<RCURL, }>\n");
+	// fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
@@ -289,14 +298,14 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
-	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
+	// fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
 }
 
 <SINGLE_LINE_COMMENT>{NEWLINE} {
-	fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
+	// fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	yyless(0);
@@ -319,7 +328,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
-	fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
+	// fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
@@ -327,7 +336,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_COMMENT><<EOF>> {
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
+	// fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
@@ -355,7 +364,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
 	warningCount++;
-	fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
+	// fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
 	buffer += yytext;
 	stringLiteral += yytext[yyleng - 1];
 }
@@ -363,7 +372,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	// fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -373,7 +382,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <MULTI_LINE_STRING>{NEWLINE} |
 <SINGLE_LINE_STRING>{NEWLINE} {
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	// fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -382,8 +391,8 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <SINGLE_LINE_STRING>{DOUBLE_QUOTE} {
-	fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-	fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
+	// fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	// fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -398,8 +407,8 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {
-	fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-	fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
+	// fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	// fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -407,42 +416,3 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 %%
-#define LOG_FILE "log.txt"
-#define TOKEN_FILE "token.txt"
-
-
-/* Main Driver */ 
-int main(int argc,char *argv[]){
-	
-	if(argc!=2){
-		printf("Please provide lexeme file name and try again\n");
-		return 0;
-	}
-	
-	FILE *fin=fopen(argv[1],"r");
-	if(fin==NULL){
-		printf("Cannot open specified file\n");
-		return 0;
-	}
-
-	log_out = fopen(LOG_FILE,"w");
-	token_out = fopen(TOKEN_FILE,"w");
-
-	yylineno = 1;
-
-	yyin = fin;
-	yylex();
-
-	fprintf(log_out,"%s",table.printAllScopes().c_str());
-
-	fprintf(log_out,"Total lines: %d\n",yylineno);
-	fprintf(log_out,"Total errors: %d\n",errorCount);
-	fprintf(log_out,"Total warnings: %d\n",warningCount);
-
-	// table.~SymbolTable();
-
-	fclose(yyin);
-	fclose(token_out);
-	fclose(log_out);
-	return 0;
-}

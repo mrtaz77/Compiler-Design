@@ -1,10 +1,14 @@
 %{
+#define YYSTYPE SymbolInfo*
+
 #include<iostream>
 #include<cstdlib>
 #include<cstring>
 #include<cmath>
-#include "symbol.h"
-#define YYSTYPE SymbolInfo
+#include<fstream>
+#include<sstream>
+
+#include"Symboltable/SymbolInfo.h"
 
 using namespace std;
 
@@ -12,7 +16,14 @@ int yyparse(void);
 int yylex(void);
 extern FILE *yyin;
 
+ofstream logout, parseout, errorout;
+
+
 %}
+
+%union {
+	SymbolInfo* symbolInfo;
+}
 
 %type start program unit var_declaration func_declaration func_definition
 %type type_specifier parameter_list compound_statement
@@ -20,21 +31,19 @@ extern FILE *yyin;
 %type variable expression logic_expression rel_expression simple_expression
 %type term unary_expression factor argument_list arguments
 
-%token VOID IF ELSE FOR WHILE ID INT FLOAT 
+%token VOID IF ELSE FOR WHILE INT FLOAT 
 %token LPAREN RPAREN LCURL RCURL LTHIRD RTHIRD
-%token SEMICOLON COMMA CONST_INT CONST_FLOAT 
+%token SEMICOLON COMMA 
+%token <symbolInfo> ID CONST_INT CONST_FLOAT 
 %token PRINTLN RETURN
 
 %right ASSIGNOP
-%nonassoc LOGICOP
-%nonassoc RELOP
-%left ADDOP
-%left MULOP
+%nonassoc <symbolInfo> LOGICOP
+%nonassoc <symbolInfo> RELOP
+%left <symbolInfo> ADDOP
+%left <symbolInfo> MULOP
 %right NOT
-%left INCOP DECOP
-
-
-
+%right INCOP DECOP
 
 %%
 
@@ -49,48 +58,47 @@ program : program unit
 	;
 	
 unit : var_declaration
-	 | func_declaration
-	 | func_definition
-	 ;
-	 
+	| func_declaration
+	| func_definition
+	;
+	
 func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 		| type_specifier ID LPAREN RPAREN SEMICOLON
 		;
-		 
+		
 func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
 		| type_specifier ID LPAREN RPAREN compound_statement
- 		;				
+		;				
 
 
 parameter_list: parameter_list COMMA type_specifier ID
 		| parameter_list COMMA type_specifier
- 		| type_specifier ID
+		| type_specifier ID
 		| type_specifier
- 		;
+		;
 
- 		
 compound_statement : LCURL statements RCURL
- 			| LCURL RCURL
- 			;
- 			
+			| LCURL RCURL
+			;
+
 var_declaration : type_specifier declaration_list SEMICOLON
- 		 ;
- 		 
+		;
+				
 type_specifier	: INT
- 		| FLOAT
- 		| VOID
- 		;
- 		
+		| FLOAT
+		| VOID
+		;
+				
 declaration_list : declaration_list COMMA ID
- 		| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
- 		| ID
- 		| ID LTHIRD CONST_INT RTHIRD
- 		;
- 		
+		| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
+		| ID
+		| ID LTHIRD CONST_INT RTHIRD
+		;
+				
 statements : statement
-	 | statements statement
-	 ;
-	 
+	| statements statement
+	;
+	
 statement : var_declaration
 	| expression_statement
 	| compound_statement
@@ -106,17 +114,17 @@ expression_statement 	: SEMICOLON
 			| expression SEMICOLON 
 			;
 	
-variable : ID 		
-	 | ID LTHIRD expression RTHIRD 
-	 ;
-	 
- expression : logic_expression	
-	 | variable ASSIGNOP logic_expression 	
-	 ;
+variable : ID		
+	| ID LTHIRD expression RTHIRD 
+	;
+	
+expression : logic_expression	
+	| variable ASSIGNOP logic_expression 	
+	;
 			
 logic_expression : rel_expression 	
-		 | rel_expression LOGICOP rel_expression 	
-		 ;
+		| rel_expression LOGICOP rel_expression 	
+		;
 			
 rel_expression	: simple_expression 
 		| simple_expression RELOP simple_expression	
@@ -126,14 +134,14 @@ simple_expression : term
 		| simple_expression ADDOP term 
 		;
 					
-term :	unary_expression
-	 |term MULOP unary_expression
-	 ;
+term : unary_expression
+	| term MULOP unary_expression
+	;
 
 unary_expression : ADDOP unary_expression 
-		 | NOT unary_expression 
-		 | factor 
-		 ;
+		| NOT unary_expression 
+		| factor 
+		;
 	
 factor	: variable 
 	| ID LPAREN argument_list RPAREN
@@ -154,30 +162,40 @@ arguments : arguments COMMA logic_expression
 
 
 %%
+
+#define LOG_FILE "log.txt"
+#define PARSE_TREE_FILE "parsetree.txt"
+#define ERROR_FILE "error.txt"
+
+
 int main(int argc,char *argv[])
 {
 
-	if((fp=fopen(argv[1],"r"))==NULL)
-	{
-		printf("Cannot Open Input File.\n");
-		exit(1);
+	if(argc!=2){
+		printf("Usage ./a.out <file_name>");
+		return 0;
 	}
 
-	fp2= fopen(argv[2],"w");
-	fclose(fp2);
-	fp3= fopen(argv[3],"w");
-	fclose(fp3);
-	
-	fp2= fopen(argv[2],"a");
-	fp3= fopen(argv[3],"a");
+	FILE *fin=fopen(argv[1],"r");
+	if(fin==NULL){
+		printf("Cannot open specified file\n");
+		return 0;
+	}
+
+	logout.open(LOG_FILE,out);
+	parseout.open(PARSE_TREE_FILE,out);
+	errorout.open(ERROR_FILE,out);
 	
 
-	yyin=fp;
+	yyin = fin;
 	yyparse();
 	
 
-	fclose(fp2);
-	fclose(fp3);
+	fclose(yyin);
+
+	logout.close();
+	parseout.close();
+	errorout.close();
 	
 	return 0;
 }

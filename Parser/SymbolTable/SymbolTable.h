@@ -5,7 +5,7 @@
 
 class SymbolTable{
     ScopeTable* currentScope;
-	int nextScopeTableId;
+	int currentScopeTableId;
 
     ScopeTable* getScopeOfSymbol(string name){
         ScopeTable* itr = currentScope;
@@ -22,8 +22,8 @@ class SymbolTable{
 public:
 
     SymbolTable(int bucketSize){
-		nextScopeTableId = 1;
-        currentScope = new ScopeTable(to_string(nextScopeTableId++), bucketSize);
+		currentScopeTableId = 0;
+        currentScope = new ScopeTable(to_string(++currentScopeTableId), bucketSize);
     }
 
     ~SymbolTable(){
@@ -45,7 +45,7 @@ public:
     string getCurrentScopeId() { return currentScope->getId(); }
 
     void enterScope(){
-        string id = to_string(nextScopeTableId++);
+        string id = to_string(++currentScopeTableId);
 
         int childId = currentScope->getNumOfChildren() + 1;
 

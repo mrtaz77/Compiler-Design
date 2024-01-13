@@ -142,6 +142,17 @@ arguments : arguments COMMA logic_expression
 
 %%
 
+/* in code section at the end of the parser */
+void yyerror(yyscan_t scanner, const YYLTYPE *loc, string error) {
+	(void)scanner;
+	errorout << "Line# "
+		<< loc->first_line 
+		<< ": "
+		<< error 
+		<< endl;
+}
+
+
 #define LOG_FILE "log.txt"
 #define PARSE_TREE_FILE "parsetree.txt"
 #define ERROR_FILE "error.txt"

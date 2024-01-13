@@ -145,6 +145,11 @@ void processNewline(YYLTYPE* yyloc) {
 	resetCursorPosition(yyloc);
 }
 
+void assignSymbolToYYLVAL(string type) {
+	SymbolInfo* symbol = new SymbolInfo(yytext,type);
+	yylval = (YYStype)symbol;
+}
+
 
 %}
 
@@ -204,60 +209,62 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 "main"	{ return MAIN; }
 "println"	{ return PRINTLN; }
 
-"+"|"-" { return ADDOP; }
-"*"|"/"|"%" { return MULOP; }
+"+"|"-" { 
+	assignSymbolToYYLVAL("ADDOP");
+	return ADDOP; 
+}
+"*"|"/"|"%" { 
+	assignSymbolToYYLVAL("MULOP");
+	return MULOP; 
+}
 "++" { return INCOP; }
 "--" { return DECOP; }
-">"|">="|"<"|"<="|"=="|"!=" { return RELOP; }
+">"|">="|"<"|"<="|"=="|"!=" { 
+	assignSymbolToYYLVAL("RELOP");
+	return RELOP; 
+}
 "=" { return ASSIGNOP; }
-"&&"|"||" { return LOGICOP; }
-"&"|"|"|"^"|"<<"|">>" { return BITOP; }
+"&&"|"||" { 
+	assignSymbolToYYLVAL("LOGICOP");
+	return LOGICOP; 
+}
+"&"|"|"|"^"|"<<"|">>" { 
+	assignSymbolToYYLVAL("BITOP");
+	return BITOP; 
+}
 "!" { return NOT; }
 "(" { return LPAREN; }
 ")" { return RPAREN; }
-"{" { 
-	return LCURL; 
-	table.enterScope();
-}
-"}" { 
-	return RCURL; 
-	table.exitScope();
-}
+"{" { return LCURL; }
+"}" { return RCURL; }
 "[" { return LTHIRD; }
 "]" { return RTHIRD; }
 "," { return COMMA; }
 ";" { return SEMICOLON; }
 
 {INT} { 
-	SymbolInfo* symbol = new SymbolInfo(yytext,"CONST_INT");
-	yylval = (YYStype)symbol;
+	assignSymbolToYYLVAL("CONST_INT");
 	return CONST_INT; 
 }
 
 {FLOAT} {
-	SymbolInfo* symbol = new SymbolInfo(yytext,"CONST_FLOAT");
-	yylval = (YYStype)symbol;
+	assignSymbolToYYLVAL("CONST_FLOAT");
 	return CONST_FLOAT; 
 }
 
 {CHAR} { writeToFileChar(); }
 
 {ID}  {
-	SymbolInfo* symbol = table.lookUp(yytext);
-	if(symbol == nullptr){
-		// fprintf(log_out,"%s",table.printAllScopes().c_str());
-		symbol = new SymbolInfo(yytext,"ID");
-	}
-	yylval = (YYStype)symbol;
+	assignSymbolToYYLVAL("ID");
 	return ID; 
 }
 
 {NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
-    yylineno++;
+    processNewline();
 }
 
 {NEWLINE}{WS}"}" {
-	yylineno++;
+	processNewline();
 	table.exitScope();
 	checkIndentation(yytext);
 	// fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
@@ -265,12 +272,12 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
 {NEWLINE}{WS}{SLASH}{2} {
-	yylineno++;
+	processNewline();
 	yyless(yyleng-2);
 }
 
 {NEWLINE}{WS} {
-	yylineno++;
+	processNewline();
 	checkIndentation(yytext);
 }
 
@@ -280,6 +287,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 ^{WS} {
+	resetCursorPosition();
 	checkIndentation(yytext);
 }
 
@@ -307,7 +315,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
-	yylineno++;
+	processNewline();
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
@@ -335,7 +343,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_COMMENT>{NEWLINE} {
 	buffer += yytext;
-	yylineno++;
+	processNewline();
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
@@ -412,7 +420,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <SINGLE_LINE_STRING>{BACKSLASH}{NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
-	yylineno++;
+	processNewline();
 }
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {

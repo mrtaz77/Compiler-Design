@@ -36,16 +36,7 @@ FILE *token_out;
 string stringLiteral = "";
 string buffer = "";
 
-void writeToToken(string token){
-	// fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
-}
-
-void writeToLog(string token){
-	// fprintf(log_out,"Line# %d: Token <%s> Lexeme %s found\n",yylineno,token.c_str(),yytext);
-}
-
 void writeToFile(string token){
-	writeToToken(token);
 	writeToLog(token);
 }
 
@@ -96,7 +87,6 @@ char getTokenFromConstChar(string lexeme) {
 
 void writeToFileChar(){
 	char lexeme = getTokenFromConstChar(yytext);
-	// fprintf(token_out,"<CONST_CHAR, %c>\n",lexeme);
 	// fprintf(log_out,"Line# %d: Token <CONST_CHAR> Lexeme %c found\n",yylineno,lexeme);
 }
 
@@ -131,6 +121,30 @@ void checkIndentation(string indent){
 		// fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
 	}
 }
+
+// code added for syntax analysis
+
+
+/* macro YY_USER_ACTION can be defined to 
+provide an action which is always executed
+prior to the matched rule's action */
+
+#define YY_USER_ACTION yyloc->last_column += yyleng ;
+
+/* Here , whenever a rule is matched, YY_USER_ACTION moves the scanner
+pointer to the end of yytext */
+
+void resetCursorPosition(YYLTYPE* yylloc) {
+	yyloc->first_column = yyloc->last_column;
+	yyloc->first_line = yyloc->last_line;
+}
+
+void processNewline(YYLTYPE* yyloc) {
+	yyloc->last_column = 1;
+	yyloc->last_line++;
+	resetCursorPosition(yyloc);
+}
+
 
 %}
 
@@ -246,7 +260,6 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 	yylineno++;
 	table.exitScope();
 	checkIndentation(yytext);
-	// fprintf(token_out,"<RCURL, }>\n");
 	// fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
 }
 
@@ -298,14 +311,12 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
-	// fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
 }
 
 <SINGLE_LINE_COMMENT>{NEWLINE} {
-	// fprintf(log_out,"Line# %d: Token <SINGLE LINE COMMENT> Lexeme %s found\n",startComment,buffer.c_str());
 	buffer = "";
 	startComment = 0;
 	yyless(0);
@@ -328,7 +339,6 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
-	// fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
@@ -392,7 +402,6 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <SINGLE_LINE_STRING>{DOUBLE_QUOTE} {
 	// fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-	// fprintf(token_out,"<SINGLE LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -408,7 +417,6 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {
 	// fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
-	// fprintf(token_out,"<MULTI LINE STRING, %s>\n",stringLiteral.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;

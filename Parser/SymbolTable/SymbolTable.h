@@ -1,9 +1,11 @@
 #pragma once
 
 #include"ScopeTable.h"
+#include<cstring>
 
 class SymbolTable{
     ScopeTable* currentScope;
+	int nextScopeTableId;
 
     ScopeTable* getScopeOfSymbol(string name){
         ScopeTable* itr = currentScope;
@@ -20,7 +22,8 @@ class SymbolTable{
 public:
 
     SymbolTable(int bucketSize){
-        currentScope = new ScopeTable("1", bucketSize);
+		nextScopeTableId = 1;
+        currentScope = new ScopeTable(to_string(nextScopeTableId++), bucketSize);
     }
 
     ~SymbolTable(){
@@ -42,11 +45,9 @@ public:
     string getCurrentScopeId() { return currentScope->getId(); }
 
     void enterScope(){
-        string id = currentScope->getId();
+        string id = to_string(nextScopeTableId++);
 
         int childId = currentScope->getNumOfChildren() + 1;
-
-        id += "." + to_string(childId);
 
         ScopeTable* newScope = new ScopeTable(id,currentScope->getNumBuckets(),currentScope);
 

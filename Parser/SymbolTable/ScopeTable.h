@@ -3,7 +3,7 @@
 #include"SymbolInfo.h"
 
 #define TAB "\t"
-#define DEFAULT_BUCKET_SIZE 10
+#define DEFAULT_BUCKET_SIZE 11
 
 class ScopeTable{
     string id;

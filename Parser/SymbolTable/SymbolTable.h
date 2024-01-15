@@ -5,7 +5,7 @@
 
 class SymbolTable{
     ScopeTable* currentScope;
-	int currentScopeTableId;
+	unsigned long currentScopeTableId;
 
     ScopeTable* getScopeOfSymbol(string name){
         ScopeTable* itr = currentScope;

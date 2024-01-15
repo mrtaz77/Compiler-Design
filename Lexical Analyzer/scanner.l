@@ -271,10 +271,7 @@ continue { writeToFile("CONTINUE"); }
 }
 
 <SINGLE_LINE_COMMENT>({BACKSLASH}[^\xd\xa]) |
-<SINGLE_LINE_COMMENT>[^\xd\xa\x5c] {
-	buffer += yytext;
-}
-
+<SINGLE_LINE_COMMENT>[^\xd\xa\x5c] |
 <SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
 }
@@ -359,12 +356,12 @@ continue { writeToFile("CONTINUE"); }
 
 <MULTI_LINE_STRING>{NEWLINE} |
 <SINGLE_LINE_STRING>{NEWLINE} {
+	yyless(0);
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno - 1,buffer.c_str());
+	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
-	yyless(0);
 	BEGIN INITIAL;
 }
 

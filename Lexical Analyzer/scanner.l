@@ -1,6 +1,9 @@
 /* Option section */
 %option noyywrap
 
+/*automatic init of yylineno and increment on finding newline*/
+%option yylineno
+
 /* States for strings and comments */
 %x SINGLE_LINE_COMMENT
 %x MULTI_LINE_COMMENT
@@ -223,12 +226,9 @@ continue { writeToFile("CONTINUE"); }
 	}
 }
 
-{NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
-    yylineno++;
-}
+{NEWLINE}{WS}{CARRIAGE_RETURN}?$ { }
 
 {NEWLINE}{WS}"}" {
-	yylineno++;
 	table.exitScope();
 	checkIndentation(yytext);
 	fprintf(token_out,"<RCURL, }>\n");
@@ -237,12 +237,10 @@ continue { writeToFile("CONTINUE"); }
 
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
 {NEWLINE}{WS}{SLASH}{2} {
-	yylineno++;
 	yyless(yyleng-2);
 }
 
 {NEWLINE}{WS} {
-	yylineno++;
 	checkIndentation(yytext);
 }
 
@@ -279,7 +277,6 @@ continue { writeToFile("CONTINUE"); }
 
 <SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
-	yylineno++;
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
@@ -303,13 +300,9 @@ continue { writeToFile("CONTINUE"); }
 	buffer = yytext;
 }
 
-<MULTI_LINE_COMMENT>([^\xa\xd]) {
-	buffer += yytext;
-}
-
+<MULTI_LINE_COMMENT>([^\xa\xd]) |
 <MULTI_LINE_COMMENT>{NEWLINE} {
 	buffer += yytext;
-	yylineno++;
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
@@ -367,7 +360,7 @@ continue { writeToFile("CONTINUE"); }
 <MULTI_LINE_STRING>{NEWLINE} |
 <SINGLE_LINE_STRING>{NEWLINE} {
 	errorCount++;
-	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
+	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno - 1,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -388,7 +381,6 @@ continue { writeToFile("CONTINUE"); }
 <SINGLE_LINE_STRING>{BACKSLASH}{NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
-	yylineno++;
 }
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {
@@ -422,7 +414,7 @@ int main(int argc,char *argv[]){
 	log_out = fopen(LOG_FILE,"w");
 	token_out = fopen(TOKEN_FILE,"w");
 
-	yylineno = 1;
+	/* yylineno = 1; */
 
 	yyin = fin;
 	yylex();

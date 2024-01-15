@@ -1,38 +1,33 @@
 /* code that should appear at the top of the parser file */
-%code top {
-	#define BUCKET_SIZE 11
+%{
+#define BUCKET_SIZE 11
 
-	#include<stdio.h>
-	#include<stdlib.h>
-	#include<string>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string>
 
-	#include"ParseTree/ParseTreeNode.h"
-	#include"SymbolTable/SymbolTable.h"
+#include"ParseTree/ParseTreeNode.h"
+#include"SymbolTable/SymbolTable.h"
 
-	File *log_out,*error_out,*parse_tree_out;
+#define PTN ParseTreeNode 
 
-	SymbolTable table(BUCKET_SIZE);
+FILE *log_out,*error_out,*parse_tree_out;
+extern FILE* yyin;
+
+SymbolTable table(BUCKET_SIZE);
+
+void yyerror(const YYLTYPE *loc,const char *error);
+int yyparse(void);
+int yylex(void);
+
+void writeRuleToLog(const char *rule) {
+	fprintf(log_out,"%s\n",rule);
 }
-
-/* code that should appear after the definition of YYLTYPE */
-%code requires {
-	void yyerror(const YYLTYPE *loc,const char *error);
-}
-
-/* place for non-dependency functions */
-%code {
-	int yyparse(void);
-	int yylex(void);
-}
+%}
 
 /* for location tracking support,
 defines YYLTYPE and YYLOC_DEFAULT */
 %locations
-
-/* Specify how the generated parser should include the generated header,
-avoid duplication of code and ensure consistency between the parser definition
-and its implementation ,i.e, include intead of duplicate */
-%define api.header.include { "MyParser.h" }
 
 %union { 
 	SymbolInfo* symbolInfo;
@@ -63,15 +58,25 @@ and its implementation ,i.e, include intead of duplicate */
 
 start : program
 	{
-		//write your code in this block in all the similar blocks below
+		$$ = new PTN("start : program ", @$.first_line, @$.last_line);
+		$$->addChild($1);
+		fprintf(parse_tree_out,"%s",$$->print().c_str());
 	}
 	;
 
 program : program unit 
 	| unit
+	{
+		$$ = new PTN("program : unit ", @$.first_line, @$.last_line);
+		$$->addChild($1);
+	}
 	;
 
 unit : var_declaration
+	{
+		$$ = new PTN("unit : var_declaration ", @$.first_line, @$.last_line);
+		$$->addChild($1);
+	}
 	| func_declaration
 	| func_definition
 	;
@@ -97,16 +102,41 @@ compound_statement : LCURL statements RCURL
 			;
 
 var_declaration : type_specifier declaration_list SEMICOLON
+		{
+			PTN* semi_colon_node = new PTN("SEMICOLON : ;", @3.first_line);
+			$$ = new PTN("var_declaration : type_specifier declaration_list SEMICOLON ", @$.first_line, @$.last_line);
+			$$->addChild($1)->addChild($2)->addChild(semi_colon_node);
+		}
 		;
 
 type_specifier	: INT
+		{
+			PTN* INT_int_node = new PTN("INT : int", @1.first_line, @1.last_line);
+			$$ = new PTN("type_specifier : INT ", @$.first_line, @$.last_line);
+			$$->addChild(INT_int_node);
+		}
 		| FLOAT
+		{
+			PTN* FLOAT_float_node = new PTN("FLOAT : float", @1.first_line, @1.last_line);
+			$$ = new PTN("type_specifier : FLOAT ", @$.first_line, @$.last_line);
+			$$->addChild(FLOAT_float_node);
+		}
 		| VOID
+		{
+			PTN* VOID_void_node = new PTN("VOID : void", @1.first_line, @1.last_line);
+			$$ = new PTN("type_specifier : VOID ", @$.first_line, @$.last_line);
+			$$->addChild(VOID_void_node);
+		}
 		;
 	
 declaration_list : declaration_list COMMA ID
 		| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
 		| ID
+		{
+			PTN* id_node = new PTN("ID : " + $1->getName(), @1.first_line);
+			$$ = new PTN("declaration_list : ID ", @$.first_line, @$.last_line);
+			$$->addChild(id_node);
+		}
 		| ID LTHIRD CONST_INT RTHIRD
 		;
 	
@@ -212,11 +242,12 @@ int main(int argc,char *argv[])
 
 	log_out = fopen(LOG_FILE,"w");
 	error_out = fopen(ERROR_FILE,"w");
+	parse_tree_out = fopen(PARSE_TREE_FILE,"w");
 
 	yyin = fin;
 	yyparse();
 
-	parse_tree_out = fopen(PARSE_TREE_FILE,"w");
+	
 
 	fclose(parse_tree_out);
 	fclose(error_out);

@@ -139,20 +139,20 @@ void checkIndentation(string indent){
 provide an action which is always executed
 prior to the matched rule's action */
 
-#define YY_USER_ACTION yyloc->last_column += yyleng ;
+#define YY_USER_ACTION yylloc->last_column += yyleng ;
 
 /* Here , whenever a rule is matched, YY_USER_ACTION moves the scanner
 pointer to the end of yytext */
 
 void resetCursorPosition(YYLTYPE* yylloc) {
-	yyloc->first_column = yyloc->last_column;
-	yyloc->first_line = yyloc->last_line;
+	yylloc->first_column = yylloc->last_column;
+	yylloc->first_line = yylloc->last_line;
 }
 
 void adjustYYLOC(YYLTYPE* yyloc) {
-	yyloc->last_column = 1;
-	yyloc->last_line++;
-	resetCursorPosition(yyloc);
+	yylloc->last_column = 1;
+	yylloc->last_line++;
+	resetCursorPosition(yylloc);
 }
 
 void assignSymbolToYYLVAL(string type) { yylval.symbolInfo = new SymbolInfo(yytext,type); }
@@ -275,11 +275,11 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 {NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
-    adjustYYLOC();
+    adjustYYLOC(yylloc);
 }
 
 {NEWLINE}{WS}"}" {
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 	// table.exitScope();
 	// checkIndentation(yytext);
 	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
@@ -287,12 +287,12 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
 {NEWLINE}{WS}{SLASH}{2} {
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 	yyless(yyleng-2);
 }
 
 {NEWLINE}{WS} {
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 	// checkIndentation(yytext);
 }
 
@@ -302,7 +302,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 ^{WS} {
-	resetCursorPosition();
+	resetCursorPosition(yyloc);
 	// checkIndentation(yytext);
 }
 
@@ -330,7 +330,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
@@ -359,7 +359,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_COMMENT>{NEWLINE} {
 	buffer += yytext;
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
@@ -436,7 +436,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <SINGLE_LINE_STRING>{BACKSLASH}{NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
-	adjustYYLOC();
+	adjustYYLOC(yylloc);
 }
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {

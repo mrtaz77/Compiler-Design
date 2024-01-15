@@ -3,8 +3,6 @@
 #include<iostream>
 #include<cstring>
 
-#include"IdType.h"
-
 using namespace std;
 
 class ParseTreeNode {
@@ -103,7 +101,7 @@ public:
 
 		out.append(rule);
 
-		out.append("\t");
+		out.append(" \t");
 
 		out += "<Line: " + to_string(startOfNode) ;
 		if(endOfNode) out += "-" + to_string(endOfNode) ;

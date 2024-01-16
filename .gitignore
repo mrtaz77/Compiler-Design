@@ -1,5 +1,4 @@
-
-Lexical Analyzer\scanner.cpp
+#added
 .lh
 .vscode
 *.txt
@@ -7,6 +6,7 @@ Lexical Analyzer\scanner.cpp
 *.bin
 *.zip
 2005020/
+input.*
 
 # Prerequisites
 *.d

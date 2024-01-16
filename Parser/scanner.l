@@ -13,20 +13,23 @@
 
 /* Cpp code section for includes and variables */
 %{
-// #define BUCKET_SIZE 11
 
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
-// #include "SymbolTable/SymbolTable.h"
-#include "SymbolTable/SymbolInfo.h"
-#include "MyParser.h"
+
+// user header file
+#include "SymbolTable/SymbolTable.h"
+#include "ParseTree/ParseTreeNode.h"
+
+// bison generated header file
+#include "parser.tab.h"
 
 extern YYSTYPE yylval;
-// extern SymbolTable table(BUCKET_SIZE);
+extern SymbolTable *table;
 
-unsigned long errorCount = 0;
-unsigned long warningCount = 0;
+unsigned long lexicalErrorCount = 0;
+unsigned long lexicalWarningCount = 0;
 
 unsigned long startString = 0;
 unsigned long startComment = 0;
@@ -36,6 +39,8 @@ extern FILE *log_out;
 
 string stringLiteral = "";
 string buffer = "";
+
+void yyerror(char *);
 
 void writeToToken(string token){
 	// fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
@@ -101,12 +106,12 @@ void writeToFileChar(){
 }
 
 void writeErrorToLog(string error){
-	errorCount++;
-	// fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+	lexicalErrorCount++;
+	fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
 }
 
 void checkIndentation(string indent){
-	string id = table.getCurrentScopeId();
+	string id = table->getCurrentScopeId();
 
 	unsigned long expectedTab = 0;
 
@@ -123,39 +128,48 @@ void checkIndentation(string indent){
 
 
 	if(space > 0){
-		warningCount++;
-		// fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+		lexicalWarningCount++;
+		fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
 	}
 	else if(tab != expectedTab){
-		warningCount++;
-		// fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+		lexicalWarningCount++;
+		fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
 	}
 }
 
 // code added for syntax analysis
 
+/* Following functions adjust the yylloc 
+first and last line fields for parser usage.
+The column values remain unchanged */
+
+/* Since column positions are not needed
+for this parser, lines changing 
+them have been commented out */
 
 /* macro YY_USER_ACTION can be defined to 
 provide an action which is always executed
 prior to the matched rule's action */
 
-#define YY_USER_ACTION yylloc->last_column += yyleng ;
+// #define YY_USER_ACTION yyloc->last_column += yyleng ;
 
 /* Here , whenever a rule is matched, YY_USER_ACTION moves the scanner
 pointer to the end of yytext */
 
-void resetCursorPosition(YYLTYPE* yylloc) {
-	yylloc->first_column = yylloc->last_column;
-	yylloc->first_line = yylloc->last_line;
+void resetCursorPosition() {
+	yylloc.first_line = yylloc.last_line;
+	// yylloc->first_column = yylloc->last_column; 
 }
 
-void adjustYYLOC(YYLTYPE* yyloc) {
-	yylloc->last_column = 1;
-	yylloc->last_line++;
-	resetCursorPosition(yylloc);
+void adjustYYLLOC() {
+	// yylloc->last_column = 1;
+	yylloc.last_line = yylineno;
+	resetCursorPosition();
 }
 
-void assignSymbolToYYLVAL(string type) { yylval.symbolInfo = new SymbolInfo(yytext,type); }
+void assignSymbolInfoToYYLVAL(string type) { 
+	yylval.symbolInfo = new SymbolInfo(yytext,type);
+}
 
 
 %}
@@ -200,69 +214,86 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 "if" { writeToFile("IF"); return IF; }
 "else" { writeToFile("ELSE"); return ELSE; }
 "for" { writeToFile("FOR"); return FOR; }
-"do" { writeToFile("DO"); return DO; }
+
 "int" { writeToFile("INT"); return INT; }
 "float" { writeToFile("FLOAT"); return FLOAT; }
 "void" { writeToFile("VOID"); return VOID; }
-"switch" { writeToFile("SWITCH"); return SWITCH; }
-"default" { writeToFile("DEFAULT"); return DEFAULT; }
-"while" { writeToFile("WHILE"); return WHILE; }
-"break" { writeToFile("BREAK"); return BREAK; }
-"char" { writeToFile("CHAR"); return CHAR; }
-"double" { writeToFile("DOUBLE"); return DOUBLE; }
+
+
+
+
+
+
 "return" { writeToFile("RETURN"); return RETURN; }
-"case" { writeToFile("CASE"); return CASE; }
-"continue" { writeToFile("CONTINUE"); return CONTINUE; }
-"main" { writeToFile("MAIN"); return MAIN; }
+
+
+
 "println" { writeToFile("PRINTLN"); return PRINTLN; }
+
+%{
+// Commented out rules
+// "do" { writeToFile("DO"); return DO; }
+// "switch" { writeToFile("SWITCH"); return SWITCH; }
+// "default" { writeToFile("DEFAULT"); return DEFAULT; }
+// "while" { writeToFile("WHILE"); return WHILE; }
+// "break" { writeToFile("BREAK"); return BREAK; }
+// "char" { writeToFile("CHAR"); return CHAR; }
+// "double" { writeToFile("DOUBLE"); return DOUBLE; }
+// "case" { writeToFile("CASE"); return CASE; }
+// "continue" { writeToFile("CONTINUE"); return CONTINUE; }
+// "main" { writeToFile("MAIN"); return MAIN; }
+%}	
+
 
 "+"|"-" { 
 	writeToFile("ADDOP");
-	assignSymbolToYYLVAL("ADDOP");
+	assignSymbolInfoToYYLVAL("ADDOP");
 	return ADDOP; 
 }
 "*"|"/"|"%" { 
 	writeToFile("MULOP");
-	assignSymbolToYYLVAL("MULOP");
+	assignSymbolInfoToYYLVAL("MULOP");
 	return MULOP; 
 }
 "++" { writeToFile("INCOP"); return INCOP; }
 "--" { writeToFile("DECOP"); return DECOP; }
 ">"|">="|"<"|"<="|"=="|"!=" { 
 	writeToFile("RELOP");
-	assignSymbolToYYLVAL("RELOP");
+	assignSymbolInfoToYYLVAL("RELOP");
 	return RELOP; 
 }
 "=" { writeToFile("ASSIGNOP"); return ASSIGNOP; }
 "&&"|"||" { 
 	writeToFile("LOGICOP");
-	assignSymbolToYYLVAL("LOGICOP");
+	assignSymbolInfoToYYLVAL("LOGICOP");
 	return LOGICOP; 
 }
-"&"|"|"|"^"|"<<"|">>" { 
-	writeToFile("BITOP");
-	assignSymbolToYYLVAL("BITOP");
-	return BITOP; 
-}
+%{
+// "&"|"|"|"^"|"<<"|">>" { 
+// 	writeToFile("BITOP");
+// 	assignSymbolInfoToYYLVAL("BITOP");
+// 	return BITOP; 
+// }
+%}
 "!" { writeToFile("NOT"); return NOT; }
 "(" { writeToFile("LPAREN"); return LPAREN; }
 ")" { writeToFile("RPAREN"); return RPAREN; }
 "{" { writeToFile("LCURL"); return LCURL; }
 "}" { writeToFile("RCURL"); return RCURL; }
-"[" { writeToFile("LSQUARE"); return LSQUARE; }
-"]" { writeToFile("RSQUARE"); return RSQUARE; }
+"[" { writeToFile("LSQUARE"); return LTHIRD; }
+"]" { writeToFile("RSQUARE"); return RTHIRD; }
 "," { writeToFile("COMMA"); return COMMA; }
 ";" { writeToFile("SEMICOLON"); return SEMICOLON; }
 
 {INT} { 
 	writeToFile("CONST_INT");
-	assignSymbolToYYLVAL("CONST_INT");
+	assignSymbolInfoToYYLVAL("CONST_INT");
 	return CONST_INT; 
 }
 
 {FLOAT} { 
 	writeToFile("CONST_FLOAT");
-	assignSymbolToYYLVAL("CONST_FLOAT");
+	assignSymbolInfoToYYLVAL("CONST_FLOAT");
 	return CONST_FLOAT; 
 }
 
@@ -270,29 +301,32 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 {ID}  {
 	writeToFile("ID");
-	assignSymbolToYYLVAL("ID");
+	auto symbol = table->lookUp(yytext);
+	if(symbol == nullptr)assignSymbolInfoToYYLVAL("ID");
+	else yylval.symbolInfo = symbol;
 	return ID; 
 }
 
 {NEWLINE}{WS}{CARRIAGE_RETURN}?$ {
-    adjustYYLOC(yylloc);
+    adjustYYLLOC();
 }
 
 {NEWLINE}{WS}"}" {
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 	// table.exitScope();
 	// checkIndentation(yytext);
 	fprintf(log_out,"Line# %d: Token <RCURL> Lexeme } found\n",yylineno);
+	return RCURL;
 }
 
 {NEWLINE}{WS}{SLASH}{ASTERISK} |
 {NEWLINE}{WS}{SLASH}{2} {
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 	yyless(yyleng-2);
 }
 
 {NEWLINE}{WS} {
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 	// checkIndentation(yytext);
 }
 
@@ -302,7 +336,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 ^{WS} {
-	resetCursorPosition(yyloc);
+	resetCursorPosition();
 	// checkIndentation(yytext);
 }
 
@@ -330,7 +364,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <SINGLE_LINE_COMMENT>({BACKSLASH}{NEWLINE}) {
 	buffer += yytext;
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 }
 
 <SINGLE_LINE_COMMENT><<EOF>> {
@@ -359,17 +393,18 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_COMMENT>{NEWLINE} {
 	buffer += yytext;
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 }
 
 <MULTI_LINE_COMMENT>{ASTERISK}{SLASH} {
+	// fprintf(log_out,"Line# %d: Token <MULTI LINE COMMENT> Lexeme %s%s found\n",startComment,buffer.c_str(),yytext);
 	buffer = "";
 	startComment = 0;
 	BEGIN INITIAL;
 }
 
 <MULTI_LINE_COMMENT><<EOF>> {
-	errorCount++;
+	lexicalErrorCount++;
 	// fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	startComment = 0;
@@ -397,15 +432,15 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
-	warningCount++;
-	fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
+	lexicalWarningCount++;
+	// fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
 	buffer += yytext;
 	stringLiteral += yytext[yyleng - 1];
 }
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
-	errorCount++;
+	lexicalErrorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
@@ -416,7 +451,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <MULTI_LINE_STRING>{NEWLINE} |
 <SINGLE_LINE_STRING>{NEWLINE} {
 	yyless(0);
-	errorCount++;
+	lexicalErrorCount++;
 	// fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
@@ -425,7 +460,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <SINGLE_LINE_STRING>{DOUBLE_QUOTE} {
-	fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	// fprintf(log_out,"Line# %d: Token <SINGLE LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;
@@ -436,11 +471,11 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <SINGLE_LINE_STRING>{BACKSLASH}{NEWLINE} {
 	BEGIN MULTI_LINE_STRING;
 	buffer += yytext;
-	adjustYYLOC(yylloc);
+	adjustYYLLOC();
 }
 
 <MULTI_LINE_STRING>{DOUBLE_QUOTE} {
-	fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
+	// fprintf(log_out,"Line# %d: Token <MULTI LINE STRING> Lexeme %s%s found\n",startString,buffer.c_str(),yytext);
 	buffer = "";
 	stringLiteral = "";
 	startString = 0;

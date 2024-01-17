@@ -25,6 +25,8 @@ parser implementation file*/
 
 	string current_rule = "";
 
+	unsigned long syntaxErrorCount = 0; 
+
 	// TODO : Decide where the following declaration belongs
 	void yyerror(const char *error);
 }
@@ -89,6 +91,7 @@ file after the Bison-generated value and location types
 
 	void initRule(string rule) {
 		current_rule = rule;
+		writeRuleToLog(current_rule);
 	}
 
 	string symbolToRule(SymbolInfo* node){
@@ -111,7 +114,6 @@ file after the Bison-generated value and location types
 start : program
 	{
 		initRule("start : program ");
-		writeRuleToLog(current_rule);
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		printParseTree($$);
 		ids.clear();
@@ -121,13 +123,11 @@ start : program
 program : program unit
 		{
 			initRule("program : program unit ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,$2);
 		}
 		| unit
 		{
 			initRule("program : unit ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		}
 		;
@@ -135,19 +135,16 @@ program : program unit
 unit : var_declaration
 	{
 		initRule("unit : var_declaration ");
-		writeRuleToLog(current_rule);
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 	}
 	| func_declaration
 	{
 		initRule("unit : func_declaration ");
-		writeRuleToLog(current_rule);
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 	}
 	| func_definition
 	{
 		initRule("unit : func_definition ");
-		writeRuleToLog(current_rule);
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 	}
 	;
@@ -160,7 +157,6 @@ unit : var_declaration
 func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 		{
 			initRule("func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
 			auto rParenNode = new PTN("RPAREN : )",@5.F_L);
@@ -171,7 +167,6 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 		| type_specifier ID LPAREN RPAREN SEMICOLON
 		{
 			initRule("func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
 			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
@@ -184,7 +179,6 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
 		{
 			initRule("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
 			auto rParenNode = new PTN("RPAREN : )",@5.F_L);
@@ -194,7 +188,6 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statem
 		| type_specifier ID LPAREN RPAREN compound_statement
 		{
 			initRule("func_definition : type_specifier ID LPAREN RPAREN compound_statement ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
 			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
@@ -206,7 +199,6 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statem
 parameter_list : parameter_list COMMA type_specifier ID
 		{
 			initRule("parameter_list  : parameter_list COMMA type_specifier ID ");
-			writeRuleToLog(current_rule);
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			auto idNode = new PTN(symbolToRule($4),@4.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
@@ -215,7 +207,6 @@ parameter_list : parameter_list COMMA type_specifier ID
 		| parameter_list COMMA type_specifier
 		{
 			initRule("parameter_list : parameter_list COMMA type_specifier ");
-			writeRuleToLog(current_rule);
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			auto idNode = new PTN(symbolToRule($4),@4.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
@@ -224,7 +215,6 @@ parameter_list : parameter_list COMMA type_specifier ID
 		| type_specifier ID
 		{
 			initRule("parameter_list COMMA type_specifier ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
@@ -232,7 +222,6 @@ parameter_list : parameter_list COMMA type_specifier ID
 		| type_specifier
 		{
 			initRule("parameter_list COMMA type_specifier ");
-			writeRuleToLog(current_rule);
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
@@ -252,7 +241,6 @@ compound_statement : LCURL statements RCURL
 var_declaration : type_specifier declaration_list SEMICOLON
 				{
 					initRule("var_declaration : type_specifier declaration_list SEMICOLON ");
-					writeRuleToLog(current_rule);
 					auto semiColonNode = new PTN("SEMICOLON : ;",@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,$2,semiColonNode);
 					insertSymbolsToTable();
@@ -262,21 +250,18 @@ var_declaration : type_specifier declaration_list SEMICOLON
 type_specifier	: INT
 		{
 			initRule("type_specifier	: INT ");
-			writeRuleToLog(current_rule);
 			auto intNode = new PTN("INT : int",@1.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,intNode);
 		}
 		| FLOAT
 		{
 			initRule("type_specifier	: FLOAT ");
-			writeRuleToLog(current_rule);
 			auto floatNode = new PTN("FLOAT : int",@1.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,floatNode);
 		}
 		| VOID
 		{
 			initRule("type_specifier	: VOID ");
-			writeRuleToLog(current_rule);
 			auto voidNode = new PTN("VOID : void",@1.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,voidNode);
 		}
@@ -290,7 +275,6 @@ type_specifier	: INT
 declaration_list : declaration_list COMMA ID
 				{
 					initRule("declaration_list COMMA ID ");
-					writeRuleToLog(current_rule);
 					auto commaNode = new PTN("COMMA : ,",@2.F_L);
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,idNode);
@@ -299,7 +283,6 @@ declaration_list : declaration_list COMMA ID
 				| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
 				{
 					initRule("declaration_list COMMA ID LSQUARE CONST_INT RSQUARE ");
-					writeRuleToLog(current_rule);
 					auto commaNode = new PTN("COMMA : ,",@2.F_L);
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
 					auto lSquareNode = new PTN("LSQUARE : [",@4.F_L);
@@ -313,7 +296,6 @@ declaration_list : declaration_list COMMA ID
 				| ID
 				{
 					initRule("declaration_list : ID ");
-					writeRuleToLog(current_rule);
 					auto idNode = new PTN(symbolToRule($1),@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 					ids.pushBack($1);
@@ -321,7 +303,6 @@ declaration_list : declaration_list COMMA ID
 				| ID LTHIRD CONST_INT RTHIRD
 				{
 					initRule("ID LSQUARE CONST_INT RSQUARE ");
-					writeRuleToLog(current_rule);
 					auto idNode = new PTN(symbolToRule($1),@1.F_L);
 					auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
 					auto constIntNode = new PTN(symbolToRule($3),@3.F_L);
@@ -336,13 +317,11 @@ declaration_list : declaration_list COMMA ID
 statements : statement
 		{
 			initRule("statements : statement ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		}
 		| statements statement
 		{
 			initRule("statements : statements statement ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,$2);
 		}
 		;
@@ -350,49 +329,106 @@ statements : statement
 statement : var_declaration
 		{
 			initRule("statement : var_declaration ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		}
 		| expression_statement
 		{
 			initRule("statement : expression_statement ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		}
 		| compound_statement
 		{
 			initRule("statement : compound_statement ");
-			writeRuleToLog(current_rule);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		}
 		| FOR LPAREN expression_statement expression_statement expression RPAREN statement
 		{
-
+			initRule("statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement ");
+			auto forNode = new PTN("FOR : for",@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@6.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(7,forNode,lParenNode,$3,$4,$5,rParenNode,$7);
 		}
 		| IF LPAREN expression RPAREN statement
 		{
-
+			initRule("statement : IF LPAREN expression RPAREN statement ");
+			auto ifNode = new PTN("IF : if",@1.F_L,@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(5,ifNode,lParenNode,$3,rParenNode,$5);
 		}
 		| IF LPAREN expression RPAREN statement ELSE statement
 		{
-
+			initRule("statement : IF LPAREN expression RPAREN statement ELSE statement ");
+			auto ifNode = new PTN("IF : if",@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
+			auto elseNode = new PTN("ELSE : else",@6.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(7,ifNode,lParenNode,$3,rParenNode,$5,elseNode,$7);
 		}
 		| WHILE LPAREN expression RPAREN statement
+		{
+			initRule("statement : WHILE LPAREN expression RPAREN statement ");
+			auto ifNode = new PTN("IF : if",@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
+			auto elseNode = new PTN("ELSE : else",@6.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(7,ifNode,lParenNode,$3,rParenNode,$5,elseNode,$7);			
+		}
 		| PRINTLN LPAREN ID RPAREN SEMICOLON
+		{
+			initRule("statement : PRINTLN LPAREN ID RPAREN SEMICOLON ");
+			auto printlnNode = new PTN("PRINTLN : println",@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto idNode = new PTN(symbolToRule($3),@3.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
+			auto semicolonNode = new PTN("SEMICOLON : ;",@5.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(5,printlnNode,lParenNode,idNode,rParenNode,$5,semicolonNode);				
+		}
 		| RETURN expression SEMICOLON
+		{
+			initRule("statement : RETURN expression SEMICOLON ");
+			auto printlnNode = new PTN("RETURN : return",@1.F_L);
+			auto semicolonNode = new PTN("SEMICOLON : ;",@3.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(3,returnNode,$2,semicolonNode);				
+		}
 		;
 
 expression_statement : SEMICOLON
 					{
 						initRule("expression_statement : SEMICOLON ");
-						writeRuleToLog(current_rule);
-						$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+						auto semicolonNode = new PTN("SEMICOLON : ;",@1.F_L);
+						$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,semicolonNode);
 					}
 					| expression SEMICOLON
+					{
+						initRule("expression_statement : expression SEMICOLON ");
+						auto semicolonNode = new PTN("SEMICOLON : ;",@2.F_L);
+						$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,semicolonNode);
+					}
 					;
 
 variable : ID
-		| ID LTHIRD expression RTHIRD 
+		{
+			initRule("variable : ID ");
+			auto idNode = new PTN(symbolToRule($1),@1.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
+		}
+		| ID LTHIRD expression RTHIRD
+		{
+			initRule("ID LTHIRD expression RTHIRD ");
+			auto idNode = new PTN(symbolToRule($1),@1.F_L);
+			auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
+			auto rSquareNode = new PTN("RQUARE : ]",@4.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
+		}
 		;
 
 expression : logic_expression
@@ -473,11 +509,14 @@ int main(int argc,char *argv[])
 	yyin = fin;
 	yyparse();
 
-	fclose(yyin);
+	fprintf(log_out,"Total lines: %d\n",yylineno);
+	fprintf(log_out,"Total errors: %d\n",syntaxErrorCount);
 
 	fclose(parse_tree_out);
 	fclose(error_out);
 	fclose(log_out);
+
+	fclose(yyin);
 
 	// table.~SymbolTable() ;
 

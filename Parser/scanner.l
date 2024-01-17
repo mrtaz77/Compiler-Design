@@ -220,7 +220,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 "void" { writeToFile("VOID"); return VOID; }
 
 
-
+"while"   { writeToFile("WHILE"); return WHILE; }
 
 
 
@@ -235,7 +235,6 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 // "do" { writeToFile("DO"); return DO; }
 // "switch" { writeToFile("SWITCH"); return SWITCH; }
 // "default" { writeToFile("DEFAULT"); return DEFAULT; }
-// "while" { writeToFile("WHILE"); return WHILE; }
 // "break" { writeToFile("BREAK"); return BREAK; }
 // "char" { writeToFile("CHAR"); return CHAR; }
 // "double" { writeToFile("DOUBLE"); return DOUBLE; }

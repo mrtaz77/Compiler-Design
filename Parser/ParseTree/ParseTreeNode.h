@@ -2,6 +2,7 @@
 
 #include<iostream>
 #include<cstring>
+#include<stdarg.h>
 
 using namespace std;
 
@@ -112,5 +113,13 @@ public:
 		}
 
 		return out;
+	}
+
+	ParseTreeNode* addChildrenToNode(int childNo, ...) {
+		va_list children;
+		va_start(children, childNo);
+		for (int i = 0; i < childNo; i++) addChild(va_arg(children,ParseTreeNode*));
+		va_end(children);
+		return this;
 	}
 };

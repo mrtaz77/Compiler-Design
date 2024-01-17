@@ -97,11 +97,11 @@ public:
 	string print(unsigned long height = 0){
 		string out = "";
 
-		for(unsigned int i = 0; i < height;i++) out.append(" ");
+		for(unsigned long i = 0; i < height;i++) out.append(" ");
 
 		out.append(rule);
 
-		out.append(" \t");
+		out.append("\t");
 
 		out += "<Line: " + to_string(startOfNode) ;
 		if(endOfNode) out += "-" + to_string(endOfNode) ;

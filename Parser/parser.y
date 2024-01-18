@@ -12,9 +12,7 @@ parser implementation file*/
 	#include<stdlib.h>
 	#include<string>
 
-	#include "ParseTree/ParseTreeNode.h"
 	#include "SymbolTable/SymbolTable.h"
-	#include "LinkedList/LinkedList.h"
 
 	FILE *log_out, *error_out, *parse_tree_out;
 	extern FILE* yyin;
@@ -23,7 +21,6 @@ parser implementation file*/
 
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
 	LinkedList<SymbolInfo*> ids;
-	LinkedList<ParseTreeNode*> idNodes;
 	ParseTreeNode *currentFunction;
 
 	string current_rule = "";
@@ -103,12 +100,12 @@ file after the Bison-generated value and location types
 		return node->getType().append(" : ").append(node->getName());
 	}
 
-	bool isParameterRedefined(SymbolInfo* id,PTN* idNode) {
-		for(unsigned long i = 0; i < idNodes.length(); i++) {
+	bool isParameterRedefined(SymbolInfo* id) {
+		for(unsigned long i = 0; i < ids.length(); i++) {
 			ids.setToPos(i);
-			if(ids.getValue()-getName() == id->getName()){
+			if(ids.getValue()->getName() == id->getName()){
 				string error = "Redefinition of parameter \'" + id->getName() + "\'";
-				semanticError(error,idNode->getStartOfNode());
+				semanticError(error,id->getNode()->getStartOfNode());
 				return true;
 			}
 		}
@@ -117,38 +114,43 @@ file after the Bison-generated value and location types
 
 	void isAnyParameterUnnamed() {
 		for(unsigned long i = 0; i < ids.length(); i++) {
-			ids.setToPos(i);
-			idNodes.setToPos(i);
+			ids.setToPos(i)
 			if(ids.getValue()->getName() == ""){
-				string error = "Unnamed parameter in line# " + to_string(idNodes.getValue()->getStartOfNode());
-				semanticError(error,idNodes.getValue()->getStartOfNode()); 
+				string error = "Unnamed parameter in line# " + to_string(ids.getValue()->getNode()->getStartOfNode());
+				semanticError(error,ids.getValue()->getNode()->getStartOfNode()); 
 			}
 		}
 	}
 
-	string getTypeName(Type_Spec type) {
+	string functionType(Type_Spec type) {
 		switch(type) {
-			case Type_Spec::VOID: return "VOID";
-			case Type_Spec::TYPE_INT: return "INT";
-			case Type_Spec::TYPE_FLOAT: return "FLOAT";
+			case Type_Spec::VOID: return "FUNCTION,VOID";
+			case Type_Spec::TYPE_INT: return "FUNCTION,INT";
+			case Type_Spec::TYPE_FLOAT: return "FUNCTION,FLOAT";
 			default: return "NO_TYPE_SPECIFIED";
 		}
 	}
 
 	void insertFunction(SymbolInfo* id,PTN* idNode,Type_Spec type,bool isDefined = false) {
-		idNode->setType(type);
-		idNode->addParameters(idNodes);
+		currentFunction = idNode;
 		idNode->declareFunction();
+		idNode->addParameters(idNodes);
+		idNode->setType(type);
 
 		if(isDefined) {
 			idNode->defineFunction(idNode->getStartOfNode());
-
 			isAnyParameterUnnamed();
 		}
 
+		ids.clear();
 		idNodes.clear();
+		id->setType(functionType(type));
 
-		id->setType("FUNCTION," + getTypeName(type));
+		if(table->insert(id)) return;
+
+
+
+
 	}
 }
 
@@ -249,8 +251,8 @@ parameter_list : parameter_list COMMA type_specifier ID
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
 			if(!isParameterRefined($4,idNode)){
+				$3->setNode(idNode);
 				ids.pushBack(id);
-				idNodes.pushBack(idNode);
 			}
 		}
 		| parameter_list COMMA type_specifier
@@ -261,8 +263,8 @@ parameter_list : parameter_list COMMA type_specifier ID
 			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
+			idNode->setNode(idNode);
 			ids.pushBack(id);
-			idNodes.pushBack(idNode);
 		}
 		| type_specifier ID
 		{
@@ -307,22 +309,22 @@ var_declaration : type_specifier declaration_list SEMICOLON
 					
 					for(unsigned long i = 0; i < ids.length(); i++) {
 						ids.setToPos(i);
-						idNodes.setToPos(i);
+						auto id = ids.getValue();
 						// printf("%d : %d\n",i,$1->getType());
 
 						if($1->getType() == 23) {
-							string error = "Variable or field \'" + ids.getValue()->getName() + "\' declared void";
-							semanticError(error,idNodes.getValue()->getStartOfNode());
+							string error = "Variable or field \'" + id->getName() + "\' declared void";
+							semanticError(error,id->getNode()->getStartOfNode());
 						}
 
-						bool isNewDeclaration = table->insert(ids.getValue());
+						bool isNewDeclaration = table->insert(id);
 
 						if(!isNewDeclaration) {
-							string error = "Redeclaration of variable \'" + ids.getValue()->getName() + "\'";
-							semanticError(error,idNodes.getValue()->getStartOfNode());
+							string error = "Redeclaration of variable \'" + id->getName() + "\'";
+							semanticError(error,id->getNode()->getStartOfNode());
 						}
 
-						idNodes.getValue()->setType($1->getType());
+						id->getNode()->setType($1->getType());
 					}
 				}
 				;
@@ -359,8 +361,8 @@ declaration_list : declaration_list COMMA ID
 					auto commaNode = new PTN("COMMA : ,",@2.F_L);
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,idNode);
+					$3->setNode(idNode);
 					ids.pushBack($3);
-					idNodes.pushBack(idNode);
 				}
 				| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
 				{
@@ -374,19 +376,17 @@ declaration_list : declaration_list COMMA ID
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 					->addChildrenToNode(6,$1,commaNode,idNode,lSquareNode,constIntNode,rSquareNode);
 					$3->setType("ARRAY");
+					$3->setNode(idNode);
 					ids.pushBack($3);
-					idNodes.pushBack(idNode);
 				}
 				| ID
 				{
 					initRule("declaration_list : ID ");
 					auto idNode = new PTN(symbolToRule($1),@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
-					
+					$1->setNode(idNode);
 					ids.clear();
-					idNodes.clear();
 					ids.pushBack($1);
-					idNodes.pushBack(idNode);
 				}
 				| ID LTHIRD CONST_INT RTHIRD
 				{
@@ -399,11 +399,9 @@ declaration_list : declaration_list COMMA ID
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 					->addChildrenToNode(4,idNode,lSquareNode,constIntNode,rSquareNode);
 					$1->setType("ARRAY");
-
+					$1->setNode(idNode);
 					ids.clear();
-					idNodes.clear();
 					ids.pushBack($1);
-					idNodes.pushBack(idNode);
 				}
 				;
 

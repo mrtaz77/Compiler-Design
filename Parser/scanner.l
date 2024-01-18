@@ -20,7 +20,6 @@
 
 // user header file
 #include "SymbolTable/SymbolTable.h"
-#include "ParseTree/ParseTreeNode.h"
 
 // bison generated header file
 #include "parser.tab.h"

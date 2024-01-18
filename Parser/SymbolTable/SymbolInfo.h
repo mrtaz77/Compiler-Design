@@ -1,12 +1,16 @@
 #pragma once
 
 #include<iostream>
+
+#include"ParseTree/ParseTreeNode.h"
+
 using namespace std;
 
 class SymbolInfo{
     string name;
     string type;
     SymbolInfo* next;
+	ParseTreeNode* node = nullptr;
 
 public:
     SymbolInfo(string name = "", string type = "",SymbolInfo* next = nullptr) :
@@ -17,10 +21,12 @@ public:
     string getName() const { return name; }
     string getType() const { return type; }
     SymbolInfo* getNext() const { return next; }
+	ParseTreeNode* getNode() const { return node; }
 
     void setName(string name) { this->name = name; }
     void setType(string type) { this->type = type; }
     void setNext(SymbolInfo* next) { this->next = next; }
+	void setNode(ParseTreeNode* node) { this->node = node; }
 
 
     SymbolInfo(const SymbolInfo& other) :

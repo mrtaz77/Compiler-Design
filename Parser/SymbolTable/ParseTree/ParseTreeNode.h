@@ -25,7 +25,6 @@ class ParseTreeNode {
 	unsigned long definitionStart = 0;
 	LinkedList<ParseTreeNode*> parameters;
 
-
 	long arraySize;
 
 public:

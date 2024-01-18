@@ -19,16 +19,17 @@ parser implementation file*/
 	FILE *log_out, *error_out, *parse_tree_out;
 	extern FILE* yyin;
 	extern int yylineno;
+	extern unsigned long errorCount;
 
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
 	LinkedList<SymbolInfo*> ids;
+	LinkedList<ParseTreeNode*> idNodes;
 
 	string current_rule = "";
 
-	unsigned long syntaxErrorCount = 0; 
-
-	// TODO : Decide where the following declaration belongs
-	void yyerror(const char *error);
+	void yyerror(char* error) {
+		fprintf(log_out, "Error: %s\n", error);
+	}
 }
 
 %union { 
@@ -56,6 +57,8 @@ parser implementation file*/
 %type <parseTreeNode> variable expression logic_expression rel_expression simple_expression
 %type <parseTreeNode> term unary_expression factor argument_list arguments
 
+%start start
+
 /* Code in the parser header file and the parser implementation 
 file after the Bison-generated value and location types 
 (YYSTYPE and YYLTYPE in C), and token definitions */
@@ -81,8 +84,9 @@ file after the Bison-generated value and location types
 		fprintf(log_out,"%s\n",rule.c_str());
 	}
 
-	void yyerror(const char *error) {
-		fprintf(error_out,"%s\n",error);
+	void semanticError(string& error, unsigned long lineNo) {
+		errorCount++;
+		fprintf(error_out,"Line #%d: %s\n",lineNo,error.c_str());
 	}
 
 	void printParseTree(PTN* node) {
@@ -98,15 +102,19 @@ file after the Bison-generated value and location types
 		return node->getType().append(" : ").append(node->getName());
 	}
 
-	void insertSymbolsToTable() {
-		int currPos = ids.currPos();
-		ids.setToBegin();
-		for(int i=0;i<ids.length();i++){
-			table->insert(ids.getValue());
-			ids.next();
+	bool isParameterRedefined(SymbolInfo* id,PTN* idNode) {
+		for(unsigned long i = 0; i < idNodes.length(); i++) {
+			ids.setToPos(i);
+			if(ids.getValue()-getName() == id->getName()){
+				string error = "Redefinition of parameter \'" + id->getName() + "\'";
+				semanticError(error,idNode->getStartOfNode());
+				return true;
+			}
 		}
-		ids.setToPos(currPos);
+		return false;
 	}
+
+	
 }
 
 %%
@@ -117,6 +125,7 @@ start : program
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		printParseTree($$);
 		ids.clear();
+		table->~SymbolTable();
 	}
 	;
 
@@ -201,49 +210,85 @@ parameter_list : parameter_list COMMA type_specifier ID
 			initRule("parameter_list  : parameter_list COMMA type_specifier ID ");
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			auto idNode = new PTN(symbolToRule($4),@4.F_L);
+			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
+			if(!isParameterRefined($4,idNode)){
+				ids.pushBack(id);
+				idNodes.pushBack(idNode);
+			}
 		}
 		| parameter_list COMMA type_specifier
 		{
 			initRule("parameter_list : parameter_list COMMA type_specifier ");
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			auto idNode = new PTN(symbolToRule($4),@4.F_L);
+			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
+			ids.pushBack(id);
+			idNodes.pushBack(idNode);
 		}
 		| type_specifier ID
 		{
-			initRule("parameter_list COMMA type_specifier ");
+			initRule("parameter_list : type_specifier ID ");
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
+			if(!isParameterRefined($2,idNode)){
+				ids.pushBack(id);
+				idNodes.pushBack(idNode);
+			}
 		}
 		| type_specifier
 		{
-			initRule("parameter_list COMMA type_specifier ");
+			initRule("parameter_list : type_specifier ");
+			auto id = new SymbolInfo("","ID");
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
+
+			ids.pushBack(id);
+			idNodes.pushBack(idNode);
 		}
 		;
 
 compound_statement : LCURL statements RCURL
+	{
+		initRule("compound_statement : LCURL statement RCURL ");
+		auto lCurlNode = new PTN("LCURL : {",@1.F_L);
+		auto rCurlNode = new PTN("RCTURL : }",@3.F_L);
+	}
 	| LCURL RCURL
 	;
-
-{
-	// TODO  : Handle
-	// void as type_specifier error
-	// redeclaration of variable
-}
 
 var_declaration : type_specifier declaration_list SEMICOLON
 				{
 					initRule("var_declaration : type_specifier declaration_list SEMICOLON ");
 					auto semiColonNode = new PTN("SEMICOLON : ;",@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,$2,semiColonNode);
-					insertSymbolsToTable();
+					
+					for(unsigned long i = 0; i < ids.length(); i++) {
+						ids.setToPos(i);
+						idNodes.setToPos(i);
+						// printf("%d : %d\n",i,$1->getType());
+
+						if($1->getType() == 23) {
+							string error = "Variable or field \'" + ids.getValue()->getName() + "\' declared void";
+							semanticError(error,idNodes.getValue()->getStartOfNode());
+						}
+
+						bool isNewDeclaration = table->insert(ids.getValue());
+
+						if(!isNewDeclaration) {
+							string error = "Redeclaration of variable \'" + ids.getValue()->getName() + "\'";
+							semanticError(error,idNodes.getValue()->getStartOfNode());
+						}
+
+						idNodes.getValue()->setType($1->getType());
+					}
 				}
 				;
 
@@ -251,26 +296,27 @@ type_specifier	: INT
 		{
 			initRule("type_specifier	: INT ");
 			auto intNode = new PTN("INT : int",@1.F_L);
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,intNode);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(1,intNode);
+			$$->setType(Type_Spec::TYPE_INT);
 		}
 		| FLOAT
 		{
 			initRule("type_specifier	: FLOAT ");
 			auto floatNode = new PTN("FLOAT : int",@1.F_L);
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,floatNode);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(1,floatNode);
+			$$->setType(Type_Spec::TYPE_FLOAT);
 		}
 		| VOID
 		{
 			initRule("type_specifier	: VOID ");
 			auto voidNode = new PTN("VOID : void",@1.F_L);
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,voidNode);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(1,voidNode);
+			$$->setType(Type_Spec::TYPE_VOID);
 		}
 		;
-
-{
-	// TODO : Handle negative and fraction as array size
-}
-
 
 declaration_list : declaration_list COMMA ID
 				{
@@ -279,12 +325,14 @@ declaration_list : declaration_list COMMA ID
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,idNode);
 					ids.pushBack($3);
+					idNodes.pushBack(idNode);
 				}
 				| declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
 				{
 					initRule("declaration_list COMMA ID LSQUARE CONST_INT RSQUARE ");
 					auto commaNode = new PTN("COMMA : ,",@2.F_L);
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
+					idNode->setArraySize(stol($5->getName(), nullptr, 10));
 					auto lSquareNode = new PTN("LSQUARE : [",@4.F_L);
 					auto constIntNode = new PTN(symbolToRule($5),@5.F_L);
 					auto rSquareNode = new PTN("RQUARE : ]",@6.F_L);
@@ -292,25 +340,35 @@ declaration_list : declaration_list COMMA ID
 					->addChildrenToNode(6,$1,commaNode,idNode,lSquareNode,constIntNode,rSquareNode);
 					$3->setType("ARRAY");
 					ids.pushBack($3);
+					idNodes.pushBack(idNode);
 				}
 				| ID
 				{
 					initRule("declaration_list : ID ");
 					auto idNode = new PTN(symbolToRule($1),@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
+					
+					ids.clear();
+					idNodes.clear();
 					ids.pushBack($1);
+					idNodes.pushBack(idNode);
 				}
 				| ID LTHIRD CONST_INT RTHIRD
 				{
 					initRule("ID LSQUARE CONST_INT RSQUARE ");
 					auto idNode = new PTN(symbolToRule($1),@1.F_L);
+					idNode->setArraySize(stol($3->getName(), nullptr, 10));
 					auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
 					auto constIntNode = new PTN(symbolToRule($3),@3.F_L);
 					auto rSquareNode = new PTN("RQUARE : ]",@4.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 					->addChildrenToNode(4,idNode,lSquareNode,constIntNode,rSquareNode);
 					$1->setType("ARRAY");
+
+					ids.clear();
+					idNodes.clear();
 					ids.pushBack($1);
+					idNodes.pushBack(idNode);
 				}
 				;
 
@@ -432,44 +490,160 @@ variable : ID
 		;
 
 expression : logic_expression
+		{
+			initRule("expression : logic_expression ");
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+		}
 		| variable ASSIGNOP logic_expression
+		{
+			initRule("expression : variable ASSIGNOP logic_expression ");
+			auto assignopNode = new PTN("ASSIGNOP : =",@1.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,assignopNode,$3);
+		}
 		;
 
-logic_expression : rel_expression 	
+logic_expression : rel_expression
+				{
+					initRule("logic_expression : rel_expression ");
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+				}
 				| rel_expression LOGICOP rel_expression
+				{
+					initRule("logic_expression : rel_expression LOGICOP rel_expression ");
+					auto logicopNode = new PTN(symbolToNode($2),@2.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,logicopNode,$3);				
+				}
 				;
 
-rel_expression	: simple_expression
-		| simple_expression RELOP simple_expression
-		;
+rel_expression : simple_expression
+			{
+				initRule("rel_expression : simple_expression ");
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+			}
+			| simple_expression RELOP simple_expression
+			{
+				initRule("rel_expression : simple_expression RELOP simple_expression ");
+				auto relopNode = new PTN(symbolToNode($2),@2.F_L);
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,relopNode,$3);	
+			}
+			;
 
-simple_expression : term 
-				| simple_expression ADDOP term 
+simple_expression : term
+				{
+					initRule("simple_expression : term ");
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+				}
+				| simple_expression ADDOP term
+				{
+					initRule("simple_expression : simple_expression ADDOP term ");
+					auto addopNode = new PTN(symbolToNode($2),@2.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,addopNode,$3);
+				}
 				;
 
 term : unary_expression
+	{
+		initRule("term : unary_expression ");
+		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+	}
 	| term MULOP unary_expression
+	{
+		initRule("term : term MULOP unary_expression ");
+		auto mulopNode = new PTN(symbolToNode($2),@2.F_L);
+		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,mulopNode,$3);
+	}
 	;
 
 unary_expression : ADDOP unary_expression
+				{
+					initRule("unary_expression : ADDOP unary_expression ");
+					auto addopNode = new PTN(symbolToNode($1),@1.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,addopNode,$2);
+				}
 				| NOT unary_expression
+				{
+					initRule("NOT unary_expression ");
+					auto notNode = new PTN("NOT : !",@1.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,notNode,$2);
+				}
 				| factor
+				{
+					initRule("unary_expression : factor ");
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+				}
 				;
 
 factor : variable
+		{
+			initRule("factor : variable ");
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+		}
 		| ID LPAREN argument_list RPAREN
+		{
+			initRule("factor : ID LPAREN argument_list RPAREN ");
+			auto idNode = new PTN(symbolToRule($1),@1.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(4,idNode,lParenNode,$3,rParenNode);
+		}
 		| LPAREN expression RPAREN
-		| CONST_INT 
+		{
+			initRule("factor : LPAREN expression RPAREN ");
+			auto lParenNode = new PTN("LPAREN : (",@1.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@3.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(3,lParenNode,$2,rParenNode);
+		}
+		| CONST_INT
+		{
+			initRule("factor : CONST_INT ");
+			auto constIntNode = new PTN(symbolToNode($1),@1.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,constIntNode);
+		}
 		| CONST_FLOAT
-		| variable INCOP 
+		{
+			initRule("factor : CONST_FLOAT ");
+			auto constFloatNode = new PTN(symbolToNode($1),@1.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,constrFloatNode);
+		}
+		| variable INCOP
+		{
+			initRule("variable : INCOP ");
+			auto incopNode = new PTN(symbolToNode($2),@2.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,incopNode);
+		}
 		| variable DECOP
+		{
+			initRule("variable : DECOP ");
+			auto decopNode = new PTN(symbolToNode($2),@2.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,decopNode);
+		}
 		;
 
 argument_list : arguments
+			{
+				initRule("argument_list : arguments");
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+			}
+			|
+			{
+				initRule("argument_list : ");
+				$$ = new PTN(current_rule,@$.F_L,@$.L_L);
+			}
 			;
 
 arguments : arguments COMMA logic_expression
+		{
+			initRule("arguments : arguments COMMMA logic_expression");
+			auto commaNode = new PTN("COMMA : ,",@2.F_L);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,$3);
+		}
 		| logic_expression
+		{
+			initRule("arguments : logic_expression");
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+		}
 		;
 
 %%
@@ -492,7 +666,7 @@ int main(int argc,char *argv[])
 	size_t dotPosition = inputFileName.find_last_of('.');
 
 	if (dotPosition == string::npos || inputFileName.substr(dotPosition) != ".c") {
-	   cout << "Invalid file extension. Please provide a .c file." << endl;
+	   printf("Invalid file extension. Please provide a .c file.");
 	   exit(1);
 	}
 
@@ -510,15 +684,13 @@ int main(int argc,char *argv[])
 	yyparse();
 
 	fprintf(log_out,"Total lines: %d\n",yylineno);
-	fprintf(log_out,"Total errors: %d\n",syntaxErrorCount);
+	fprintf(log_out,"Total errors: %d\n",errorCount);
 
 	fclose(parse_tree_out);
 	fclose(error_out);
 	fclose(log_out);
 
 	fclose(yyin);
-
-	// table.~SymbolTable() ;
 
 	return 0;
 }

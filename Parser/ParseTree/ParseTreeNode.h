@@ -21,6 +21,8 @@ class ParseTreeNode {
 	Function_State state;
 	Type_Spec type;
 
+	long arraySize;
+
 public:
 
 	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0, ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
@@ -30,7 +32,8 @@ public:
 		sibling(sibling),
 		rule(rule),
 		state(Function_State::NOT_A_FUNCTION),
-		type(Type_Spec::NO_TYPE_SPECIFIED) {}
+		type(Type_Spec::NO_TYPE_SPECIFIED),
+		arraySize(-1) {}
 
 	ParseTreeNode(const ParseTreeNode& other) :
 		startOfNode(other.startOfNode), 
@@ -39,7 +42,8 @@ public:
 		sibling(other.sibling),
 		rule(other.rule),
 		state(other.state),
-		type(other.type) {}
+		type(other.type),
+		arraySize(other.arraySize) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -76,6 +80,14 @@ public:
 		return type;
 	}
 
+	bool isArray() const {
+		return arraySize > -1;
+	}
+
+	long getArraySize() const {
+		return arraySize;
+	}
+
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
     }
@@ -102,6 +114,10 @@ public:
 
 	void setType(Type_Spec newType) { 
 		type = newType;
+	}
+
+	void setArraySize(long newArraySize) {
+		arraySize = newArraySize;
 	}
 
 	ParseTreeNode* addChild(ParseTreeNode* child) {

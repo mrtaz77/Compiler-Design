@@ -28,19 +28,20 @@
 extern YYSTYPE yylval;
 extern SymbolTable *table;
 
-unsigned long lexicalErrorCount = 0;
-unsigned long lexicalWarningCount = 0;
+unsigned long errorCount = 0;
+unsigned long warningCount = 0;
 
 unsigned long startString = 0;
 unsigned long startComment = 0;
 
 extern FILE *log_out;
+extern FILE *error_out;
 // FILE *token_out;
 
 string stringLiteral = "";
 string buffer = "";
 
-void yyerror(char *);
+void yyerror(char* error);
 
 void writeToToken(string token){
 	// fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
@@ -106,8 +107,8 @@ void writeToFileChar(){
 }
 
 void writeErrorToLog(string error){
-	lexicalErrorCount++;
-	fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+	errorCount++;
+	fprintf(error_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
 }
 
 void checkIndentation(string indent){
@@ -128,11 +129,11 @@ void checkIndentation(string indent){
 
 
 	if(space > 0){
-		lexicalWarningCount++;
+		warningCount++;
 		fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
 	}
 	else if(tab != expectedTab){
-		lexicalWarningCount++;
+		warningCount++;
 		fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
 	}
 }
@@ -146,15 +147,6 @@ The column values remain unchanged */
 /* Since column positions are not needed
 for this parser, lines changing 
 them have been commented out */
-
-/* macro YY_USER_ACTION can be defined to 
-provide an action which is always executed
-prior to the matched rule's action */
-
-// #define YY_USER_ACTION yyloc->last_column += yyleng ;
-
-/* Here , whenever a rule is matched, YY_USER_ACTION moves the scanner
-pointer to the end of yytext */
 
 void resetCursorPosition() {
 	yylloc.first_line = yylloc.last_line;
@@ -403,7 +395,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 }
 
 <MULTI_LINE_COMMENT><<EOF>> {
-	lexicalErrorCount++;
+	errorCount++;
 	// fprintf(log_out,"Error at line# %d: UNFINISHED_COMMENT %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	startComment = 0;
@@ -431,7 +423,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) |
 <SINGLE_LINE_STRING>{BACKSLASH}([^\\'"abfnrtv0\xd\xa]) {
-	lexicalWarningCount++;
+	warningCount++;
 	// fprintf(log_out, "Line# %d: Warning, unknown escape sequence \'%s\' in string\n",yylineno,yytext);
 	buffer += yytext;
 	stringLiteral += yytext[yyleng - 1];
@@ -439,7 +431,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 <MULTI_LINE_STRING><<EOF>> |
 <SINGLE_LINE_STRING><<EOF>> {
-	lexicalErrorCount++;
+	errorCount++;
 	fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";
@@ -450,7 +442,7 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 <MULTI_LINE_STRING>{NEWLINE} |
 <SINGLE_LINE_STRING>{NEWLINE} {
 	yyless(0);
-	lexicalErrorCount++;
+	errorCount++;
 	// fprintf(log_out,"Error at line# %d: UNFINISHED_STRING %s\n",yylineno,buffer.c_str());
 	buffer = "";
 	stringLiteral = "";

@@ -4,8 +4,8 @@
 #include<cstring>
 #include<stdarg.h>
 
-#include"Enums/FunctionEnum.h"
 #include"Enums/DataEnum.h"
+#include"LinkedList/LinkedList.h"
 
 using namespace std;
 
@@ -18,8 +18,13 @@ class ParseTreeNode {
 
 	string rule;
 
-	Function_State state;
 	Type_Spec type;
+
+	bool functionDefined = false;
+	bool functionDeclared = false;
+	unsigned long definitionStart = 0;
+	LinkedList<ParseTreeNode*> parameters;
+
 
 	long arraySize;
 
@@ -31,7 +36,6 @@ public:
 		child(child),
 		sibling(sibling),
 		rule(rule),
-		state(Function_State::NOT_A_FUNCTION),
 		type(Type_Spec::NO_TYPE_SPECIFIED),
 		arraySize(-1) {}
 
@@ -41,8 +45,11 @@ public:
 		child(other.child),
 		sibling(other.sibling),
 		rule(other.rule),
-		state(other.state),
 		type(other.type),
+		functionDeclared(other.functionDeclared),
+		functionDefined(other.functionDefined),
+		definitionStart(other.definitionStart),
+		parameters(other.parameters),
 		arraySize(other.arraySize) {}
 
 	~ParseTreeNode() {
@@ -50,6 +57,7 @@ public:
         delete sibling;
 		startOfNode = 0;
 		endOfNode = 0;
+		parameters.clear();
     }
 
     unsigned long getStartOfNode() const {
@@ -72,13 +80,15 @@ public:
         return rule;
     }
 
-	Function_State getState() const { 
-		return state; 
-	}
-
 	Type_Spec getType() const { 
 		return type;
 	}
+
+	bool isFunctionDeclared() const { return functionDeclared; }
+	bool isFunctionDefined() const { return functionDefined; }
+	const LinkedList<ParseTreeNode*> getParameters() const { return parameters; }
+	int getNumParameters() const { return parameters.length(); }
+	unsigned long getDefinitionStart() const { return definitionStart; }
 
 	bool isArray() const {
 		return arraySize > -1;
@@ -108,16 +118,40 @@ public:
         rule = newRule;
     }
 
-	void setState(Function_State newState) {
-		state = newState;
-	}
-
 	void setType(Type_Spec newType) { 
 		type = newType;
 	}
 
+	void setDefinitionStart(unsigned long lineNo){
+		definitionStart = lineNo;
+	}
+
+	void setParameters(LinkedList<ParseTreeNode*> nodes) {
+		parameters = nodes;
+	}
+
 	void setArraySize(long newArraySize) {
 		arraySize = newArraySize;
+	}
+
+	void declareFunction(bool newFunctionDeclaration) {
+		functionDeclared = newFunctionDeclaration;
+	}
+
+	void defineFunction(unsigned long lineNo = 0) {
+		definitionStart = lineNo;
+		functionDefined = functionDeclared = true;
+	}
+
+	void addParameter(ParseTreeNode* node) {
+		parameters.pushBack(node);
+	}
+
+	void addParameters(LinkedList<ParseTreeNode*> nodes) {
+		for(unsigned long i = 0; i < nodes.length(); i++){
+			nodes.setToPos(i);
+			addParameter(nodes.getValue());
+		}
 	}
 
 	ParseTreeNode* addChild(ParseTreeNode* child) {

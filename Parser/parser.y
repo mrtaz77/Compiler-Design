@@ -24,6 +24,7 @@ parser implementation file*/
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
 	LinkedList<SymbolInfo*> ids;
 	LinkedList<ParseTreeNode*> idNodes;
+	ParseTreeNode *currentFunction;
 
 	string current_rule = "";
 
@@ -114,7 +115,41 @@ file after the Bison-generated value and location types
 		return false;
 	}
 
-	
+	void isAnyParameterUnnamed() {
+		for(unsigned long i = 0; i < ids.length(); i++) {
+			ids.setToPos(i);
+			idNodes.setToPos(i);
+			if(ids.getValue()->getName() == ""){
+				string error = "Unnamed parameter in line# " + to_string(idNodes.getValue()->getStartOfNode());
+				semanticError(error,idNodes.getValue()->getStartOfNode()); 
+			}
+		}
+	}
+
+	string getTypeName(Type_Spec type) {
+		switch(type) {
+			case Type_Spec::VOID: return "VOID";
+			case Type_Spec::TYPE_INT: return "INT";
+			case Type_Spec::TYPE_FLOAT: return "FLOAT";
+			default: return "NO_TYPE_SPECIFIED";
+		}
+	}
+
+	void insertFunction(SymbolInfo* id,PTN* idNode,Type_Spec type,bool isDefined = false) {
+		idNode->setType(type);
+		idNode->addParameters(idNodes);
+		idNode->declareFunction();
+
+		if(isDefined) {
+			idNode->defineFunction(idNode->getStartOfNode());
+
+			isAnyParameterUnnamed();
+		}
+
+		idNodes.clear();
+
+		id->setType("FUNCTION," + getTypeName(type));
+	}
 }
 
 %%

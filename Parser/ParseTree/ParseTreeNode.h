@@ -4,6 +4,9 @@
 #include<cstring>
 #include<stdarg.h>
 
+#include"Enums/FunctionEnum.h"
+#include"Enums/DataEnum.h"
+
 using namespace std;
 
 class ParseTreeNode {
@@ -15,6 +18,9 @@ class ParseTreeNode {
 
 	string rule;
 
+	Function_State state;
+	Type_Spec type;
+
 public:
 
 	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0, ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
@@ -22,14 +28,18 @@ public:
 		endOfNode(endOfNode), 
 		child(child),
 		sibling(sibling),
-		rule(rule) {}
+		rule(rule),
+		state(Function_State::NOT_A_FUNCTION),
+		type(Type_Spec::NO_TYPE_SPECIFIED) {}
 
 	ParseTreeNode(const ParseTreeNode& other) :
 		startOfNode(other.startOfNode), 
 		endOfNode(other.endOfNode), 
 		child(other.child),
 		sibling(other.sibling),
-		rule(other.rule) {}
+		rule(other.rule),
+		state(other.state),
+		type(other.type) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -58,6 +68,14 @@ public:
         return rule;
     }
 
+	Function_State getState() const { 
+		return state; 
+	}
+
+	Type_Spec getType() const { 
+		return type;
+	}
+
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
     }
@@ -77,6 +95,14 @@ public:
     void setRule(const string& newRule) {
         rule = newRule;
     }
+
+	void setState(Function_State newState) {
+		state = newState;
+	}
+
+	void setType(Type_Spec newType) { 
+		type = newType;
+	}
 
 	ParseTreeNode* addChild(ParseTreeNode* child) {
 		ParseTreeNode* itr = this->child;

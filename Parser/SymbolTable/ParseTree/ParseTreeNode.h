@@ -86,7 +86,7 @@ public:
 	bool isFunctionDeclared() const { return functionDeclared; }
 	bool isFunctionDefined() const { return functionDefined; }
 	const LinkedList<ParseTreeNode*> getParameters() const { return parameters; }
-	int getNumParameters() const { return parameters.length(); }
+	unsigned long getNumParameters() const { return parameters.length(); }
 	unsigned long getDefinitionStart() const { return definitionStart; }
 
 	bool isArray() const {

@@ -21,7 +21,7 @@ parser implementation file*/
 
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
 	LinkedList<SymbolInfo*> ids;
-	ParseTreeNode *currentFunction;
+	SymbolInfo *currentFunction = nullptr;
 
 	string current_rule = "";
 
@@ -74,6 +74,7 @@ file after the Bison-generated value and location types
 /* place for non-dependency functions */
 %code {
 	#define PTN ParseTreeNode
+	LinkedList<SymbolInfo*> parameters;
 
 	int yyparse(void);
 	int yylex(void);
@@ -84,7 +85,12 @@ file after the Bison-generated value and location types
 
 	void semanticError(string& error, unsigned long lineNo) {
 		errorCount++;
-		fprintf(error_out,"Line #%d: %s\n",lineNo,error.c_str());
+		fprintf(error_out,"Line# %d: %s\n",lineNo,error.c_str());
+	}
+
+	void syntaxError(string& error, unsigned long lineNo) {
+		errorCount++;
+		fprintf(error_out,"Line# %d: Syntax error at %s\n",lineNo,error.c_str());
 	}
 
 	void printParseTree(PTN* node) {
@@ -100,12 +106,13 @@ file after the Bison-generated value and location types
 		return node->getType().append(" : ").append(node->getName());
 	}
 
-	bool isParameterRedefined(SymbolInfo* id) {
-		for(unsigned long i = 0; i < ids.length(); i++) {
-			ids.setToPos(i);
-			if(ids.getValue()->getName() == id->getName()){
-				string error = "Redefinition of parameter \'" + id->getName() + "\'";
-				semanticError(error,id->getNode()->getStartOfNode());
+	bool isParameterRedefined(SymbolInfo* parameter) {
+		for(unsigned long i = 0; i < parameters.length(); i++) {
+			parameters.setToPos(i);
+			auto currParam = parameters.getValue();
+			if(currParam->getName() == parameter->getName()){
+				string error = "Redefinition of parameter \'" + parameter->getName() + "\'";
+				semanticError(error,parameter->getNode()->getStartOfNode());
 				return true;
 			}
 		}
@@ -113,44 +120,121 @@ file after the Bison-generated value and location types
 	}
 
 	void isAnyParameterUnnamed() {
-		for(unsigned long i = 0; i < ids.length(); i++) {
-			ids.setToPos(i)
-			if(ids.getValue()->getName() == ""){
-				string error = "Unnamed parameter in line# " + to_string(ids.getValue()->getNode()->getStartOfNode());
-				semanticError(error,ids.getValue()->getNode()->getStartOfNode()); 
+		for(unsigned long i = 0; i < parameters.length(); i++) {
+			parameters.setToPos(i);
+			auto currParam = parameters.getValue();
+			if(currParam->getName() == ""){
+				string error = "Unnamed parameter in line# " + to_string(currParam->getNode()->getStartOfNode());
+				semanticError(error,currParam->getNode()->getStartOfNode()); 
 			}
 		}
 	}
 
-	string functionType(Type_Spec type) {
+	string typeToString(Type_Spec type){
 		switch(type) {
-			case Type_Spec::VOID: return "FUNCTION,VOID";
-			case Type_Spec::TYPE_INT: return "FUNCTION,INT";
-			case Type_Spec::TYPE_FLOAT: return "FUNCTION,FLOAT";
+			case Type_Spec::VOID: return "VOID";
+			case Type_Spec::TYPE_INT: return "INT";
+			case Type_Spec::TYPE_FLOAT: return "FLOAT";
 			default: return "NO_TYPE_SPECIFIED";
 		}
 	}
 
-	void insertFunction(SymbolInfo* id,PTN* idNode,Type_Spec type,bool isDefined = false) {
-		currentFunction = idNode;
-		idNode->declareFunction();
-		idNode->addParameters(idNodes);
-		idNode->setType(type);
+	string functionType(Type_Spec type) {
+		string strType = "FUNCTION,";
+		strType.append(typeToString(type));
+		return strType;
+	}
 
-		if(isDefined) {
-			idNode->defineFunction(idNode->getStartOfNode());
-			isAnyParameterUnnamed();
+	void redeclarationAsDifferentSymbol(SymbolInfo* func){
+		auto node = func->getNode();
+		if(!node->isFunctionDeclared()){
+			string error = "\'" 
+							+ currentFunction->getName() 
+							+ "\' redeclared as different kind of symbol";
+			semanticError(error,currentFunction->getNode()->getStartOfNode());
+		}
+	}
+
+	void alreadDefined(SymbolInfo* func){
+		auto node = func->getNode();
+		if(node->isFunctionDefined()){
+			string error = "Redefinition of \'" 
+							+ func->getName() 
+							+ "\' previously defined at line " 
+							+ to_string(func->getDefinitionStart());
+			semanticError(error,currentFunction->getNode()->getStartOfNode());
+		}
+	}
+
+	void conflictingTypes(SymbolInfo* id) {
+		string error = "Conflicting types for \'"
+						+ id->getName() + "\'";
+		semanticError(error,id->getNode()->getStartOfNode());
+	}
+
+	void parameterTypeMismatch(SymbolInfo* func) {
+		auto currentParameters = currentFunction->getParameters();
+		auto prevParameters = func->getNode()->getParameters();
+
+		for(unsigned long i = 0 ; i < currentParameters; i++){
+			currentParameters.setToPos(i);
+			prevParameters.setToPos(i);
+
+			auto curr = currentParameters.getValue()->getNode()->getType();
+			auto prev = prevParameters.getValue()->getNode()->getType();
+
+			if(curr != prev){
+				string error = "Type mismatch for parameter " 
+								+ i 
+								+ " of \'"
+								+ func->getName() 
+								+ "\'";
+				semanticError(error,currentFunction->getNode()->getStartOfNode());
+			}
 		}
 
-		ids.clear();
-		idNodes.clear();
-		id->setType(functionType(type));
+		// reset declaration symbol if all ok
+		func->getNode()->setParameters(currentParameters);
+		currentFunction = func;
+	}
 
-		if(table->insert(id)) return;
+	void preProcessFunction(Type_Spec type,SymbolInfo* func) {
+		currentFunction = func;
+		func->setType(functionType(type));
+		auto funcNode = func->getNode();
+		funcNode->declareFunction();
+		funcNode->addParameters(parameters);
+		funcNode->setType(type);
+	}
 
+	void voidAsVariableType(SymbolInfo* id){
+		string error = "Variable or field \'" 
+						+ id->getName() 
+						+ "\' declared void";
+		semanticError(error,id->getNode()->getStartOfNode());
+	}
 
+	void insertFunction(Type_Spec type,SymbolInfo* func,bool defineNow = false) {
+		preProcessFunction(type,func);
+		if(defineNow) {
+			auto funcNode = func->getNode();
+			funcNode->defineFunction(funcNode->getStartOfNode());
+			isAnyParameterUnnamed();
+		}
+		if(table->insert(func))return;
 
+		auto prevFunction = table->lookUp(func->getName());
+		auto prevFuncNode = prevFunction->getNode();
 
+		if(!prevFuncNode->isFunctionDeclared())redeclarationAsDifferentSymbol(prevFunction);
+		else if(prevFuncNode->isFunctionDefined())alreadyDefined(prevFunction);
+		else {
+			if(!((prevFuncNode->getType() == type) && (prevFuncNode->getNumParameters() == funcNode->getNumParameters())))conflictingTypes(prevFunction);
+			else parameterTypeMismatch(prevFunction);
+		}
+
+		if(prevFunction->isFunctionDeclared() && defineNow)
+			prevFuncNode->defineFunction(currentFuction->getNode()->getStartOfNode());
 	}
 }
 
@@ -193,6 +277,11 @@ unit : var_declaration
 		initRule("unit : func_definition ");
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 	}
+	| error
+	{
+		initRule("unit : error ");
+		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+	}
 	;
 
 {
@@ -209,6 +298,8 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 			auto semiColonNode = new PTN("SEMICOLON : ;",@6.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(6,$1,idNode,lParenNode,$4,rParenNode,semiColonNode);
+			$$->setType($1->getType());
+			insertFunction($1->getType(),$2);
 		}
 		| type_specifier ID LPAREN RPAREN SEMICOLON
 		{
@@ -219,10 +310,16 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 			auto semiColonNode = new PTN("SEMICOLON : ;",@5.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(5,$1,idNode,lParenNode,rParenNode,semiColonNode);
+			$$->setType($1->getType());
+			insertFunction($1->getType(),$2);
 		}
 		;
 
-func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
+func_definition : type_specifier ID LPAREN parameter_list RPAREN
+		{
+			insertFunction($1->getType(),$2,true);
+		}
+		compound_statement
 		{
 			initRule("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement ");
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
@@ -231,7 +328,11 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statem
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(6,$1,idNode,lParenNode,$4,rParenNode,$6);
 		}
-		| type_specifier ID LPAREN RPAREN compound_statement
+		| type_specifier ID LPAREN RPAREN
+		{
+			insertFunction($1->getType(),$2,true);
+		}
+		compound_statement
 		{
 			initRule("func_definition : type_specifier ID LPAREN RPAREN compound_statement ");
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
@@ -250,21 +351,20 @@ parameter_list : parameter_list COMMA type_specifier ID
 			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
-			if(!isParameterRefined($4,idNode)){
-				$3->setNode(idNode);
-				ids.pushBack(id);
-			}
+			$4->setNode(idNode);
+			if(!isParameterRedefined($4))parameters.pushBack($4);
 		}
 		| parameter_list COMMA type_specifier
 		{
 			initRule("parameter_list : parameter_list COMMA type_specifier ");
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
-			auto idNode = new PTN(symbolToRule($4),@4.F_L);
+			auto id = new SymbolInfo("","ID");
+			auto idNode = new PTN(symbolToRule(id),@4.F_L);
 			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
-			idNode->setNode(idNode);
-			ids.pushBack(id);
+			id->setNode(idNode);
+			parameters.pushBack(id);
 		}
 		| type_specifier ID
 		{
@@ -273,22 +373,20 @@ parameter_list : parameter_list COMMA type_specifier ID
 			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
-			if(!isParameterRefined($2,idNode)){
-				ids.pushBack(id);
-				idNodes.pushBack(idNode);
-			}
+			parameters.clear();
+			if(!isParameterRedefined($2))parameters.pushBack($2);
 		}
 		| type_specifier
 		{
 			initRule("parameter_list : type_specifier ");
 			auto id = new SymbolInfo("","ID");
-			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			auto idNode = new PTN(symbolToRule(id),@2.F_L);
 			idNode->setType($1->getType());
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
-
-			ids.pushBack(id);
-			idNodes.pushBack(idNode);
+			id->setNode(idNode);
+			parameters.clear();
+			parameters.pushBack(id);
 		}
 		;
 
@@ -310,26 +408,31 @@ var_declaration : type_specifier declaration_list SEMICOLON
 					for(unsigned long i = 0; i < ids.length(); i++) {
 						ids.setToPos(i);
 						auto id = ids.getValue();
-						// printf("%d : %d\n",i,$1->getType());
 
-						if($1->getType() == 23) {
-							string error = "Variable or field \'" + id->getName() + "\' declared void";
-							semanticError(error,id->getNode()->getStartOfNode());
+						if($1->getType() == 23)voidAsVariableType(id);
+						else {
+							if(id->getType() != "ARRAY")id->setType($1->getType());
+							id->getNode()->setType($1->getType());
+							bool isNewDeclaration = table->insert(id);
+							bool isConflictingType = false;
+							if(!isNewDeclaration) {
+								auto prevId = table->lookUp(id->getName());
+								if(prevId->getType() == id->getType()){
+									if(prevId->getNode()->getType() == id->getNode()->getType()){
+										if(prevId->getArraySize() == id->getNode()->getArraySize());
+										else isConflictingType = true;
+									}
+									else isConflictingType = true;
+								}
+								else isConflictingType = true;
+								if(isConflictingType)conflictingTypes(id);
+							}
 						}
-
-						bool isNewDeclaration = table->insert(id);
-
-						if(!isNewDeclaration) {
-							string error = "Redeclaration of variable \'" + id->getName() + "\'";
-							semanticError(error,id->getNode()->getStartOfNode());
-						}
-
-						id->getNode()->setType($1->getType());
 					}
 				}
 				;
 
-type_specifier	: INT
+type_specifier : INT
 		{
 			initRule("type_specifier	: INT ");
 			auto intNode = new PTN("INT : int",@1.F_L);
@@ -699,8 +802,8 @@ int main(int argc,char *argv[])
 	size_t dotPosition = inputFileName.find_last_of('.');
 
 	if (dotPosition == string::npos || inputFileName.substr(dotPosition) != ".c") {
-	   printf("Invalid file extension. Please provide a .c file.");
-	   exit(1);
+		printf("Invalid file extension. Please provide a .c file.");
+		exit(1);
 	}
 
 	FILE *fin = fopen(argv[1],"r");

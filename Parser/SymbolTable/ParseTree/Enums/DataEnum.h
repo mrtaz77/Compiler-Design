@@ -2,9 +2,9 @@
 #include<iostream>
 using namespace std;
 
-// A tribute to NDC
+// NAT = NOT_A_TYPE
 typedef enum {
-	NO_TYPE_SPECIFIED = 12,
+	NAT = 12,
 	TYPE_INT = 01,
 	TYPE_FLOAT = 50,
 	TYPE_VOID = 23

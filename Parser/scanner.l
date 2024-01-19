@@ -289,11 +289,9 @@ UNFINISHED_CONST_CHAR '({PRINTABLE}?)|'({BACKSLASH}[\x20-\x7e]?)
 
 {CHAR} { writeToFileChar(); }
 
-{ID}  {
+{ID} {
 	writeToFile("ID");
-	auto symbol = table->lookUp(yytext);
-	if(symbol == nullptr)assignSymbolInfoToYYLVAL("ID");
-	else yylval.symbolInfo = symbol;
+	assignSymbolInfoToYYLVAL("ID");
 	return ID; 
 }
 

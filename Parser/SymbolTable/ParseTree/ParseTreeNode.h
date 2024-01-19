@@ -26,6 +26,7 @@ class ParseTreeNode {
 	LinkedList<ParseTreeNode*> parameters;
 
 	long arraySize;
+	string val;
 
 public:
 
@@ -35,8 +36,9 @@ public:
 		child(child),
 		sibling(sibling),
 		rule(rule),
-		type(Type_Spec::NO_TYPE_SPECIFIED),
-		arraySize(-1) {}
+		type(Type_Spec::NAT),
+		arraySize(-1),
+		val("") {}
 
 	ParseTreeNode(const ParseTreeNode& other) :
 		startOfNode(other.startOfNode), 
@@ -49,7 +51,8 @@ public:
 		functionDefined(other.functionDefined),
 		definitionStart(other.definitionStart),
 		parameters(other.parameters),
-		arraySize(other.arraySize) {}
+		arraySize(other.arraySize),
+		val(other.val) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -83,6 +86,8 @@ public:
 		return type;
 	}
 
+	string getVal() { return val; }
+
 	bool isFunctionDeclared() const { return functionDeclared; }
 	bool isFunctionDefined() const { return functionDefined; }
 	const LinkedList<ParseTreeNode*> getParameters() const { return parameters; }
@@ -90,7 +95,7 @@ public:
 	unsigned long getDefinitionStart() const { return definitionStart; }
 
 	bool isArray() const {
-		return arraySize > -1;
+		return arraySize >= 0;
 	}
 
 	long getArraySize() const {
@@ -126,12 +131,18 @@ public:
 	}
 
 	void setParameters(LinkedList<ParseTreeNode*> nodes) {
-		parameters = nodes;
+		parameters.clear();
+		for(unsigned long i = 0; i < nodes.length(); i++){
+			nodes.setToPos(i);
+			addParameter(nodes.getValue());
+		}
 	}
 
 	void setArraySize(long newArraySize) {
 		arraySize = newArraySize;
 	}
+
+	void setVal(string value) { val = value; }
 
 	void declareFunction(bool newFunctionDeclaration) {
 		functionDeclared = newFunctionDeclaration;

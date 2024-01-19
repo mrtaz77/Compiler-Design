@@ -26,7 +26,7 @@ parser implementation file*/
 	string current_rule = "";
 
 	void yyerror(char* error) {
-		fprintf(log_out, "Error: %s\n", error);
+		fprintf(log_out, "Error at line# %d : %s\n",yylineno, error);
 	}
 }
 
@@ -40,6 +40,9 @@ parser implementation file*/
 %token SEMICOLON COMMA 
 %token <symbolInfo> ID CONST_INT CONST_FLOAT 
 %token PRINTLN RETURN
+
+%nonassoc LOWER_THAN_ELSE_AS_IN_BOOK
+%nonassoc ELSE
 
 %right ASSIGNOP
 %left <symbolInfo> LOGICOP
@@ -260,14 +263,18 @@ file after the Bison-generated value and location types
 			else {
 				auto error = parameterTypeMismatch(prevFunction);
 				if(!error) {
+					if(definNow) {
+						prevFuncNode->defineFunction(currentFunction->getNode()->getStartOfNode());
+					}
+					else{
+						string error = "Redeclaration of function \'" + func->getName() + "\'";
+						semanticError(error,func->getNode()->getStartOfNode());
+					}
 					prevFuncNode->setParameters(func->getNode()->getParameters());
 					currentFunction = prevFunction;
 				}
 			}
-		}
-
-		if(prevFuncNode->isFunctionDeclared() && defineNow)
-			prevFuncNode->defineFunction(currentFunction->getNode()->getStartOfNode());
+		}	
 	}
 
 	void insertParametersToScope() {
@@ -318,10 +325,10 @@ file after the Bison-generated value and location types
 	}
 
 	Type_Spec typecast(Type_Spec type1, Type_Spec type2) {
-		if(type1 == Type_Spec::NAT || type2 == Type_Spec::NAT)return Type_Spec::NAT;
-		else if(type1 == Type_Spec::TYPE_VOID || type2 == Type_Spec::TYPE_VOID)return Type_Spec::TYPE_VOID;
+		if(type1 == Type_Spec::TYPE_VOID || type2 == Type_Spec::TYPE_VOID)return Type_Spec::TYPE_VOID;
 		else if(type1 == Type_Spec::TYPE_FLOAT || type2 == Type_Spec::TYPE_FLOAT)return Type_Spec::TYPE_FLOAT;
-		else return Type_Spec::TYPE_INT;
+		else if(type1 == Type_Spec::TYPE_INT || type2 == Type_Spec::TYPE_INT)return Type_Spec::TYPE_INT;
+		else return Type_Spec::NAT;
 	}
 
 	void printSymbolTable() {
@@ -337,7 +344,6 @@ start : program
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		printParseTree($$);
 		ids.clear();
-		// printSymbolTable();
 		table->~SymbolTable();
 	}
 	;
@@ -672,7 +678,7 @@ statement : var_declaration
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(7,forNode,lParenNode,$3,$4,$5,rParenNode,$7);
 		}
-		| IF LPAREN expression RPAREN statement
+		| IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE_AS_IN_BOOK
 		{
 			initRule("statement : IF LPAREN expression RPAREN statement ");
 			auto ifNode = new PTN("IF : if",@1.F_L,@1.F_L);
@@ -710,7 +716,8 @@ statement : var_declaration
 			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
 			auto semicolonNode = new PTN("SEMICOLON : ;",@5.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
-			->addChildrenToNode(5,printlnNode,lParenNode,idNode,rParenNode,$5,semicolonNode);				
+			->addChildrenToNode(5,printlnNode,lParenNode,idNode,rParenNode,$5,semicolonNode);
+			if(table->lookUp($3->getName()) == nullptr)undeclaredVariable($3);		
 		}
 		| RETURN expression SEMICOLON
 		{
@@ -764,12 +771,27 @@ expression : logic_expression
 		{
 			initRule("expression : logic_expression ");
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+			$$->setType($1->getType());
 		}
 		| variable ASSIGNOP logic_expression
 		{
 			initRule("expression : variable ASSIGNOP logic_expression ");
 			auto assignopNode = new PTN("ASSIGNOP : =",@1.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,assignopNode,$3);
+
+			if($1->getType() == 23 || $3->getType() == 23){
+				string error = "Void cannot be used in expression";
+				unsigned long lineNo;
+				if($1->getType() != 23) lineNo = @3.F_L;
+				else if($3->getType() != 23) lineNo = @1.F_L;
+				else lineNo = @$.F_L;
+				semanticError(error,lineNo);
+			}
+			else if($1->getType() == Type_Spec::TYPE_INT && $3->getType() == Type_Spec::TYPE_FLOAT) {
+				string error = "Warning: possible loss of data in assignment of FLOAT to INT";
+				semanticError(error,@1.F_L);
+			}
+			$$->setType($1->getType());
 		}
 		;
 
@@ -777,12 +799,17 @@ logic_expression : rel_expression
 				{
 					initRule("logic_expression : rel_expression ");
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+					$$->setType($1->getType());
 				}
 				| rel_expression LOGICOP rel_expression
 				{
 					initRule("logic_expression : rel_expression LOGICOP rel_expression ");
 					auto logicopNode = new PTN(symbolToNode($2),@2.F_L);
-					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,logicopNode,$3);				
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,logicopNode,$3);	
+					if($1->getType() == 23 || $3->getType() == 23){
+						$$-setType(Type_Spec::TYPE_VOID);
+					}
+				else $$->setType(Type_Spec::TYPE_INT);
 				}
 				;
 
@@ -815,7 +842,6 @@ simple_expression : term
 					initRule("simple_expression : simple_expression ADDOP term ");
 					auto addopNode = new PTN(symbolToNode($2),@2.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,addopNode,$3);
-					if($3->getType() == 23)$$->setType(Type_Spec::TYPE::VOID);
 					$$->setType(typecast($1->getType(),$3->getType()));
 				}
 				;
@@ -838,7 +864,7 @@ term : unary_expression
 				string error = "Operands of modulus must be integers ";
 				semanticError(error,@$.F_L);
 			}
-			$$->setType(Type_Spec::TYPE_NAT);
+			$$->setType(Type_Spec::NAT);
 		}
 		if($2->getName() == "%" || $2->getName() == "/") {
 			if(atof($3->getValue() == 0)){
@@ -854,14 +880,14 @@ unary_expression : ADDOP unary_expression
 					initRule("unary_expression : ADDOP unary_expression ");
 					auto addopNode = new PTN(symbolToNode($1),@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,addopNode,$2);
-					$$->setType($1->getType());
+					$$->setType($2->getType());
 				}
 				| NOT unary_expression
 				{
 					initRule("NOT unary_expression ");
 					auto notNode = new PTN("NOT : !",@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,notNode,$2);
-					$$->setType($1->getType());
+					$$->setType($2->getType());
 				}
 				| factor
 				{
@@ -1036,6 +1062,8 @@ int main(int argc,char *argv[])
 
 	yyin = fin;
 	yyparse();
+
+	// printSymbolTable();
 
 	fprintf(log_out,"Total lines: %d\n",yylineno);
 	fprintf(log_out,"Total errors: %d\n",errorCount);

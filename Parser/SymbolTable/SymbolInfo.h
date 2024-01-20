@@ -10,13 +10,14 @@ class SymbolInfo{
     string name;
     string type;
     SymbolInfo* next;
-	ParseTreeNode* node = nullptr;
+	ParseTreeNode* node;
 
 public:
-    SymbolInfo(string name = "", string type = "",SymbolInfo* next = nullptr) :
+    SymbolInfo(string name = "", string type = "",SymbolInfo* next = nullptr,ParseTreeNode* node = nullptr) :
         name(name),
         type(type),
-        next(next) { }
+        next(next),
+		node(node) { }
 
     string getName() const { return name; }
     string getType() const { return type; }
@@ -32,7 +33,8 @@ public:
     SymbolInfo(const SymbolInfo& other) :
         name(other.name), 
         type(other.type), 
-        next(other.next) { }
+        next(other.next),
+		node(other.node) { }
 
     ~SymbolInfo() {
     }
@@ -40,7 +42,8 @@ public:
     void operator=(const SymbolInfo& other) { 
         name = other.name; 
         type = other.type; 
-        next = other.next; 
+        next = other.next;
+		node = other.node;
     }
 
     bool operator==(const SymbolInfo& other) const { return name == other.name ; }

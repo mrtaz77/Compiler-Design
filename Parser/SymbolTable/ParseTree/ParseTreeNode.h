@@ -3,9 +3,9 @@
 #include<iostream>
 #include<cstring>
 #include<stdarg.h>
+#include<vector>
 
 #include"Enums/DataEnum.h"
-#include"LinkedList/LinkedList.h"
 
 using namespace std;
 
@@ -22,8 +22,7 @@ class ParseTreeNode {
 
 	bool functionDefined = false;
 	bool functionDeclared = false;
-	unsigned long definitionStart = 0;
-	LinkedList<ParseTreeNode*> parameters;
+	vector<ParseTreeNode*> parameters;
 
 	long arraySize;
 	string val;
@@ -49,7 +48,6 @@ public:
 		type(other.type),
 		functionDeclared(other.functionDeclared),
 		functionDefined(other.functionDefined),
-		definitionStart(other.definitionStart),
 		parameters(other.parameters),
 		arraySize(other.arraySize),
 		val(other.val) {}
@@ -90,9 +88,8 @@ public:
 
 	bool isFunctionDeclared() const { return functionDeclared; }
 	bool isFunctionDefined() const { return functionDefined; }
-	const LinkedList<ParseTreeNode*> getParameters() const { return parameters; }
-	unsigned long getNumParameters() const { return parameters.length(); }
-	unsigned long getDefinitionStart() const { return definitionStart; }
+	vector<ParseTreeNode*> getParameters() { return parameters; }
+	unsigned long getNumParameters() const { return parameters.size(); }
 
 	bool isArray() const {
 		return arraySize >= 0;
@@ -126,16 +123,8 @@ public:
 		type = newType;
 	}
 
-	void setDefinitionStart(unsigned long lineNo){
-		definitionStart = lineNo;
-	}
-
-	void setParameters(LinkedList<ParseTreeNode*> nodes) {
-		parameters.clear();
-		for(unsigned long i = 0; i < nodes.length(); i++){
-			nodes.setToPos(i);
-			addParameter(nodes.getValue());
-		}
+	void setParameters(vector<ParseTreeNode*> parameters) {
+		this->parameters = parameters;
 	}
 
 	void setArraySize(long newArraySize) {
@@ -148,19 +137,17 @@ public:
 		functionDeclared = newFunctionDeclaration;
 	}
 
-	void defineFunction(unsigned long lineNo = 0) {
-		definitionStart = lineNo;
-		functionDefined = functionDeclared = true;
+	void defineFunction(bool newFunctionDefination) {
+		functionDefined = functionDeclared = newFunctionDefination;
 	}
 
 	void addParameter(ParseTreeNode* node) {
-		parameters.pushBack(node);
+		parameters.push_back(node);
 	}
 
-	void addParameters(LinkedList<ParseTreeNode*> nodes) {
-		for(unsigned long i = 0; i < nodes.length(); i++){
-			nodes.setToPos(i);
-			addParameter(nodes.getValue());
+	void addParameters(vector<ParseTreeNode*> nodes) {
+		for(unsigned long i = 0; i < nodes.size(); i++){
+			addParameter(nodes[i]);
 		}
 	}
 

@@ -13,5 +13,5 @@ echo 'Generated the scanner object file'
 g++ y.o l.o -lfl -o parser
 echo 'All ready, running'
 ./parser input.c
-rm y.o l.o
+rm y.o l.o parser
 rm parser.tab.c parser.tab.h lex.yy.c

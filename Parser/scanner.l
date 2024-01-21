@@ -34,13 +34,12 @@ unsigned long startString = 0;
 unsigned long startComment = 0;
 
 extern FILE *log_out;
-extern FILE *error_out;
 // FILE *token_out;
 
 string stringLiteral = "";
 string buffer = "";
 
-void yyerror(char* error);
+void yyerror(char *error);
 
 void writeToToken(string token){
 	// fprintf(token_out,"<%s, %s>\n",token.c_str(),yytext);
@@ -107,7 +106,7 @@ void writeToFileChar(){
 
 void writeErrorToLog(string error){
 	errorCount++;
-	fprintf(error_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
+	fprintf(log_out,"Error at line# %d: %s %s\n",yylineno,error.c_str(),yytext); 
 }
 
 void checkIndentation(string indent){
@@ -149,11 +148,11 @@ them have been commented out */
 
 void resetCursorPosition() {
 	yylloc.first_line = yylloc.last_line;
-	// yylloc->first_column = yylloc->last_column; 
+	// yylloc.first_column = yylloc.last_column; 
 }
 
 void adjustYYLLOC() {
-	// yylloc->last_column = 1;
+	// yylloc.last_column = 1;
 	yylloc.last_line = yylineno;
 	resetCursorPosition();
 }

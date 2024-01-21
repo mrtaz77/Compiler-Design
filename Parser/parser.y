@@ -24,8 +24,8 @@ parser implementation file*/
 
 	string current_rule = "";
 
-	void yyerror(char* error) {
-		fprintf(log_out, "Error at line# %d : %s\n",yylineno, error);
+	void yyerror(char *error) {
+		fprintf(log_out, "Error at line no %d : syntax error\n",yylineno);
 	}
 }
 
@@ -59,6 +59,9 @@ parser implementation file*/
 %right NOT
 %right INCOP DECOP
 
+%destructor { if($$ != nullptr)$$->~ParseTreeNode();} <parseTreeNode>
+%destructor { if($$ != nullptr)$$->~SymbolInfo();} <symbolInfo>
+
 /* Code in the parser header file and the parser implementation 
 file after the Bison-generated value and location types 
 (YYSTYPE and YYLTYPE in C), and token definitions */
@@ -77,6 +80,7 @@ file after the Bison-generated value and location types
 %code {
 	#define PTN ParseTreeNode
 	vector<SymbolInfo*> ids,parameters;
+	bool parameterRedefined = false;
 
 	int yyparse(void);
 	int yylex(void);
@@ -99,6 +103,11 @@ file after the Bison-generated value and location types
 		writeRuleToLog(current_rule);
 	}
 
+	void initError(char* error,int lineNo) {
+		errorCount++;
+		fprintf(error_out,"Line# %d: Syntax error at %s\n",lineNo,error);
+	}
+
 	string symbolToRule(SymbolInfo* node){
 		return node->getType().append(" : ").append(node->getName());
 	}
@@ -107,6 +116,7 @@ file after the Bison-generated value and location types
 		for(unsigned long i = 0; i < parameters.size(); i++) {
 			auto currParam = parameters[i];
 			if(currParam->getName() == parameter->getName()){
+				parameterRedefined = true;
 				string error = "Redefinition of parameter \'" + parameter->getName() + "\'";
 				semanticError(error,parameter->getNode()->getStartOfNode());
 				return true;
@@ -153,10 +163,9 @@ file after the Bison-generated value and location types
 	void alreadyDefined(SymbolInfo* func){
 		auto node = func->getNode();
 		if(node->isFunctionDefined()){
-			string error = "Redefinition of \'" 
+			string error = "Redefinition of function \'" 
 							+ func->getName() 
-							+ "\' previously defined at line " 
-							+ to_string(func->getNode()->getStartOfNode());
+							+ "\'" ;
 			semanticError(error,currentFunction->getNode()->getStartOfNode());
 		}
 	}
@@ -202,7 +211,6 @@ file after the Bison-generated value and location types
 
 
 			if(currType != prevType) {
-				// cout << curr[i]->getRule() << " <-> " << prev[i]->getRule() << endl;
 				string error = "Type mismatch for argument "
 							+ to_string(i+1) + " of \'"
 							+ prevFunction->getName() + "\'";
@@ -236,8 +244,8 @@ file after the Bison-generated value and location types
 			funcNode->defineFunction(true);
 			isAnyParameterUnnamed();
 		}
-
 		parameters.clear();
+		parameterRedefined = false;
 		if(table->lookUp(func->getName()) == nullptr) {
 			if(!defineNow)table->insert(func);
 			return;
@@ -245,7 +253,6 @@ file after the Bison-generated value and location types
 
 		auto prevFunction = table->lookUp(func->getName());
 		auto prevFuncNode = prevFunction->getNode();
-
 
 		if(!prevFuncNode->isFunctionDeclared())redeclarationAsDifferentSymbol(prevFunction);
 		else if(prevFuncNode->isFunctionDefined())alreadyDefined(prevFunction);
@@ -256,6 +263,7 @@ file after the Bison-generated value and location types
 				if(!error) {
 					if(defineNow) {
 						prevFuncNode->defineFunction(true);
+						prevFuncNode->setParameters(func->getNode()->getParameters());
 						currentFunction = prevFunction;
 					}
 					else{
@@ -289,6 +297,16 @@ file after the Bison-generated value and location types
 		}
 	}
 
+	void insertParametersForErrorRecovery() {
+		for(int i = 0; i < parameters.size() ; i++) {
+			auto symbol = parameters[i];
+			if(symbol->getName() == "")symbol->setName("NN");
+			symbol->setType(typeToString(symbol->getNode()->getType()));
+			table->insert(symbol);
+		}
+		parameters.clear();
+	}
+
 	void undeclaredVariable(SymbolInfo* id) {
 		string error = "Undeclared variable \'" 
 					+ id->getName() + "\'";
@@ -305,7 +323,7 @@ file after the Bison-generated value and location types
 	SymbolInfo* validVariable(SymbolInfo* id) {
 		auto prevId = table->lookUp(id->getName());
 		if(prevId == nullptr)undeclaredVariable(id);
-		else if(prevId->getNode()->isFunctionDeclared())variableTypeMisMatch(id," an id of valid type");
+		else if(prevId->getNode()->isFunctionDeclared())variableTypeMisMatch(id,"an id of valid type");
 		return prevId;
 	}
 
@@ -329,6 +347,47 @@ file after the Bison-generated value and location types
 
 	void printSymbolTable() {
 		fprintf(log_out,"%s",table->printAllScopes().c_str());
+	}
+
+	void insertVariables(Type_Spec type){
+		for(unsigned long i = 0; i < ids.size(); i++) {
+			auto id = ids[i];
+			if(type == 23)voidAsVariableType(id);
+			else {
+				if(id->getType() != "ARRAY")id->setType(typeToString(type));
+				id->getNode()->setType(type);
+				bool isNewDeclaration = table->insert(id);
+				bool isConflictingType = false;
+				if(!isNewDeclaration) {
+					auto prevId = table->lookUp(id->getName());
+					if(prevId->getType() == id->getType()){
+						if(prevId->getNode()->getType() == id->getNode()->getType()){
+							if(prevId->getNode()->getArraySize() == id->getNode()->getArraySize()){
+								string error = "Redeclaration of variable \'" + id->getName() + "\'";
+								semanticError(error,id->getNode()->getStartOfNode());
+								prevId->getNode()->setStartOfNode(id->getNode()->getStartOfNode());
+							}
+							else isConflictingType = true;
+						}
+						else isConflictingType = true;
+					}
+					else isConflictingType = true;
+					if(isConflictingType)conflictingTypes(id);
+				}
+			}
+		}
+	}
+
+	bool arrayAsOperands(PTN* node1, PTN* node2,SymbolInfo* op){
+		auto isArr1 = node1->isArray();
+		auto isArr2 = node2->isArray();
+		if(isArr1||isArr2) {
+			string error = "Invalid array type operands to operator \'" 
+							+ op->getName() + "\'";
+			semanticError(error,yylineno);
+			return true;
+		}
+		return false;
 	}
 }
 
@@ -400,6 +459,28 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 			->addChildrenToNode(5,$1,idNode,lParenNode,rParenNode,semiColonNode);
 			$$->setType($1->getType());
 		}
+		| type_specifier ID LPAREN parameter_list error RPAREN SEMICOLON
+		{
+			initError("parameter list of function declaration",@$.F_L);
+			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
+			auto errorNode = new PTN("parameter_list : error",$4->getStartOfNode());
+			auto rParenNode = new PTN("RPAREN : )",@6.F_L);
+			auto semiColonNode = new PTN("SEMICOLON : ;",@7.F_L);
+			$$ = (new PTN("type_specifier ID LPAREN parameter_list RPAREN SEMICOLON ",@$.F_L,@$.L_L))
+			->addChildrenToNode(6,$1,idNode,lParenNode,errorNode,rParenNode,semiColonNode);
+		}
+		| type_specifier ID LPAREN error RPAREN SEMICOLON
+		{
+			initError("parameter list of function declaration",@$.F_L);
+			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
+			auto errorNode = new PTN("parameter_list : error",@4.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@5.F_L);
+			auto semiColonNode = new PTN("SEMICOLON : ;",@6.F_L);
+			$$ = (new PTN("type_specifier ID LPAREN RPAREN SEMICOLON ",@$.F_L,@$.L_L))
+			->addChildrenToNode(6,$1,idNode,lParenNode,errorNode,rParenNode,semiColonNode);
+		}
 		;
 
 func_definition : type_specifier ID LPAREN parameter_list RPAREN {
@@ -428,6 +509,27 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(5,$1,$2->getNode(),lParenNode,rParenNode,$6);
 			$$->setType($1->getType());
+			table->insert($2);
+		}
+		| type_specifier ID LPAREN parameter_list error RPAREN compound_statement
+		{
+			initError("parameter list of function definition",@$.F_L);
+			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
+			auto errorNode = new PTN("parameter_list : error",$4->getStartOfNode());
+			auto rParenNode = new PTN("RPAREN : )",@6.F_L);
+			$$ = (new PTN("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement ",@$.F_L,@$.L_L))
+			->addChildrenToNode(6,$1,idNode,lParenNode,errorNode,rParenNode,$7);
+		}
+		| type_specifier ID LPAREN error RPAREN compound_statement
+		{
+			initError("parameter list of function definition",@$.F_L);
+			auto idNode = new PTN(symbolToRule($2),@2.F_L);
+			auto lParenNode = new PTN("LPAREN : (",@3.F_L);
+			auto errorNode = new PTN("parameter_list : error",@4.F_L);
+			auto rParenNode = new PTN("RPAREN : )",@5.F_L);
+			$$ = (new PTN("func_definition : type_specifier ID LPAREN RPAREN compound_statement ",@$.F_L,@$.L_L))
+			->addChildrenToNode(6,$1,idNode,lParenNode,errorNode,rParenNode,$6);
 		}
 		;
 
@@ -440,7 +542,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			$4->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
-			if(!isParameterRedefined($4))parameters.push_back($4);
+			if(!isParameterRedefined($4) && !parameterRedefined)parameters.push_back($4);
 		}
 		| parameter_list COMMA type_specifier
 		{
@@ -463,7 +565,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
 			parameters.clear();
-			if(!isParameterRedefined($2))parameters.push_back($2);
+			parameters.push_back($2);
 		}
 		| type_specifier
 		{
@@ -481,7 +583,8 @@ parameter_list : parameter_list COMMA type_specifier ID
 
 compound_statement : LCURL {
 		table->enterScope();
-		insertParametersToScope();
+		if(currentFunction != nullptr)insertParametersToScope();
+		else insertParametersForErrorRecovery();
 	} statements RCURL
 	{
 		initRule("compound_statement : LCURL statements RCURL ");
@@ -491,21 +594,20 @@ compound_statement : LCURL {
 		->addChildrenToNode(3,lCurlNode,$3,rCurlNode);
 		printSymbolTable();
 		table->exitScope();
-		table->insert(currentFunction);
 	}
 	| LCURL {
 		table->enterScope();
-		insertParametersToScope();
+		if(currentFunction != nullptr)insertParametersToScope();
+		else insertParametersForErrorRecovery();
 	} RCURL
 	{
-		initRule("compound_statement : LCURL statement RCURL ");
+		initRule("compound_statement : LCURL RCURL ");
 		auto lCurlNode = new PTN("LCURL : {",@1.F_L);
 		auto rCurlNode = new PTN("RCURL : }",@3.F_L);
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 		->addChildrenToNode(2,lCurlNode,rCurlNode);
 		printSymbolTable();
 		table->exitScope();
-		table->insert(currentFunction);
 	}
 	;
 
@@ -514,33 +616,24 @@ var_declaration : type_specifier declaration_list SEMICOLON
 					initRule("var_declaration : type_specifier declaration_list SEMICOLON ");
 					auto semiColonNode = new PTN("SEMICOLON : ;",@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,$2,semiColonNode);
-					for(unsigned long i = 0; i < ids.size(); i++) {
-						auto id = ids[i];
-
-						if($1->getType() == 23)voidAsVariableType(id);
-						else {
-							if(id->getType() != "ARRAY")id->setType(typeToString($1->getType()));
-							id->getNode()->setType($1->getType());
-							bool isNewDeclaration = table->insert(id);
-							bool isConflictingType = false;
-							if(!isNewDeclaration) {
-								auto prevId = table->lookUp(id->getName());
-								if(prevId->getType() == id->getType()){
-									if(prevId->getNode()->getType() == id->getNode()->getType()){
-										if(prevId->getNode()->getArraySize() == id->getNode()->getArraySize()){
-											string error = "Redeclaration of variable \'" + id->getName() + "\'";
-											semanticError(error,id->getNode()->getStartOfNode());
-											prevId->getNode()->setStartOfNode(id->getNode()->getStartOfNode());
-										}
-										else isConflictingType = true;
-									}
-									else isConflictingType = true;
-								}
-								else isConflictingType = true;
-								if(isConflictingType)conflictingTypes(id);
-							}
-						}
-					}
+					insertVariables($1->getType());
+				}
+				| type_specifier declaration_list error SEMICOLON
+				{
+					initError("declaration list of variable declaration",@$.F_L);
+					auto errorNode = new PTN("declaration_list : error",$2->getStartOfNode());
+					auto semiColonNode = new PTN("SEMICOLON : ;",@4.F_L);
+					$$ = (new PTN("var_declaration : type_specifier declaration_list SEMICOLON ",@$.F_L,@$.L_L))
+					->addChildrenToNode(3,$1,errorNode,semiColonNode);
+					insertVariables($1->getType());
+				}
+				| type_specifier error SEMICOLON
+				{
+					initError("declaration list of variable declaration",@$.F_L);
+					auto errorNode = new PTN("declaration_list : error",@2.F_L);
+					auto semiColonNode = new PTN("SEMICOLON : ;",@3.F_L);
+					$$ = (new PTN("var_declaration : type_specifier declaration_list SEMICOLON ",@$.F_L,@$.L_L))
+					->addChildrenToNode(3,$1,errorNode,semiColonNode);
 				}
 				;
 
@@ -628,7 +721,8 @@ statements : statement
 		| statements statement
 		{
 			initRule("statements : statements statement ");
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,$2);
+			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+			->addChildrenToNode(2,$1,$2);
 		}
 		;
 
@@ -718,6 +812,14 @@ expression_statement : SEMICOLON
 						auto semicolonNode = new PTN("SEMICOLON : ;",@2.F_L);
 						$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,$1,semicolonNode);
 					}
+					| error SEMICOLON
+					{
+						initError("expression of expression statement",@$.F_L);
+						auto errorNode = new PTN("expression : error",@1.F_L);
+						auto semicolonNode = new PTN("SEMICOLON : ;",@2.F_L);
+						$$ = (new PTN("expression_statement : expression SEMICOLON ",@$.F_L,@$.L_L))
+						->addChildrenToNode(2,errorNode,semicolonNode);
+					}
 					;
 
 variable : ID
@@ -727,7 +829,10 @@ variable : ID
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 			auto prevId = validVariable($1);
 			if(!prevId)$$->setType(Type_Spec::NAT);
-			else $$->setType(prevId->getNode()->getType());
+			else {
+				$$->setType(prevId->getNode()->getType());
+				$$->setArraySize(prevId->getNode()->getArraySize());
+			} 
 		}
 		| ID LTHIRD expression RTHIRD
 		{
@@ -742,6 +847,19 @@ variable : ID
 			else $$->setType(prevId->getNode()->getType());
 			if($3->getType() != 01)invalidArraySubscript($3);
 		}
+		| ID LTHIRD error RTHIRD
+		{
+			initError("array subscript of variable",@3.F_L);
+			auto idNode = new PTN(symbolToRule($1),@1.F_L);
+			auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
+			auto errorNode = new PTN("expression : error",@3.F_L);
+			auto rSquareNode = new PTN("RSQUARE : ]",@4.F_L);
+			$$ = (new PTN("variable : ID LSQUARE expression RSQUARE ",@$.F_L,@$.L_L))
+			->addChildrenToNode(4,idNode,lSquareNode,errorNode,rSquareNode);
+			auto prevId = validArray($1);
+			if(!prevId)$$->setType(Type_Spec::NAT);
+			else $$->setType(prevId->getNode()->getType());
+		}
 		;
 
 expression : logic_expression
@@ -749,6 +867,7 @@ expression : logic_expression
 			initRule("expression : logic_expression ");
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 			$$->setType($1->getType());
+			$$->setArraySize($1->getArraySize());
 		}
 		| variable ASSIGNOP logic_expression
 		{
@@ -768,6 +887,7 @@ expression : logic_expression
 				string error = "Warning: possible loss of data in assignment of FLOAT to INT";
 				semanticError(error,@1.F_L);
 			}
+			arrayAsOperands($1,$3,new SymbolInfo("=","ASSIGNOP"));
 			$$->setType($1->getType());
 		}
 		;
@@ -777,6 +897,7 @@ logic_expression : rel_expression
 					initRule("logic_expression : rel_expression ");
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
+					$$->setArraySize($1->getArraySize());
 				}
 				| rel_expression LOGICOP rel_expression
 				{
@@ -787,6 +908,7 @@ logic_expression : rel_expression
 						$$->setType(Type_Spec::TYPE_VOID);
 					}
 					else $$->setType(Type_Spec::TYPE_INT);
+					if(arrayAsOperands($1,$3,$2))$$->setType(Type_Spec::NAT);
 				}
 				;
 
@@ -795,6 +917,7 @@ rel_expression : simple_expression
 				initRule("rel_expression : simple_expression ");
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 				$$->setType($1->getType());
+				$$->setArraySize($1->getArraySize());
 			}
 			| simple_expression RELOP simple_expression
 			{
@@ -805,6 +928,7 @@ rel_expression : simple_expression
 					$$->setType(Type_Spec::TYPE_VOID);
 				}
 				else $$->setType(Type_Spec::TYPE_INT);
+				if(arrayAsOperands($1,$3,$2))$$->setType(Type_Spec::NAT);
 			}
 			;
 
@@ -813,6 +937,7 @@ simple_expression : term
 					initRule("simple_expression : term ");
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
+					$$->setArraySize($1->getArraySize());
 				}
 				| simple_expression ADDOP term
 				{
@@ -820,7 +945,7 @@ simple_expression : term
 					auto addopNode = new PTN(symbolToRule($2),@2.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,addopNode,$3);
 					$$->setType(typecast($1->getType(),$3->getType()));
-					// cout  << typeToString($$->getType()) << endl;
+					if(arrayAsOperands($1,$3,$2))$$->setType(Type_Spec::NAT);
 				}
 				;
 
@@ -829,6 +954,7 @@ term : unary_expression
 		initRule("term : unary_expression ");
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		$$->setType($1->getType());
+		$$->setArraySize($1->getArraySize());
 	}
 	| term MULOP unary_expression
 	{
@@ -850,6 +976,7 @@ term : unary_expression
 				semanticError(error,@3.F_L);
 			}
 		}
+		if(arrayAsOperands($1,$3,$2))$$->setType(Type_Spec::NAT);
 	}
 	;
 
@@ -859,6 +986,7 @@ unary_expression : ADDOP unary_expression
 					auto addopNode = new PTN(symbolToRule($1),@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,addopNode,$2);
 					$$->setType($2->getType());
+					$$->setArraySize($2->getArraySize());
 				}
 				| NOT unary_expression
 				{
@@ -866,6 +994,7 @@ unary_expression : ADDOP unary_expression
 					auto notNode = new PTN("NOT : !",@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,notNode,$2);
 					$$->setType($2->getType());
+					$$->setArraySize($2->getArraySize());
 				}
 				| factor
 				{
@@ -873,6 +1002,7 @@ unary_expression : ADDOP unary_expression
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
 					$$->setVal($1->getVal());
+					$$->setArraySize($1->getArraySize());
 				}
 				;
 
@@ -979,6 +1109,14 @@ argument_list : arguments
 			{
 				initRule("argument_list : arguments");
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
+				$$->setParameters($1->getParameters());
+			}
+			| arguments error
+			{
+				initError("arguments of argument list",@1.F_L);
+				auto errorNode = new PTN("arguments : error",$1->getStartOfNode());
+				$$ = (new PTN("argument_list : arguments ",@$.F_L,@$.L_L))
+				->addChildrenToNode(1,errorNode);
 				$$->setParameters($1->getParameters());
 			}
 			|

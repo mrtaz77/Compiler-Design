@@ -20,7 +20,7 @@ Road to a working c++ compiler
 	- [Specification](/Specifications/CSE310_July_2023_YACC_Assignment_Spec.pdf)
 	- [Grammar rules](/Specifications/BisonAssignmentGrammar.PDF)
 	- Useful Links
-		- **Usage YYLTYPE yyloc**
+		- **Usage YYLTYPE yylloc**
 			- [Location Type](https://www.gnu.org/software/bison/manual/html_node/Location-Type.html)
 		- **Usage %code**
 			- [Prologue alternatives](https://www.gnu.org/software/bison/manual/html_node/Prologue-Alternatives.html)

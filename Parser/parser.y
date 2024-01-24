@@ -81,6 +81,7 @@ file after the Bison-generated value and location types
 	#define PTN ParseTreeNode
 	vector<SymbolInfo*> ids,parameters;
 	bool parameterRedefined = false;
+	bool returnFlag = false;
 
 	int yyparse(void);
 	int yylex(void);
@@ -236,6 +237,18 @@ file after the Bison-generated value and location types
 		semanticError(error,id->getNode()->getStartOfNode());
 	}
 
+	void returnFromVoid(SymbolInfo *id){
+		string error = "Return from void type function \'"
+						+ id->getName() + "\'";
+		semanticError(error,id->getNode()->getStartOfNode());
+	}
+
+	void noReturnFromFunction(SymbolInfo *id){
+		string error = "Warning: No return from function \'"
+						+ id->getName() +"\'";
+		semanticError(error,id->getNode()->getStartOfNode());
+	}
+
 	void insertFunction(Type_Spec type,SymbolInfo* func,bool defineNow) {
 		currentFunction = func;
 		preProcessFunction(type,func);
@@ -258,6 +271,8 @@ file after the Bison-generated value and location types
 		else if(prevFuncNode->isFunctionDefined())alreadyDefined(prevFunction);
 		else {
 			if(!((prevFuncNode->getType() == type) && (prevFuncNode->getNumParameters() == func->getNode()->getNumParameters())))conflictingTypes(prevFunction);
+			else if(type == Type_Spec::TYPE_VOID && returnFlag)returnFromVoid(func);
+			else if(type != Type_Spec::TYPE_VOID && !returnFlag)noReturnFromFunction(func);
 			else {
 				auto error = parameterTypeMismatch(prevFunction);
 				if(!error) {
@@ -830,7 +845,8 @@ statement : var_declaration
 			auto returnNode = new PTN("RETURN : return",@1.F_L);
 			auto semicolonNode = new PTN("SEMICOLON : ;",@3.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
-			->addChildrenToNode(3,returnNode,$2,semicolonNode);				
+			->addChildrenToNode(3,returnNode,$2,semicolonNode);	
+			returnFlag = true;			
 		}
 		;
 

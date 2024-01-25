@@ -687,6 +687,23 @@ declaration_list : declaration_list COMMA ID
 					$3->setNode(idNode);
 					ids.push_back($3);
 				}
+				| declaration_list COMMA ID LTHIRD RTHIRD ASSIGNOP LCURL argument_list RCURL
+				{
+					initRule("declaration_list : declaration_list COMMA ID LSQUARE RSQUARE ASSIGNOP LCURL argument_list RCURL ");
+					auto idNode = new PTN(symbolToRule($3),@3.F_L);
+					idNode->setArraySize($8->getParameters().size());
+					$3->setNode(idNode);
+					$3->setType("ARRAY");
+					auto commaNode = new PTN("COMMA : ,",@2.F_L);
+					auto lSquareNode = new PTN("LSQUARE : [",@4.F_L);
+					auto rSquareNode = new PTN("RSQUARE : ]",@5.F_L);
+					auto assignOpNode = new PTN("ASSIGNOP : =",@6.F_L);
+					auto lCurlNode = new PTN("LCURL : {",@7.F_L);
+					auto rCurlNode = new PTN("RCURL : }",@9.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+					->addChildrenToNode(9,$1,commaNode,idNode,lSquareNode,rSquareNode,assignOpNode,lCurlNode,$8,rCurlNode);
+					ids.push_back($3);
+				}
 				| ID
 				{
 					initRule("declaration_list : ID ");
@@ -708,6 +725,23 @@ declaration_list : declaration_list COMMA ID
 					->addChildrenToNode(4,idNode,lSquareNode,constIntNode,rSquareNode);
 					$1->setType("ARRAY");
 					$1->setNode(idNode);
+					ids.clear();
+					ids.push_back($1);
+				}
+				| ID LTHIRD RTHIRD ASSIGNOP LCURL argument_list RCURL
+				{
+					initRule("declaration_list : ID LSQUARE RSQUARE ASSIGNOP LCURL argument_list RCURL ");
+					auto idNode = new PTN(symbolToRule($1),@1.F_L);
+					idNode->setArraySize($6->getParameters().size());
+					$1->setNode(idNode);
+					$1->setType("ARRAY");
+					auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
+					auto rSquareNode = new PTN("RSQUARE : ]",@3.F_L);
+					auto assignOpNode = new PTN("ASSIGNOP : =",@4.F_L);
+					auto lCurlNode = new PTN("LCURL : {",@5.F_L);
+					auto rCurlNode = new PTN("RCURL : }",@7.F_L);
+					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+					->addChildrenToNode(7,idNode,lSquareNode,rSquareNode,assignOpNode,lCurlNode,$6,rCurlNode);
 					ids.clear();
 					ids.push_back($1);
 				}

@@ -1,8 +1,19 @@
+#pragma once
+
+#define ASM_FILE "code.asm"
+
 #include<stdio.h>
 #include<stdlib.h>
-#include<cstring>
+#include<string>
+#include "SymbolTable/SymbolTable.h"
 
-File *asm_out;
+
+extern SymbolTable *table;
+ParseTreeNode *root;
+
+FILE *asm_out;
+
+
 
 void writeToAsm(string code){
 	fprintf(asm_out,"%s",code.c_str());
@@ -10,9 +21,9 @@ void writeToAsm(string code){
 
 void printHeaderComment(string comment) {
 	string code = "\
-;--------------------------------\n\
-;\t" + comment + "\n\
-;--------------------------------\n";
+;-------------------------------\n\
+;         " + comment + "\n\
+;-------------------------------\n";
 	writeToAsm(code);
 }
 
@@ -20,48 +31,51 @@ void headerCode() {
 	printHeaderComment("asm code generator");
 	string code = "\
 .MODEL SMALL ; SCOPE OF CODE\n\
-\n\
 .STACK 1000H ; ALLOCATE MEMORY IN HEXADECIMAL\n\
-\n\
 .DATA ; VARIABLE DECLARATION\n\
-NUMBER DB \"00000$\"\n\
-CR EQU 0DH\n\
-LF EQU 0AH\n\
-NL DB CR,LF,'$'\n";
+	number DB \"00000$\"\n\
+.CODE\n";
+	writeToAsm(code);
+}
+
+void footerCode() {
+	string code = "\
+END main\n";
+	writeToAsm(code);
+}
+
+void printNewlineCode() {
+	printHeaderComment("print newline");
+	string code = "\
+	PUSH AX\n\
+    PUSH DX\n\
+    MOV AH,2\n\
+    MOV DL,0DH\n\
+    INT 21H\n\
+    MOV AH,2\n\
+    MOV DL,0AH\n\
+    INT 21H\n\
+    POP DX\n\
+    POP AX\n";
 	writeToAsm(code);
 }
 
 void printNewLine() {
-	printHeaderComment("prints newline to console");
+	printHeaderComment("print library");
 	string code = "\
-NEWLINE PROC\n\
-	PUSH AX\n\
-	PUSH DX\n\
-	LEA DX,NL\n\
-	MOV AH,9\n\
-	INT 21H\n\
-	POP AX\n\
-	POP DX\n\
-	RET\n\
-	NEWLINE ENDP\n\n";
-	writeToAsm(code);
-}
-
-void printOutput() {
-	printHeaderComment("prints content of ax");
-	string code = "\
-PRINT_OUTPUT proc\n\
+;-------------------------------\n\
+println proc\n\
     PUSH AX\n\
     PUSH BX\n\
     PUSH CX\n\
     PUSH DX\n\
     PUSH SI\n\
-    LEA SI,NUMBER_PRINTLN\n\
+    LEA SI,number\n\
     MOV BX,10\n\
     ADD SI,4\n\
     CMP AX,0\n\
     JNGE NEGATE\n\
-    PRINT:\n\
+PRINT:\n\
     XOR DX,DX\n\
     DIV BX\n\
     MOV [SI],DL\n\
@@ -72,14 +86,18 @@ PRINT_OUTPUT proc\n\
     INC SI\n\
     LEA DX,SI\n\
     MOV AH,9\n\
-    INT 21H\n\
+    INT 21H\n";
+
+	printNewlineCode();
+	
+	code += "\
     POP SI\n\
     POP DX\n\
     POP CX\n\
     POP BX\n\
     POP AX\n\
     RET\n\
-    NEGATE:\n\
+NEGATE:\n\
     PUSH AX\n\
     MOV AH,2\n\
     MOV DL,'-'\n\
@@ -87,6 +105,23 @@ PRINT_OUTPUT proc\n\
     POP AX\n\
     NEG AX\n\
     JMP PRINT\n\
-	PRINT_OUTPUT ENDP\n\n";
+	println ENDP\n\n";
 	writeToAsm(code);
+}
+
+void postOrderTraversal(ParseTreeNode *node) {
+	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
+		postOrderTraversal(itr);
+	}
+	// processRuleOfNode(node);
+}
+
+
+void generateASM(ParseTreeNode *node){
+	root = node;
+	asm_out = fopen(ASM_FILE,"w");
+	headerCode();
+	postOrderTraversal(node);
+	footerCode();
+	fclose(asm_out);
 }

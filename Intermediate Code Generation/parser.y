@@ -414,6 +414,7 @@ start : program
 		printParseTree($$);
 		ids.clear();
 		printSymbolTable();
+		generateASM($$);
 		// table->~SymbolTable();
 	}
 	;

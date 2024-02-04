@@ -2,6 +2,9 @@
 
 #include"SymbolInfo.h"
 
+#include <vector>
+#include <algorithm> 
+
 #define TAB "\t"
 #define DEFAULT_BUCKET_SIZE 11
 
@@ -189,5 +192,24 @@ public:
         }
 
         return str; 
+    }
+
+	vector<SymbolInfo*> getSortedSymbolInfoVector() const {
+        vector<SymbolInfo*> symbolInfoVector;
+
+        // Iterate through the hashtable and extract SymbolInfo pointers
+        for (unsigned long long i = 0; i < total_buckets; ++i) {
+            SymbolInfo* currentSymbol = hashTable[i];
+            while (currentSymbol != nullptr) {
+                symbolInfoVector.push_back(currentSymbol);
+                currentSymbol = currentSymbol->getNext(); // Assuming you have a method like this
+            }
+        }
+        // Sort the vector based on the offset field
+        sort(symbolInfoVector.begin(), symbolInfoVector.end(),[](SymbolInfo* a, SymbolInfo* b) {
+			return a->getOffset() < b->getOffset();
+        });
+
+        return symbolInfoVector;
     }
 };

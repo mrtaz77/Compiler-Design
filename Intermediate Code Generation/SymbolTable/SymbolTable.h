@@ -115,4 +115,8 @@ public:
 
         return str;
     }
+
+	vector<SymbolInfo*> getSortedSymbolInfosOfCurrentScope() {
+		return currentScope->getSortedSymbolInfoVector();
+	}
 };

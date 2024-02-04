@@ -7,13 +7,21 @@
 #include<string>
 #include "SymbolTable/SymbolTable.h"
 
-
 extern SymbolTable *table;
 ParseTreeNode *root;
 
 FILE *asm_out;
 
-
+string idNameFromRule(string rule){
+	if(rule.substr(0,2) != "ID") return "";
+	else {
+		string name = "";
+		for(int i = 5; i < rule.length() ; i++) {
+			name += rule[i];
+		}
+		return name;
+	}
+}
 
 void writeToAsm(string code){
 	fprintf(asm_out,"%s",code.c_str());
@@ -33,8 +41,7 @@ void headerCode() {
 .MODEL SMALL ; SCOPE OF CODE\n\
 .STACK 1000H ; ALLOCATE MEMORY IN HEXADECIMAL\n\
 .DATA ; VARIABLE DECLARATION\n\
-	number DB \"00000$\"\n\
-.CODE\n";
+	number DB \"00000$\"\n";
 	writeToAsm(code);
 }
 
@@ -109,11 +116,45 @@ NEGATE:\n\
 	writeToAsm(code);
 }
 
+void declareGlobalVariablesInASM(){
+	auto symbols = table->getSortedSymbolInfosOfCurrentScope();
+	string code = "";
+	for(auto symbol : symbols){
+		// skipping functions
+		if(symbol->getNode()->isFunctionDeclared())continue;
+		code += "\t" + symbol->getName() + " DW ";
+		if(symbol->getType() == "ARRAY") code+= to_string(symbol->getNode()->getArraySize()); 
+		else code += "1";
+		code += " DUP (0000H)\n";
+	}
+	code += ".CODE\n";
+	writeToAsm(code);
+}
+
+void processIdNode(string idName){
+	auto id = table->lookUp(idName);
+
+	if(id != nullptr){
+		// id in global scope
+		auto node = id->getNode();
+	}
+}
+
+void processRuleOfNode(ParseTreeNode *node) {
+	string rule = node->getRule();
+	if(idNameFromRule(rule) != "")processIdNode(idNameFromRule(rule));
+}
+
+bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
+
 void postOrderTraversal(ParseTreeNode *node) {
+	// skipping some nodes
+	if(isGlobalVariableDeclaration(node->getRule()))return;
+
 	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
 		postOrderTraversal(itr);
 	}
-	// processRuleOfNode(node);
+	processRuleOfNode(node);
 }
 
 
@@ -121,7 +162,8 @@ void generateASM(ParseTreeNode *node){
 	root = node;
 	asm_out = fopen(ASM_FILE,"w");
 	headerCode();
-	postOrderTraversal(node);
+	declareGlobalVariablesInASM();
+	// postOrderTraversal(node);
 	footerCode();
 	fclose(asm_out);
 }

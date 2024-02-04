@@ -10,6 +10,7 @@ class ScopeTable{
     ScopeTable* parentScope;
     unsigned long long total_buckets;
     SymbolInfo** hashTable;
+	unsigned long currentOffset;
     int numOfChildren;
 
     unsigned long long sdbm_hash(string str) {
@@ -35,6 +36,7 @@ public:
             hashTable[i] = nullptr;
         }
         numOfChildren = 0;
+		currentOffset = 0;
         // cout << TAB << "ScopeTable# " << id << " created" << endl;
     }
 
@@ -133,6 +135,11 @@ public:
             prev = itr;
             itr = itr->getNext();
         }
+
+		if(symbol->getOffset() != -1) {
+			currentOffset += symbol->getOffset();
+			symbol->setOffset(currentOffset);
+		}
 
         if(prev == nullptr)hashTable[hash] = symbol;
         else prev->setNext(symbol);

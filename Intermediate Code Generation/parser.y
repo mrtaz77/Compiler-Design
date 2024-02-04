@@ -289,14 +289,11 @@ file after the Bison-generated value and location types
 		}	
 	}
 
-	string idNameFromRule(string rule){
-		if(rule.length() <= 5) return "";
-		else {
-			string name = "";
-			for(int i = 5; i < rule.length() ; i++) {
-				name += rule[i];
-			}
-			return name;
+	unsigned offsetFromType(Type_Spec type) {
+		switch(type) {
+			case TYPE_INT: return 2;
+			case TYPE_FLOAT: return 4;
+			default: return -1;
 		}
 	}
 
@@ -305,7 +302,7 @@ file after the Bison-generated value and location types
 		for(int i = 0; i < params.size() ; i++) {
 			auto name = idNameFromRule(params[i]->getRule());
 			auto type = typeToString(params[i]->getType());
-			auto symbol = new SymbolInfo(name,type);
+			auto symbol = new SymbolInfo(name,type,offsetFromType(params[i]->getType()));
 			symbol->setNode(params[i]);
 			table->insert(symbol);
 		}
@@ -368,7 +365,12 @@ file after the Bison-generated value and location types
 			auto id = ids[i];
 			if(type == 23)voidAsVariableType(id);
 			else {
-				if(id->getType() != "ARRAY")id->setType(typeToString(type));
+				if(id->getType() != "ARRAY") {
+					id->setType(typeToString(type));
+					id->setOffset(offsetFromType(type));
+				}else {
+					id->setOffset(id->getNode()->getArraySize() * offsetFromType(type));
+				}
 				id->getNode()->setType(type);
 				bool isNewDeclaration = table->insert(id);
 				bool isConflictingType = false;

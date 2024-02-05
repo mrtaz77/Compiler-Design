@@ -124,7 +124,7 @@ void optimizeASMLines(vector<string>& lines) {
 		else if(areConsecutivePushPopOfSameOperand(currentLine, nextLine)) {
 			lines.erase(lines.begin() + i);
 			lines.erase(lines.begin() + i);
-			--i;
+			i -= 2;
 		}
 	}
 	cout << "After optimization lines : " << lines.size() << endl;

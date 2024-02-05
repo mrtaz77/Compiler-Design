@@ -12,6 +12,8 @@ ParseTreeNode *root;
 
 FILE *asm_out;
 
+unsigned long labelCount = 0;
+
 string idNameFromRule(string rule){
 	if(rule.substr(0,2) != "ID") return "";
 	else {
@@ -67,7 +69,7 @@ void printNewlineCode() {
 	writeToAsm(code);
 }
 
-void printNewLine() {
+void printOutput() {
 	printHeaderComment("print library");
 	string code = "\
 ;-------------------------------\n\
@@ -131,25 +133,77 @@ void declareGlobalVariablesInASM(){
 	writeToAsm(code);
 }
 
+void printLabel(){
+	string code = "L" + to_string(++labelCount) + ":\n";
+	writeToAsm(code);
+}
+
+
+void insertFunctionHeaderCode(SymbolInfo* func) {
+	printHeaderComment("Function : " +func->getName());
+	string code = func->getName() + " PROC\n";
+	if(func->getName() == "main") {
+		code += "\
+	MOV AX, @DATA\n\
+	MOV DS, AX\n";
+	}
+	code +="\
+	PUSH BP\n\
+	MOV BP, SP\n";
+	writeToAsm(code);
+}
+
+void insertFunctionFooterCode(SymbolInfo* func) {
+	printLabel();
+	string code = "\tPOP BP\n";
+	if(func->getName() == "main") {
+		code += "\
+	MOV AX, 4CH\n\
+	INT 21H\n";
+	}else {
+		code += "\tRET\n";
+	}
+	code += func->getName() + " ENDP\n";
+	writeToAsm(code);
+}
+
+
 void processIdNode(string idName){
 	auto id = table->lookUp(idName);
 
 	if(id != nullptr){
 		// id in global scope
 		auto node = id->getNode();
+
+		if(node->isFunctionDefined()) {
+			insertFunctionHeaderCode(id);
+		}
 	}
+}
+
+bool isFunctionDefinitionRule(string rule) {
+	return rule.find("func_definition : ") != string::npos;
 }
 
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(idNameFromRule(rule));
+	if(isFunctionDefinitionRule(rule)) {
+		auto idNode = node->getNthChild(2);
+		auto idName = idNameFromRule(idNode->getRule());
+		auto id = table->lookUp(idName);
+		insertFunctionFooterCode(id);
+	}
 }
 
 bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
+bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaration "; }
+
 
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
 	if(isGlobalVariableDeclaration(node->getRule()))return;
+	if(isFunctionDeclaration(node->getRule()))return;
 
 	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
 		postOrderTraversal(itr);
@@ -163,7 +217,7 @@ void generateASM(ParseTreeNode *node){
 	asm_out = fopen(ASM_FILE,"w");
 	headerCode();
 	declareGlobalVariablesInASM();
-	// postOrderTraversal(node);
+	postOrderTraversal(node);
 	footerCode();
 	fclose(asm_out);
 }

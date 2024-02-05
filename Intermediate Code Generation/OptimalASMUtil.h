@@ -102,7 +102,7 @@ void optimizeASMLines(vector<string>& lines) {
 	cout << "Before optimization lines : " << lines.size() << endl;
 
 	for(int i=0; i<lines.size() - 1; i++) {
-		cout << "Lines " << i << " and " << (i+1) << endl;
+		// cout << "Lines " << i << " and " << (i+1) << endl;
 		string currentLine = lines[i];
         string nextLine = lines[i + 1];
 

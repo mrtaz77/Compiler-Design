@@ -30,8 +30,8 @@ public:
     void setName(string name) { this->name = name; }
     void setType(string type) { this->type = type; }
     void setNext(SymbolInfo* next) { this->next = next; }
-	void setNode(ParseTreeNode* node) { this->node = node; }
-	void setOffset(long offset) { this->offset = offset; }
+	void setNode(ParseTreeNode* node) { this->node = node; node->setOffset(offset) ; }
+	void setOffset(long offset) { this->offset = offset; node->setOffset(offset) ;  }
 
     SymbolInfo(const SymbolInfo& other) :
         name(other.name), 
@@ -49,6 +49,7 @@ public:
         next = other.next;
 		node = other.node;
 		offset = other.offset;
+		node->setOffset(other.offset);
     }
 
     bool operator==(const SymbolInfo& other) const { return name == other.name ; }

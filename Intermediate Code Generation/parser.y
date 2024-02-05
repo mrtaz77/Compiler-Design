@@ -289,7 +289,7 @@ file after the Bison-generated value and location types
 		}	
 	}
 
-	unsigned offsetFromType(Type_Spec type) {
+	unsigned widthFromType(Type_Spec type) {
 		switch(type) {
 			case TYPE_INT: return 2;
 			case TYPE_FLOAT: return 4;
@@ -302,7 +302,7 @@ file after the Bison-generated value and location types
 		for(int i = 0; i < params.size() ; i++) {
 			auto name = idNameFromRule(params[i]->getRule());
 			auto type = typeToString(params[i]->getType());
-			auto symbol = new SymbolInfo(name,type,offsetFromType(params[i]->getType()));
+			auto symbol = new SymbolInfo(name,type,widthFromType(params[i]->getType()));
 			symbol->setNode(params[i]);
 			table->insert(symbol);
 		}
@@ -367,9 +367,9 @@ file after the Bison-generated value and location types
 			else {
 				if(id->getType() != "ARRAY") {
 					id->setType(typeToString(type));
-					id->setOffset(offsetFromType(type));
+					id->setOffset(widthFromType(type));
 				}else {
-					id->setOffset(id->getNode()->getArraySize() * offsetFromType(type));
+					id->setOffset(id->getNode()->getArraySize() * widthFromType(type));
 				}
 				id->getNode()->setType(type);
 				bool isNewDeclaration = table->insert(id);

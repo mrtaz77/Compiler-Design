@@ -27,9 +27,11 @@ class ParseTreeNode {
 	long arraySize;
 	string val;
 
+	long offset;
+
 public:
 
-	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0, ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
+	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0,long offset = -1 , ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
 		startOfNode(startOfNode), 
 		endOfNode(endOfNode), 
 		child(child),
@@ -37,7 +39,8 @@ public:
 		rule(rule),
 		type(Type_Spec::NAT),
 		arraySize(-1),
-		val("") {}
+		val(""),
+		offset(offset) {}
 
 	ParseTreeNode(const ParseTreeNode& other) :
 		startOfNode(other.startOfNode), 
@@ -50,7 +53,8 @@ public:
 		functionDefined(other.functionDefined),
 		parameters(other.parameters),
 		arraySize(other.arraySize),
-		val(other.val) {}
+		val(other.val),
+		offset(other.offset) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -98,6 +102,8 @@ public:
 	long getArraySize() const {
 		return arraySize;
 	}
+
+	long getOffset() const { return offset; }
 
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
@@ -151,6 +157,8 @@ public:
 		}
 	}
 
+	void setOffset(long offset) { this->offset = offset; }
+
 	ParseTreeNode* addChild(ParseTreeNode* child) {
 		ParseTreeNode* itr = this->child;
 
@@ -194,5 +202,14 @@ public:
 		for (int i = 0; i < childNo; i++) addChild(va_arg(children,ParseTreeNode*));
 		va_end(children);
 		return this;
+	}
+
+	ParseTreeNode* getNthChild(unsigned long childNo) {
+		int index = 1;
+		ParseTreeNode* itr;
+		for(itr = child; itr != nullptr && index < childNo; itr = itr->sibling){
+			index++;
+		}
+		return itr;
 	}
 };

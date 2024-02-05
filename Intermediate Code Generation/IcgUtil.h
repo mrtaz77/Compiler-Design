@@ -13,6 +13,7 @@ ParseTreeNode *root;
 FILE *asm_out;
 
 unsigned long labelCount = 0;
+long stackPointer = 0;
 
 string idNameFromRule(string rule){
 	if(rule.substr(0,2) != "ID") return "";
@@ -34,6 +35,11 @@ void printHeaderComment(string comment) {
 ;-------------------------------\n\
 ;         " + comment + "\n\
 ;-------------------------------\n";
+	writeToAsm(code);
+}
+
+void adjustStackPointer() {
+	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
 	writeToAsm(code);
 }
 
@@ -155,6 +161,9 @@ void insertFunctionHeaderCode(SymbolInfo* func) {
 
 void insertFunctionFooterCode(SymbolInfo* func) {
 	printLabel();
+	if(stackPointer != 0) {
+		adjustStackPointer();
+	}
 	string code = "\tPOP BP\n";
 	if(func->getName() == "main") {
 		code += "\
@@ -168,15 +177,22 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 }
 
 
-void processIdNode(string idName){
+void processIdNode(ParseTreeNode* node){
+	auto idName = idNameFromRule(node->getRule());
 	auto id = table->lookUp(idName);
 
 	if(id != nullptr){
-		// id in global scope
-		auto node = id->getNode();
-
 		if(node->isFunctionDefined()) {
 			insertFunctionHeaderCode(id);
+		}
+	}else {
+		// local variable
+		cout << stackPointer << " " << node->getOffset() << endl;
+		if(stackPointer > -(node->getOffset())) {
+			// local variable declaration
+			string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
+			stackPointer = -node->getOffset();
+			writeToAsm(code);
 		}
 	}
 }
@@ -185,15 +201,20 @@ bool isFunctionDefinitionRule(string rule) {
 	return rule.find("func_definition : ") != string::npos;
 }
 
+bool isSemiColon(string rule) {
+	return rule == "SEMICOLON : ;";
+}
+
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
-	if(idNameFromRule(rule) != "")processIdNode(idNameFromRule(rule));
-	if(isFunctionDefinitionRule(rule)) {
+	if(idNameFromRule(rule) != "")processIdNode(node);
+	else if(isFunctionDefinitionRule(rule)) {
 		auto idNode = node->getNthChild(2);
 		auto idName = idNameFromRule(idNode->getRule());
 		auto id = table->lookUp(idName);
 		insertFunctionFooterCode(id);
 	}
+	else if(isSemiColon(rule)) { printLabel(); }
 }
 
 bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }

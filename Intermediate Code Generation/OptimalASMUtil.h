@@ -48,20 +48,47 @@ bool areConsecutiveMovsBetweenSameOperands(const string& currentLine, const stri
         auto currentOperands = getOperandsFromMovLine(currentLine);
         auto nextOperands = getOperandsFromMovLine(nextLine);
 
-		// cout << "------------------------------\n";
-
-		// cout << currentOperands.first
-		// 	<< ":" << currentOperands.second
-		// 	<< "," << nextOperands.first 
-		// 	<< ":" << nextOperands.second << endl;
-
-		// cout << "******************************\n";
-
 		return (currentOperands.first == nextOperands.second 
 		&& currentOperands.second == nextOperands.first) ;
 	}
 
     return false;
+}
+
+bool areConsecutiveMovsToSameOperand(const string& currentLine, const string& nextLine) {
+    if (areConsecutiveMovs(currentLine,nextLine)) {
+
+        auto currentOperands = getOperandsFromMovLine(currentLine);
+        auto nextOperands = getOperandsFromMovLine(nextLine);
+
+		return (currentOperands.first == nextOperands.first) ;
+	}
+
+    return false;
+}
+
+bool isRedundantAddOrSub(const string& currentLine) {
+	if((currentLine.find("ADD") != string::npos ||
+	currentLine.find("SUB") != string::npos) &&
+	currentLine.find(",") != string::npos ) {
+		size_t commaPos = currentLine.find(",");
+		string substrAfterComma = currentLine.substr(commaPos + 1);  // Extract substring after comma
+
+        return atoi(substrAfterComma.c_str()) == 0;
+	}
+}
+
+bool areConsecutivePushPopOfSameOperand(const string& currentLine, const string& nextLine) {
+	if(currentLine.find("PUSH") != string::npos &&
+    nextLine.find("POP") != string::npos) {
+		size_t pushOpLoc = currentLine.find("PUSH") + 5;
+		size_t popOpLoc = nextLine.find("POP") + 4;
+
+		string pushOp = currentLine.substr(pushOpLoc,currentLine.length() - 1 - pushOpLoc);
+		string popOp = nextLine.substr(popOpLoc,nextLine.length() - 1 - popOpLoc);
+
+		return pushOp == popOp;
+	}
 }
 
 
@@ -72,8 +99,10 @@ void writeOptimizedCodeToFile(vector<string>& lines) {
 }
 
 void optimizeASMLines(vector<string>& lines) {
-	cout << lines.size() << endl;
+	cout << "Before optimization lines : " << lines.size() << endl;
+
 	for(int i=0; i<lines.size() - 1; i++) {
+		cout << "Lines " << i << " and " << (i+1) << endl;
 		string currentLine = lines[i];
         string nextLine = lines[i + 1];
 
@@ -81,6 +110,22 @@ void optimizeASMLines(vector<string>& lines) {
             lines.erase(lines.begin() + i + 1);
             --i;
         }
+
+		else if(areConsecutiveMovsToSameOperand(currentLine, nextLine)) {
+			lines.erase(lines.begin() + i);
+			--i;
+		}
+
+		else if(isRedundantAddOrSub(currentLine)) {
+			lines.erase(lines.begin() + i);
+			--i;
+		}
+
+		else if(areConsecutivePushPopOfSameOperand(currentLine, nextLine)) {
+			lines.erase(lines.begin() + i);
+			lines.erase(lines.begin() + i);
+			--i;
+		}
 	}
 	cout << "After optimization lines : " << lines.size() << endl;
 

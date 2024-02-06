@@ -878,13 +878,17 @@ variable : ID
 		{
 			initRule("variable : ID ");
 			auto idNode = new PTN(symbolToRule($1),@1.F_L);
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 			auto prevId = validVariable($1);
-			if(!prevId)$$->setType(Type_Spec::NAT);
+			if(!prevId) {
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
+				$$->setType(Type_Spec::NAT);
+			}
 			else {
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,prevId->getNode());
 				$$->setType(prevId->getNode()->getType());
 				$$->setArraySize(prevId->getNode()->getArraySize());
-			} 
+				$$->setOffset(prevId->getNode()->getOffset());
+			}
 		}
 		| ID LTHIRD expression RTHIRD
 		{
@@ -892,11 +896,18 @@ variable : ID
 			auto idNode = new PTN(symbolToRule($1),@1.F_L);
 			auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
 			auto rSquareNode = new PTN("RSQUARE : ]",@4.F_L);
-			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
-			->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
 			auto prevId = validArray($1);
-			if(!prevId)$$->setType(Type_Spec::NAT);
-			else $$->setType(prevId->getNode()->getType());
+			if(!prevId){
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+				->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
+				$$->setType(Type_Spec::NAT);
+			}
+			else {
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
+				->addChildrenToNode(4,prevId->getNode(),lSquareNode,$3,rSquareNode);
+				$$->setType(prevId->getNode()->getType());
+				$$->setOffset(prevId->getNode()->getOffset());
+			}
 			if($3->getType() != 01)invalidArraySubscript($3);
 		}
 		| ID LTHIRD error RTHIRD

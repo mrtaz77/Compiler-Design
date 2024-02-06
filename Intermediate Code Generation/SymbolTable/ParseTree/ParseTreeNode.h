@@ -105,6 +105,12 @@ public:
 
 	long getOffset() const { return offset; }
 
+	unsigned long getNumOfChildren() {
+		unsigned long i = 0;
+		for(ParseTreeNode* itr = child; itr != nullptr; itr = itr->sibling)i++;
+		return i;
+	}
+
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
     }

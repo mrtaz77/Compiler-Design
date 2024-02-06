@@ -38,8 +38,14 @@ void printHeaderComment(string comment) {
 	writeToAsm(code);
 }
 
+string annotationOfLine(unsigned long lineNo){
+	string code = "\
+	; Line " + to_string(lineNo) + "\n";
+	return code;
+}
+
 void adjustStackPointer() {
-	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
+	string code = "\tADD SP," + to_string(-stackPointer) + "\n";
 	writeToAsm(code);
 }
 
@@ -130,7 +136,7 @@ void declareGlobalVariablesInASM(){
 	for(auto symbol : symbols){
 		// skipping functions
 		if(symbol->getNode()->isFunctionDeclared())continue;
-		code += "\t" + symbol->getName() + " DW ";
+		code += TAB + symbol->getName() + " DW ";
 		if(symbol->getType() == "ARRAY") code+= to_string(symbol->getNode()->getArraySize()); 
 		else code += "1";
 		code += " DUP (0000H)\n";
@@ -150,12 +156,12 @@ void insertFunctionHeaderCode(SymbolInfo* func) {
 	string code = func->getName() + " PROC\n";
 	if(func->getName() == "main") {
 		code += "\
-	MOV AX, @DATA\n\
-	MOV DS, AX\n";
+	MOV AX,@DATA\n\
+	MOV DS,AX\n";
 	}
 	code +="\
 	PUSH BP\n\
-	MOV BP, SP\n";
+	MOV BP,SP\n";
 	writeToAsm(code);
 }
 
@@ -167,7 +173,7 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 	string code = "\tPOP BP\n";
 	if(func->getName() == "main") {
 		code += "\
-	MOV AX, 4CH\n\
+	MOV AX,4CH\n\
 	INT 21H\n";
 	}else {
 		code += "\tRET\n";
@@ -187,14 +193,31 @@ void processIdNode(ParseTreeNode* node){
 		}
 	}else {
 		// local variable
-		cout << stackPointer << " " << node->getOffset() << endl;
 		if(stackPointer > -(node->getOffset())) {
 			// local variable declaration
-			string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
+			string code = "\tSUB SP," + to_string(node->getOffset()+stackPointer) + "\n";
 			stackPointer = -node->getOffset();
 			writeToAsm(code);
 		}
 	}
+}
+
+void processAssignOpNode(ParseTreeNode* node){
+	string code;
+	auto varNode = node->getNthChild(1);
+	auto logicExprNode = node->getNthChild(3);
+	// cout << varNode->print() << varNode->getNumOfChildren() << " " << varNode->getOffset();
+	if(varNode->getNumOfChildren() == 1) {
+		// assignment to id
+		code = "\tMOV AX,";
+		if(logicExprNode->getVal().length()) {
+			code += logicExprNode->getVal() + 
+			annotationOfLine(logicExprNode->getStartOfNode())
+			+ TAB + "MOV [BP-" + to_string(varNode->getOffset()) + "],AX\n"
+			+ TAB + "PUSH AX\n\tPOP AX\n";
+		}
+	}
+	writeToAsm(code);
 }
 
 bool isFunctionDefinitionRule(string rule) {
@@ -203,6 +226,10 @@ bool isFunctionDefinitionRule(string rule) {
 
 bool isSemiColon(string rule) {
 	return rule == "SEMICOLON : ;";
+}
+
+bool isAssignOpOperation(string rule) {
+	return rule == "expression : variable ASSIGNOP logic_expression ";
 }
 
 void processRuleOfNode(ParseTreeNode *node) {
@@ -214,7 +241,8 @@ void processRuleOfNode(ParseTreeNode *node) {
 		auto id = table->lookUp(idName);
 		insertFunctionFooterCode(id);
 	}
-	else if(isSemiColon(rule)) { printLabel(); }
+	else if(isSemiColon(rule))printLabel();
+	else if(isAssignOpOperation(rule))processAssignOpNode(node);
 }
 
 bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
@@ -223,8 +251,8 @@ bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaratio
 
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
-	if(isGlobalVariableDeclaration(node->getRule()))return;
-	if(isFunctionDeclaration(node->getRule()))return;
+	if(isGlobalVariableDeclaration(node->getRule()) 
+	|| isFunctionDeclaration(node->getRule()))return;
 
 	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
 		postOrderTraversal(itr);

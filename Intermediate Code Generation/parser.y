@@ -58,9 +58,6 @@ parser implementation file*/
 %right NOT
 %right INCOP DECOP
 
-%destructor { if($$ != nullptr)$$->~ParseTreeNode();} <parseTreeNode>
-%destructor { if($$ != nullptr)$$->~SymbolInfo();} <symbolInfo>
-
 /* Code in the parser header file and the parser implementation 
 file after the Bison-generated value and location types 
 (YYSTYPE and YYLTYPE in C), and token definitions */
@@ -879,7 +876,7 @@ variable : ID
 			initRule("variable : ID ");
 			auto idNode = new PTN(symbolToRule($1),@1.F_L);
 			auto prevId = validVariable($1);
-			if(!prevId) {
+			if(prevId == nullptr) {
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 				$$->setType(Type_Spec::NAT);
 			}
@@ -897,7 +894,7 @@ variable : ID
 			auto lSquareNode = new PTN("LSQUARE : [",@2.F_L);
 			auto rSquareNode = new PTN("RSQUARE : ]",@4.F_L);
 			auto prevId = validArray($1);
-			if(!prevId){
+			if(prevId == nullptr){
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 				->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
 				$$->setType(Type_Spec::NAT);
@@ -931,6 +928,7 @@ expression : logic_expression
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 			$$->setType($1->getType());
 			$$->setArraySize($1->getArraySize());
+			$$->setVal($1->getVal());
 		}
 		| variable ASSIGNOP logic_expression
 		{
@@ -961,6 +959,7 @@ logic_expression : rel_expression
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
 					$$->setArraySize($1->getArraySize());
+					$$->setVal($1->getVal());
 				}
 				| rel_expression LOGICOP rel_expression
 				{
@@ -981,6 +980,7 @@ rel_expression : simple_expression
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 				$$->setType($1->getType());
 				$$->setArraySize($1->getArraySize());
+				$$->setVal($1->getVal());
 			}
 			| simple_expression RELOP simple_expression
 			{
@@ -1001,6 +1001,7 @@ simple_expression : term
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
 					$$->setArraySize($1->getArraySize());
+					$$->setVal($1->getVal());
 				}
 				| simple_expression ADDOP term
 				{
@@ -1018,6 +1019,7 @@ term : unary_expression
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		$$->setType($1->getType());
 		$$->setArraySize($1->getArraySize());
+		$$->setVal($1->getVal());
 	}
 	| term MULOP unary_expression
 	{

@@ -16,7 +16,7 @@ unsigned long labelCount = 0;
 long stackPointer = 0;
 
 string idNameFromRule(string rule){
-	if(rule.substr(0,2) != "ID") return "";
+	if(rule.substr(0, 2) != "ID") return "";
 	else {
 		string name = "";
 		for(int i = 5; i < rule.length() ; i++) {
@@ -27,7 +27,7 @@ string idNameFromRule(string rule){
 }
 
 void writeToAsm(string code){
-	fprintf(asm_out,"%s",code.c_str());
+	fprintf(asm_out, "%s", code.c_str());
 }
 
 void printHeaderComment(string comment) {
@@ -39,13 +39,13 @@ void printHeaderComment(string comment) {
 }
 
 string annotationOfLine(unsigned long lineNo){
-	string code = "\
+	string code = "\t\
 	; Line " + to_string(lineNo) + "\n";
 	return code;
 }
 
 void adjustStackPointer() {
-	string code = "\tADD SP," + to_string(-stackPointer) + "\n";
+	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
 	writeToAsm(code);
 }
 
@@ -61,7 +61,7 @@ void headerCode() {
 
 void footerCode() {
 	string code = "\
-END main\n";
+END main";
 	writeToAsm(code);
 }
 
@@ -70,11 +70,11 @@ void printNewlineCode() {
 	string code = "\
 	PUSH AX\n\
     PUSH DX\n\
-    MOV AH,2\n\
-    MOV DL,0DH\n\
+    MOV AH, 2\n\
+    MOV DL, 0DH\n\
     INT 21H\n\
-    MOV AH,2\n\
-    MOV DL,0AH\n\
+    MOV AH, 2\n\
+    MOV DL, 0AH\n\
     INT 21H\n\
     POP DX\n\
     POP AX\n";
@@ -91,22 +91,22 @@ println proc\n\
     PUSH CX\n\
     PUSH DX\n\
     PUSH SI\n\
-    LEA SI,number\n\
-    MOV BX,10\n\
-    ADD SI,4\n\
-    CMP AX,0\n\
+    LEA SI, number\n\
+    MOV BX, 10\n\
+    ADD SI, 4\n\
+    CMP AX, 0\n\
     JNGE NEGATE\n\
 PRINT:\n\
-    XOR DX,DX\n\
+    XOR DX, DX\n\
     DIV BX\n\
-    MOV [SI],DL\n\
-    ADD [SI],'0'\n\
+    MOV [SI], DL\n\
+    ADD [SI], '0'\n\
     DEC SI\n\
-    CMP AX,0\n\
+    CMP AX, 0\n\
     JNE PRINT\n\
     INC SI\n\
-    LEA DX,SI\n\
-    MOV AH,9\n\
+    LEA DX, SI\n\
+    MOV AH, 9\n\
     INT 21H\n";
 
 	printNewlineCode();
@@ -120,8 +120,8 @@ PRINT:\n\
     RET\n\
 NEGATE:\n\
     PUSH AX\n\
-    MOV AH,2\n\
-    MOV DL,'-'\n\
+    MOV AH, 2\n\
+    MOV DL, '-'\n\
     INT 21H\n\
     POP AX\n\
     NEG AX\n\
@@ -156,12 +156,12 @@ void insertFunctionHeaderCode(SymbolInfo* func) {
 	string code = func->getName() + " PROC\n";
 	if(func->getName() == "main") {
 		code += "\
-	MOV AX,@DATA\n\
-	MOV DS,AX\n";
+	MOV AX, @DATA\n\
+	MOV DS, AX\n";
 	}
 	code +="\
 	PUSH BP\n\
-	MOV BP,SP\n";
+	MOV BP, SP\n";
 	writeToAsm(code);
 }
 
@@ -173,7 +173,7 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 	string code = "\tPOP BP\n";
 	if(func->getName() == "main") {
 		code += "\
-	MOV AX,4CH\n\
+	MOV AX, 4CH\n\
 	INT 21H\n";
 	}else {
 		code += "\tRET\n";
@@ -195,7 +195,7 @@ void processIdNode(ParseTreeNode* node){
 		// local variable
 		if(stackPointer > -(node->getOffset())) {
 			// local variable declaration
-			string code = "\tSUB SP," + to_string(node->getOffset()+stackPointer) + "\n";
+			string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
 			stackPointer = -node->getOffset();
 			writeToAsm(code);
 		}
@@ -209,28 +209,27 @@ void processAssignOpNode(ParseTreeNode* node){
 	// cout << varNode->print() << varNode->getNumOfChildren() << " " << varNode->getOffset();
 	if(varNode->getNumOfChildren() == 1) {
 		// assignment to id
-		code = "\tMOV AX,";
+		code = "\tMOV AX, ";
 		if(logicExprNode->getVal().length()) {
 			code += logicExprNode->getVal() + 
 			annotationOfLine(logicExprNode->getStartOfNode())
-			+ TAB + "MOV [BP-" + to_string(varNode->getOffset()) + "],AX\n"
+			+ TAB + "MOV [BP-" + to_string(varNode->getOffset()) + "], AX\n"
 			+ TAB + "PUSH AX\n\tPOP AX\n";
 		}
 	}
 	writeToAsm(code);
 }
 
-bool isFunctionDefinitionRule(string rule) {
-	return rule.find("func_definition : ") != string::npos;
+void processAddopNode(ParseTreeNode *node){
+	// TODO Addop operation
 }
 
-bool isSemiColon(string rule) {
-	return rule == "SEMICOLON : ;";
-}
-
-bool isAssignOpOperation(string rule) {
-	return rule == "expression : variable ASSIGNOP logic_expression ";
-}
+bool isFunctionDefinitionRule(string rule) {return rule.find("func_definition : ") != string::npos; }
+bool isSemiColon(string rule) { return rule == "SEMICOLON : ;"; }
+bool isAssignOpOperation(string rule) { return rule == "expression : variable ASSIGNOP logic_expression "; }
+bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
+bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaration "; }
+bool isAddOpOperation(string rule) { return rule == "simple_expression : simple_expression ADDOP term ";}
 
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
@@ -243,11 +242,8 @@ void processRuleOfNode(ParseTreeNode *node) {
 	}
 	else if(isSemiColon(rule))printLabel();
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
+	else if(isAddOpOperation(rule))processAddOpNode(node);
 }
-
-bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
-bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaration "; }
-
 
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
@@ -263,7 +259,7 @@ void postOrderTraversal(ParseTreeNode *node) {
 
 void generateASM(ParseTreeNode *node){
 	root = node;
-	asm_out = fopen(ASM_FILE,"w");
+	asm_out = fopen(ASM_FILE, "w");
 	headerCode();
 	declareGlobalVariablesInASM();
 	postOrderTraversal(node);

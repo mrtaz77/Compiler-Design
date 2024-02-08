@@ -242,10 +242,10 @@ void processAddOpNode(ParseTreeNode *node){
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
 	string code;
-	code += "";
-	if(isPlusOp(addOpRule))code += "\tADD DX, AX\n";
-	else code += "\tSUB DX, AX\n";
-	code += "\tPUSH DX\n";
+	code += "\tXCHG AX, DX\n";
+	if(isPlusOp(addOpRule))code += "\tADD AX, DX\n";
+	else code += "\tSUB AX, DX\n";
+	code += "\tPUSH AX\n";
 	writeToAsm(code);
 	if(node->getSibling() != nullptr)printPopAx(node);
 }

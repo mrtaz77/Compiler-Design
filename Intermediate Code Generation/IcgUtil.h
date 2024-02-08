@@ -1,11 +1,12 @@
 #pragma once
 
-#define ASM_FILE "code.asm"
+#define ASM_FILE "output_code.asm"
 
 #include<stdio.h>
 #include<stdlib.h>
 #include<string>
 #include "SymbolTable/SymbolTable.h"
+#include "RuleCheckUtil.h"
 
 extern SymbolTable *table;
 ParseTreeNode *root;
@@ -46,6 +47,12 @@ string annotationOfLine(unsigned long lineNo){
 
 void adjustStackPointer() {
 	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
+	writeToAsm(code);
+}
+
+void printPopAx(ParseTreeNode *node) {
+	string code;
+	code += "\tPOP AX" + annotationOfLine(node->getStartOfNode());
 	writeToAsm(code);
 }
 
@@ -209,40 +216,58 @@ void processAssignOpNode(ParseTreeNode* node){
 	// cout << varNode->print() << varNode->getNumOfChildren() << " " << varNode->getOffset();
 	if(varNode->getNumOfChildren() == 1) {
 		// assignment to id
-		code = "\tMOV AX, ";
-		if(logicExprNode->getVal().length()) {
-			code += logicExprNode->getVal() + 
-			annotationOfLine(logicExprNode->getStartOfNode())
-			+ TAB + "MOV [BP-" + to_string(varNode->getOffset()) + "], AX\n"
+			code += "\tMOV [BP-" + to_string(varNode->getOffset()) + "], AX\n"
 			+ TAB + "PUSH AX\n\tPOP AX\n";
-		}
+	}	
+	writeToAsm(code);
+}
+
+void processFactorConstIntRule(ParseTreeNode *node) {
+	string code;
+	code += "\tMOV AX, " 
+	+ node->getVal()
+	+ annotationOfLine(node->getStartOfNode());
+	writeToAsm(code);
+}
+
+void processPlusOpNode(ParseTreeNode *node){
+	string code;
+	string siblingRule = node->getSibling()->getRule();
+	if(isTermRule(siblingRule)) {
+		// addition operation
+		code += "\tMOV DX, AX\n";
 	}
 	writeToAsm(code);
 }
 
-void processAddopNode(ParseTreeNode *node){
-	// TODO Addop operation
+void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
+	string code;
+	code += "\
+	ADD AX, DX\n\
+	PUSH AX\n";
+	writeToAsm(code);
+	if(node->getSibling() != nullptr)printPopAx(node);
 }
 
-bool isFunctionDefinitionRule(string rule) {return rule.find("func_definition : ") != string::npos; }
-bool isSemiColon(string rule) { return rule == "SEMICOLON : ;"; }
-bool isAssignOpOperation(string rule) { return rule == "expression : variable ASSIGNOP logic_expression "; }
-bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_declaration "; }
-bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaration "; }
-bool isAddOpOperation(string rule) { return rule == "simple_expression : simple_expression ADDOP term ";}
+void processRelExpressionSimpleExpressionRule(ParseTreeNode *node){
+	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+}
 
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
-	else if(isFunctionDefinitionRule(rule)) {
+	else if(isFuncDefinitionRule(rule)) {
 		auto idNode = node->getNthChild(2);
 		auto idName = idNameFromRule(idNode->getRule());
 		auto id = table->lookUp(idName);
 		insertFunctionFooterCode(id);
 	}
 	else if(isSemiColon(rule))printLabel();
+	else if(isPlusOp(rule))processPlusOpNode(node);
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
-	else if(isAddOpOperation(rule))processAddOpNode(node);
+	else if(isFactorConstIntRule(rule))processFactorConstIntRule(node);
+	else if(isSimpleExpressionAddOpTermRule(rule))processSimpleExpressionAddOpTermRule(node);
+	else if(isRelExpressionSimpleExpressionRule(rule))processRelExpressionSimpleExpressionRule(node);
 }
 
 void postOrderTraversal(ParseTreeNode *node) {

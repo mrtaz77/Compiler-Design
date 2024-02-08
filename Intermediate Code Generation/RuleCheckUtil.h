@@ -43,15 +43,17 @@ bool isExpressionRule(string rule) { return rule == "expression : logic_expressi
 
 bool isLogicExpressionRule(string rule) { return rule == "logic_expression : rel_expression " || rule == "logic_expression : rel_expression LOGICOP rel_expression "; }
 
-bool isRelExpressionRule(string rule) { return rule == "rel_expression : simple_expression " || rule == "rel_expression : simple_expression RELOP simple_expression "; }
+bool isRelExpressionSimpleExpressionRule(string rule) { return rule == "rel_expression : simple_expression "; }
 
-bool isSimpleExpressionRule(string rule) { return rule == "simple_expression : term " || rule == "simple_expression : simple_expression ADDOP term "; }
+bool isRelExpressionComparisonRule(string rule) { return rule == "rel_expression : simple_expression RELOP simple_expression "; }
+
+bool isSimpleExpressionTermRule(string rule) { return rule == "simple_expression : term "; }
+
+bool isSimpleExpressionAddOpTermRule(string rule) { return rule == "simple_expression : simple_expression ADDOP term "; }
 
 bool isTermRule(string rule) { return rule == "term : unary_expression " || rule == "term : term MULOP unary_expression "; }
 
 bool isUnaryExpressionRule(string rule) { return rule == "unary_expression : ADDOP unary_expression " || rule == "unary_expression : NOT unary_expression " || rule == "unary_expression : factor "; }
-
-// Factor Rules
 
 bool isFactorVariableRule(string rule) { return rule == "factor : variable "; }
 
@@ -79,3 +81,4 @@ bool isAddOpOperation(string rule) { return rule == "simple_expression : simple_
 // token rules
 
 bool isSemiColon(string rule) { return rule == "SEMICOLON : ;"; }
+bool isPlusOp(string rule) { return rule == "ADDOP : +"; }

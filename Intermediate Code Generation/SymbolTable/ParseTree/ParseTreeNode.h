@@ -218,4 +218,9 @@ public:
 		}
 		return itr;
 	}
+
+	unsigned long getParameterWidth() {
+		if(!functionDefined) return -1;
+		return parameters[getNumParameters()-1]->getOffset();
+	}
 };

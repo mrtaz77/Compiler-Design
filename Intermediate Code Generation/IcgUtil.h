@@ -183,7 +183,7 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 	MOV AX, 4CH\n\
 	INT 21H\n";
 	}else {
-		code += "\tRET\n";
+		code += "\tRET " + to_string(func->getNode()->getParameterWidth()) + "\n";
 	}
 	code += func->getName() + " ENDP\n";
 	writeToAsm(code);
@@ -278,15 +278,17 @@ void processSimpleExpressionTermRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
+void processFunctionDefintionRule(ParseTreeNode *node){
+	auto idNode = node->getNthChild(2);
+	auto idName = idNameFromRule(idNode->getRule());
+	auto id = table->lookUp(idName);
+	insertFunctionFooterCode(id);
+}
+
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
-	else if(isFuncDefinitionRule(rule)) {
-		auto idNode = node->getNthChild(2);
-		auto idName = idNameFromRule(idNode->getRule());
-		auto id = table->lookUp(idName);
-		insertFunctionFooterCode(id);
-	}
+	else if(isFuncDefinitionRule(rule))processFunctionDefintionRule(node);
 	else if(isSemiColon(rule))printLabel();
 	else if(isAddOp(rule))processAddOpNode(node);
 	else if(isMulOp(rule))processMulOpNode(node);

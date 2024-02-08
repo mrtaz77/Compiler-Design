@@ -232,10 +232,17 @@ void processFactorConstIntRule(ParseTreeNode *node) {
 
 void processAddOpNode(ParseTreeNode *node){
 	string code;
+	// check for ADDOP unary_expression rule
 	string siblingRule = node->getSibling()->getRule();
-	if(isTermRule(siblingRule)) {
+	if(isTermUnaryExpressionRule(siblingRule) || isTermMulOpUnaryExpressionRule(siblingRule)) {
 		code += "\tMOV DX, AX\n";
 	}
+	writeToAsm(code);
+}
+
+void processMulOpNode(ParseTreeNode *node){
+	string code;
+	code += "\tMOV CX, AX\n";
 	writeToAsm(code);
 }
 
@@ -250,7 +257,24 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	if(node->getSibling() != nullptr)printPopAx(node);
 }
 
+void processTermMulOpUnaryExpressionRule(ParseTreeNode *node){
+	string mulOpRule = node->getNthChild(2)->getRule();
+	string code;
+	code += "\tXCHG AX, CX\n";
+	code += "\tCWD\n";
+	if(isStarOp(mulOpRule))code += "\tMUL CX\n";
+	else code += "\tDIV CX\n";
+	if(isModOp(mulOpRule))code += "\tPUSH DX\n";
+	else code += "\tPUSH AX\n";
+	writeToAsm(code);
+	if(node->getSibling() != nullptr)printPopAx(node);
+}
+
 void processRelExpressionSimpleExpressionRule(ParseTreeNode *node){
+	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+}
+
+void processSimpleExpressionTermRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
@@ -265,10 +289,13 @@ void processRuleOfNode(ParseTreeNode *node) {
 	}
 	else if(isSemiColon(rule))printLabel();
 	else if(isAddOp(rule))processAddOpNode(node);
+	else if(isMulOp(rule))processMulOpNode(node);
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
 	else if(isFactorConstIntRule(rule))processFactorConstIntRule(node);
 	else if(isSimpleExpressionAddOpTermRule(rule))processSimpleExpressionAddOpTermRule(node);
 	else if(isRelExpressionSimpleExpressionRule(rule))processRelExpressionSimpleExpressionRule(node);
+	else if(isTermMulOpUnaryExpressionRule(rule))processTermMulOpUnaryExpressionRule(node);
+	else if(isSimpleExpressionTermRule(rule))processSimpleExpressionTermRule(node);
 }
 
 void postOrderTraversal(ParseTreeNode *node) {

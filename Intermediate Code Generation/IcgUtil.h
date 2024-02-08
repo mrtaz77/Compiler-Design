@@ -27,6 +27,13 @@ string idNameFromRule(string rule){
 	}
 }
 
+string varAddress(ParseTreeNode *node) {
+	auto idName = idNameFromRule(node->getRule());
+	auto id = table->lookUp(idName);
+	if(id != nullptr)return id->getName(); // global variable
+	return "[BP-" + to_string(node->getOffset()) + "]";
+}
+
 void writeToAsm(string code){
 	fprintf(asm_out, "%s", code.c_str());
 }
@@ -213,11 +220,10 @@ void processAssignOpNode(ParseTreeNode* node){
 	string code;
 	auto varNode = node->getNthChild(1);
 	auto logicExprNode = node->getNthChild(3);
-	// cout << varNode->print() << varNode->getNumOfChildren() << " " << varNode->getOffset();
 	if(varNode->getNumOfChildren() == 1) {
 		// assignment to id
-			code += "\tMOV [BP-" + to_string(varNode->getOffset()) + "], AX\n"
-			+ TAB + "PUSH AX\n\tPOP AX\n";
+		code += "\tMOV " + varAddress(varNode->getNthChild(1))  + ", AX\n"
+		+ TAB + "PUSH AX\n\tPOP AX\n";
 	}	
 	writeToAsm(code);
 }
@@ -285,6 +291,15 @@ void processFunctionDefintionRule(ParseTreeNode *node){
 	insertFunctionFooterCode(id);
 }
 
+void processFactorVariableRule(ParseTreeNode *node){
+	string code;
+	code += "\tMOV AX, " 
+	+ varAddress(node->getNthChild(1)->getNthChild(1))
+	+ annotationOfLine(node->getStartOfNode());
+	writeToAsm(code);
+}
+
+
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
@@ -298,6 +313,7 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isRelExpressionSimpleExpressionRule(rule))processRelExpressionSimpleExpressionRule(node);
 	else if(isTermMulOpUnaryExpressionRule(rule))processTermMulOpUnaryExpressionRule(node);
 	else if(isSimpleExpressionTermRule(rule))processSimpleExpressionTermRule(node);
+	else if(isFactorVariableRule(rule))processFactorVariableRule(node);
 }
 
 void postOrderTraversal(ParseTreeNode *node) {

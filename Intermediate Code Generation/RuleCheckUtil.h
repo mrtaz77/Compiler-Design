@@ -51,7 +51,7 @@ bool isSimpleExpressionTermRule(string rule) { return rule == "simple_expression
 
 bool isSimpleExpressionAddOpTermRule(string rule) { return rule == "simple_expression : simple_expression ADDOP term "; }
 
-bool isTermUnaryExpressionRule(string rule) { return rule == "term : unary_expression"; }
+bool isTermUnaryExpressionRule(string rule) { return rule == "term : unary_expression "; }
 
 bool isTermMulOpUnaryExpressionRule(string rule) { return rule == "term : term MULOP unary_expression "; }
 

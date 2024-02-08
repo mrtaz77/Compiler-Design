@@ -72,7 +72,7 @@ bool isRedundantAddOrSub(const string& currentLine) {
 	currentLine.find("SUB") != string::npos) &&
 	currentLine.find(",") != string::npos ) {
 		size_t commaPos = currentLine.find(",");
-		string substrAfterComma = currentLine.substr(commaPos + 1);  // Extract substring after comma
+		string substrAfterComma = currentLine.substr(commaPos + 2);  // Extract substring after comma
 
         return atoi(substrAfterComma.c_str()) == 0;
 	}

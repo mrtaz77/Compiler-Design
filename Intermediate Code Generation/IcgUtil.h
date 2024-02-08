@@ -230,21 +230,22 @@ void processFactorConstIntRule(ParseTreeNode *node) {
 	writeToAsm(code);
 }
 
-void processPlusOpNode(ParseTreeNode *node){
+void processAddOpNode(ParseTreeNode *node){
 	string code;
 	string siblingRule = node->getSibling()->getRule();
 	if(isTermRule(siblingRule)) {
-		// addition operation
 		code += "\tMOV DX, AX\n";
 	}
 	writeToAsm(code);
 }
 
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
+	string addOpRule = node->getNthChild(2)->getRule();
 	string code;
-	code += "\
-	ADD AX, DX\n\
-	PUSH AX\n";
+	code += "";
+	if(isPlusOp(addOpRule))code += "\tADD DX, AX\n";
+	else code += "\tSUB DX, AX\n";
+	code += "\tPUSH DX\n";
 	writeToAsm(code);
 	if(node->getSibling() != nullptr)printPopAx(node);
 }
@@ -263,7 +264,7 @@ void processRuleOfNode(ParseTreeNode *node) {
 		insertFunctionFooterCode(id);
 	}
 	else if(isSemiColon(rule))printLabel();
-	else if(isPlusOp(rule))processPlusOpNode(node);
+	else if(isAddOp(rule))processAddOpNode(node);
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
 	else if(isFactorConstIntRule(rule))processFactorConstIntRule(node);
 	else if(isSimpleExpressionAddOpTermRule(rule))processSimpleExpressionAddOpTermRule(node);

@@ -81,4 +81,9 @@ bool isAddOpOperation(string rule) { return rule == "simple_expression : simple_
 // token rules
 
 bool isSemiColon(string rule) { return rule == "SEMICOLON : ;"; }
+bool isAddOp(string rule) { 
+	return rule == "ADDOP : +" 
+	|| rule == "ADDOP : -" ; 
+}
+
 bool isPlusOp(string rule) { return rule == "ADDOP : +"; }

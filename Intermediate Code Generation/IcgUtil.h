@@ -284,6 +284,10 @@ void processSimpleExpressionTermRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
+void processUnaryExpressionFactorRule(ParseTreeNode *node){
+	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+}
+
 void processFunctionDefintionRule(ParseTreeNode *node){
 	auto idNode = node->getNthChild(2);
 	auto idName = idNameFromRule(idNode->getRule());
@@ -296,6 +300,20 @@ void processFactorVariableRule(ParseTreeNode *node){
 	code += "\tMOV AX, " 
 	+ varAddress(node->getNthChild(1)->getNthChild(1))
 	+ annotationOfLine(node->getStartOfNode());
+	writeToAsm(code);
+}
+
+void processFactorIncDecOpRule(ParseTreeNode *node){
+	string code;
+	code += "\tMOV AX, "
+	+ varAddress(node->getNthChild(1)->getNthChild(1))
+	+ annotationOfLine(node->getStartOfNode())
+	+ "\tPUSH AX\n";
+	if(node->getRule().find("INCOP") != string::npos)code +="\tINC AX\n";
+	else code += "\tDEC AX\n";
+	code += "\tMOV " 
+	+ varAddress(node->getNthChild(1)->getNthChild(1))
+	+ ", AX\n";
 	writeToAsm(code);
 }
 
@@ -314,6 +332,8 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isTermMulOpUnaryExpressionRule(rule))processTermMulOpUnaryExpressionRule(node);
 	else if(isSimpleExpressionTermRule(rule))processSimpleExpressionTermRule(node);
 	else if(isFactorVariableRule(rule))processFactorVariableRule(node);
+	else if(isFactorIncOpRule(rule) || isFactorDecOpRule(rule))processFactorIncDecOpRule(node);
+	else if(isUnaryExpressionFactorRule(rule))processUnaryExpressionFactorRule(node);
 }
 
 void postOrderTraversal(ParseTreeNode *node) {

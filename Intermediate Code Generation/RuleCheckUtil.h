@@ -55,7 +55,11 @@ bool isTermUnaryExpressionRule(string rule) { return rule == "term : unary_expre
 
 bool isTermMulOpUnaryExpressionRule(string rule) { return rule == "term : term MULOP unary_expression "; }
 
-bool isUnaryExpressionRule(string rule) { return rule == "unary_expression : ADDOP unary_expression " || rule == "unary_expression : NOT unary_expression " || rule == "unary_expression : factor "; }
+bool isUnaryExpressionAddOpRule(string rule) { return rule == "unary_expression : ADDOP unary_expression "; }
+
+bool isUnaryExpressionNotRule(string rule) { return rule == "unary_expression : NOT unary_expression "; }
+
+bool isUnaryExpressionFactorRule(string rule) { return rule == "unary_expression : factor "; }
 
 bool isFactorVariableRule(string rule) { return rule == "factor : variable "; }
 

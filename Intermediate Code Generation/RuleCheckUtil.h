@@ -51,7 +51,9 @@ bool isSimpleExpressionTermRule(string rule) { return rule == "simple_expression
 
 bool isSimpleExpressionAddOpTermRule(string rule) { return rule == "simple_expression : simple_expression ADDOP term "; }
 
-bool isTermRule(string rule) { return rule == "term : unary_expression " || rule == "term : term MULOP unary_expression "; }
+bool isTermUnaryExpressionRule(string rule) { return rule == "term : unary_expression"; }
+
+bool isTermMulOpUnaryExpressionRule(string rule) { return rule == "term : term MULOP unary_expression "; }
 
 bool isUnaryExpressionRule(string rule) { return rule == "unary_expression : ADDOP unary_expression " || rule == "unary_expression : NOT unary_expression " || rule == "unary_expression : factor "; }
 
@@ -78,12 +80,19 @@ bool isAssignOpOperation(string rule) { return rule == "expression : variable AS
 
 bool isAddOpOperation(string rule) { return rule == "simple_expression : simple_expression ADDOP term ";}
 
-// token rules
-
 bool isSemiColon(string rule) { return rule == "SEMICOLON : ;"; }
-bool isAddOp(string rule) { 
-	return rule == "ADDOP : +" 
-	|| rule == "ADDOP : -" ; 
-}
 
 bool isPlusOp(string rule) { return rule == "ADDOP : +"; }
+bool isMinusOp(string rule) { return rule == "ADDOP : -"; }
+
+bool isAddOp(string rule) { 
+	return isPlusOp(rule) || isMinusOp(rule) ;
+}
+
+bool isStarOp(string rule) { return rule == "MULOP : *"; }
+bool isDivOp(string rule) { return rule == "MULOP : /"; }
+bool isModOp(string rule) { return rule == "MULOP : %"; }
+
+bool isMulOp(string rule) { 
+	return isStarOp(rule) || isDivOp(rule) || isModOp(rule);  
+}

@@ -335,7 +335,9 @@ void processRuleOfNode(ParseTreeNode *node) {
 void processStatementPrintlnRule(ParseTreeNode *node){
 	printlnUsed = true;
 	string code = "\
-	MOV AX, " + varAddress(node->getNthChild(3)) + "\n\
+	MOV AX, " + 
+	varAddress(node->getNthChild(3)) +
+	annotationOfLine(node->getStartOfNode()) + "\
 	CALL println\n";
 	writeToAsm(code);
 	processRuleOfNode(node->getNthChild(5));

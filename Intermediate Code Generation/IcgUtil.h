@@ -15,6 +15,7 @@ FILE *asm_out;
 
 unsigned long labelCount = 0;
 long stackPointer = 0;
+bool printlnUsed = false;
 
 string idNameFromRule(string rule){
 	if(rule.substr(0, 2) != "ID") return "";
@@ -79,9 +80,8 @@ END main";
 	writeToAsm(code);
 }
 
-void printNewlineCode() {
-	printHeaderComment("print newline");
-	string code = "\
+string printNewlineCode() {
+	return "\
 	PUSH AX\n\
     PUSH DX\n\
     MOV AH, 2\n\
@@ -92,7 +92,6 @@ void printNewlineCode() {
     INT 21H\n\
     POP DX\n\
     POP AX\n";
-	writeToAsm(code);
 }
 
 void printOutput() {
@@ -121,11 +120,9 @@ PRINT:\n\
     INC SI\n\
     LEA DX, SI\n\
     MOV AH, 9\n\
-    INT 21H\n";
-
-	printNewlineCode();
-	
-	code += "\
+    INT 21H\n"
+	+ printNewlineCode()
+	+ "\
     POP SI\n\
     POP DX\n\
     POP CX\n\
@@ -317,7 +314,6 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 	writeToAsm(code);
 }
 
-
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
@@ -336,10 +332,24 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isUnaryExpressionFactorRule(rule))processUnaryExpressionFactorRule(node);
 }
 
+void processStatementPrintlnRule(ParseTreeNode *node){
+	printlnUsed = true;
+	string code = "\
+	MOV AX, " + varAddress(node->getNthChild(3)) + "\n\
+	CALL println\n";
+	writeToAsm(code);
+	processRuleOfNode(node->getNthChild(5));
+}
+
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
 	if(isGlobalVariableDeclaration(node->getRule()) 
 	|| isFunctionDeclaration(node->getRule()))return;
+
+	if(isStatementPrintlnRule(node->getRule())) {
+		processStatementPrintlnRule(node);
+		return;
+	}
 
 	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
 		postOrderTraversal(itr);
@@ -354,6 +364,7 @@ void generateASM(ParseTreeNode *node){
 	headerCode();
 	declareGlobalVariablesInASM();
 	postOrderTraversal(node);
+	if(printlnUsed)printOutput();
 	footerCode();
 	fclose(asm_out);
 }

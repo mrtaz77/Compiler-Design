@@ -831,12 +831,14 @@ statement : var_declaration
 			initRule("statement : PRINTLN LPAREN ID RPAREN SEMICOLON ");
 			auto printlnNode = new PTN("PRINTLN : println",@1.F_L);
 			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
+			auto id = table->lookUp($3->getName());
 			auto idNode = new PTN(symbolToRule($3),@3.F_L);
+			if(id != nullptr) idNode->setOffset(id->getOffset());
 			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
 			auto semicolonNode = new PTN("SEMICOLON : ;",@5.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(5,printlnNode,lParenNode,idNode,rParenNode,semicolonNode);
-			if(table->lookUp($3->getName()) == nullptr)undeclaredVariable($3);		
+			if(id == nullptr)undeclaredVariable($3);		
 		}
 		| RETURN expression SEMICOLON
 		{

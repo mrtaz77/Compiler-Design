@@ -33,7 +33,23 @@ bool isDeclarationListRule(string rule) { return rule == "declaration_list : dec
 
 bool isStatementsRule(string rule) { return rule == "statements : statement " || rule == "statements : statements statement "; }
 
-bool isStatementRule(string rule) { return rule == "statement : var_declaration " || rule == "statement : expression_statement " || rule == "statement : compound_statement " || rule == "statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement " || rule == "statement : IF LPAREN expression RPAREN statement " || rule == "statement : IF LPAREN expression RPAREN statement ELSE statement " || rule == "statement : WHILE LPAREN expression RPAREN statement " || rule == "statement : PRINTLN LPAREN ID RPAREN SEMICOLON " || rule == "statement : RETURN expression SEMICOLON "; }
+bool isStatementVarDeclarationRule(string rule) { return rule == "statement : var_declaration "; }
+
+bool isStatementExpressionStatementRule(string rule) { return rule == "statement : expression_statement "; }
+
+bool isStatementCompoundStatementRule(string rule) { return rule == "statement : compound_statement "; }
+
+bool isStatementForLoopRule(string rule) { return rule == "statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement "; }
+
+bool isStatementIfRule(string rule) { return rule == "statement : IF LPAREN expression RPAREN statement "; }
+
+bool isStatementIfElseRule(string rule) { return rule == "statement : IF LPAREN expression RPAREN statement ELSE statement "; }
+
+bool isStatementWhileRule(string rule) { return rule == "statement : WHILE LPAREN expression RPAREN statement "; }
+
+bool isStatementPrintlnRule(string rule) { return rule == "statement : PRINTLN LPAREN ID RPAREN SEMICOLON "; }
+
+bool isStatementReturnRule(string rule) { return rule == "statement : RETURN expression SEMICOLON "; }
 
 bool isExpressionStatementRule(string rule) { return rule == "expression_statement : SEMICOLON " || rule == "expression_statement : expression SEMICOLON "; }
 

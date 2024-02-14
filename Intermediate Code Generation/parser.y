@@ -126,7 +126,11 @@ file after the Bison-generated value and location types
 		for(unsigned long i = 0; i < parameters.size(); i++) {
 			auto currParam = parameters[i];
 			if(currParam->getName() == ""){
-				string error = "Name ommitted for parameter "+ to_string(i+1) +" in definition of function \'" + currentFunction->getName() + "\'";
+				string error = 
+				"Name ommitted for parameter "
+				+ to_string(i+1) 
+				+ " in definition of function \'" 
+				+ currentFunction->getName() + "\'";
 				semanticError(error,currParam->getNode()->getStartOfNode()); 
 			}
 		}
@@ -295,11 +299,16 @@ file after the Bison-generated value and location types
 	}
 
 	void insertParametersToScope() {
+		unsigned long currentParamOffset = 2;
 		auto params = currentFunction->getNode()->getParameters();
+		for(int i = params.size() - 1; i >= 0; i--) currentParamOffset += widthFromType(params[i]->getType());
+
 		for(int i = 0; i < params.size() ; i++) {
 			auto name = idNameFromRule(params[i]->getRule());
 			auto type = typeToString(params[i]->getType());
-			auto symbol = new SymbolInfo(name,type,widthFromType(params[i]->getType()));
+			auto symbol = new SymbolInfo(name,type,currentParamOffset);
+			params[i]->setOffset(currentParamOffset);
+			currentParamOffset -= widthFromType(params[i]->getType());
 			symbol->setNode(params[i]);
 			table->insert(symbol);
 		}
@@ -553,6 +562,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			auto idNode = new PTN(symbolToRule($4),@4.F_L);
 			idNode->setType($3->getType());
+			idNode->setParam(1);
 			$4->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
@@ -565,6 +575,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			auto id = new SymbolInfo("","ID");
 			auto idNode = new PTN(symbolToRule(id),@3.L_L);
 			idNode->setType($3->getType());
+			idNode->setParam(1);
 			id->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
@@ -575,6 +586,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			initRule("parameter_list : type_specifier ID ");
 			auto idNode = new PTN(symbolToRule($2),@2.F_L);
 			idNode->setType($1->getType());
+			idNode->setParam(1);
 			$2->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);
@@ -587,6 +599,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			auto id = new SymbolInfo("","ID");
 			auto idNode = new PTN(symbolToRule(id),@1.L_L);
 			idNode->setType($1->getType());
+			idNode->setParam(1);
 			id->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(2,$1,idNode);

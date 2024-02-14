@@ -140,8 +140,10 @@ public:
         }
 
 		if(symbol->getOffset() != -1) {
-			currentOffset += symbol->getOffset();
-			symbol->setOffset(currentOffset);
+			if(!symbol->getNode()->isParam()) {
+				currentOffset += symbol->getOffset();
+				symbol->setOffset(currentOffset);
+			}
 		}
 
         if(prev == nullptr)hashTable[hash] = symbol;

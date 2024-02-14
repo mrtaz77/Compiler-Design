@@ -28,10 +28,11 @@ class ParseTreeNode {
 	string val;
 
 	long offset;
+	bool isParameter;
 
 public:
 
-	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0,long offset = -1 , ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
+	ParseTreeNode(string rule = "", unsigned long startOfNode = 0, unsigned long endOfNode = 0,long offset = -1, bool isParmam = 0, ParseTreeNode* child = nullptr, ParseTreeNode* sibling = nullptr) :
 		startOfNode(startOfNode), 
 		endOfNode(endOfNode), 
 		child(child),
@@ -40,7 +41,8 @@ public:
 		type(Type_Spec::NAT),
 		arraySize(-1),
 		val(""),
-		offset(offset) {}
+		offset(offset),
+		isParameter(isParameter) {}
 
 	ParseTreeNode(const ParseTreeNode& other) :
 		startOfNode(other.startOfNode), 
@@ -54,7 +56,8 @@ public:
 		parameters(other.parameters),
 		arraySize(other.arraySize),
 		val(other.val),
-		offset(other.offset) {}
+		offset(other.offset),
+		isParameter(other.isParameter) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -111,6 +114,8 @@ public:
 		return i;
 	}
 
+	bool isParam() const { return isParameter; }
+
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
     }
@@ -164,6 +169,8 @@ public:
 	}
 
 	void setOffset(long offset) { this->offset = offset; }
+
+	void setParam(bool isParameter) { this->isParameter = isParameter; }
 
 	ParseTreeNode* addChild(ParseTreeNode* child) {
 		ParseTreeNode* itr = this->child;

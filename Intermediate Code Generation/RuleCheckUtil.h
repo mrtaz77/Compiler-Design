@@ -116,3 +116,20 @@ bool isModOp(string rule) { return rule == "MULOP : %"; }
 bool isMulOp(string rule) { 
 	return isStarOp(rule) || isDivOp(rule) || isModOp(rule);  
 }
+
+bool isGreaterOp(string rule) { return rule == "RELOP : >"; }
+
+bool isGreaterEqualOp(string rule) { return rule == "RELOP : >="; }
+
+bool isLessOp(string rule) { return rule == "RELOP : <"; }
+
+bool isLessEqualOp(string rule) { return rule == "RELOP : <="; }
+
+bool isEqualOp(string rule) { return rule == "RELOP : =="; }
+
+bool isNotEqualOp(string rule) { return rule == "RELOP : !="; }
+
+bool isRelop(string rule) { 
+	return isGreaterOp(rule) || isGreaterEqualOp(rule) || isLessEqualOp(rule)
+	|| isLessOp(rule) || isEqualOp(rule) || isNotEqualOp(rule); 
+}

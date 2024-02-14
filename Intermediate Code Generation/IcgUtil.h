@@ -32,7 +32,8 @@ string varAddress(ParseTreeNode *node) {
 	auto idName = idNameFromRule(node->getRule());
 	auto id = table->lookUp(idName);
 	if(id != nullptr)return id->getName(); // global variable
-	return "[BP-" + to_string(node->getOffset()) + "]";
+	string offsetSign = node->isParam() ? "+" : "-";
+	return "[BP" + offsetSign  + to_string(node->getOffset()) + "]";
 }
 
 void writeToAsm(string code){
@@ -204,7 +205,7 @@ void processIdNode(ParseTreeNode* node){
 		}
 	}else {
 		// local variable
-		if(stackPointer > -(node->getOffset())) {
+		if(stackPointer > -(node->getOffset()) && !node->isParam()) {
 			// local variable declaration
 			string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
 			stackPointer = -node->getOffset();
@@ -243,11 +244,9 @@ void processAddOpNode(ParseTreeNode *node){
 	writeToAsm(code);
 }
 
-void processMulOpNode(ParseTreeNode *node){
-	string code;
-	code += "\tMOV CX, AX\n";
-	writeToAsm(code);
-}
+void processMulOpNode(){ writeToAsm("\tMOV CX, AX\n"); }
+
+void processRelOpNode(){ writeToAsm("\tMOV DX, AX\n"); };
 
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
@@ -337,7 +336,8 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isFuncDefinitionRule(rule))processFunctionDefintionRule(node);
 	else if(isSemiColon(rule))printLabel();
 	else if(isAddOp(rule))processAddOpNode(node);
-	else if(isMulOp(rule))processMulOpNode(node);
+	else if(isMulOp(rule))processMulOpNode();
+	else if(isRelop(rule))processRelOpNode();
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
 	else if(isFactorConstIntRule(rule))processFactorConstIntRule(node);
 	else if(isSimpleExpressionAddOpTermRule(rule))processSimpleExpressionAddOpTermRule(node);

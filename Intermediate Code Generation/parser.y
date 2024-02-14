@@ -1057,7 +1057,7 @@ unary_expression : ADDOP unary_expression
 				}
 				| NOT unary_expression
 				{
-					initRule("NOT unary_expression ");
+					initRule("unary_expression : NOT unary_expression ");
 					auto notNode = new PTN("NOT : !",@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,notNode,$2);
 					$$->setType($2->getType());

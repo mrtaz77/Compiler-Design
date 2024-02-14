@@ -285,6 +285,10 @@ void processUnaryExpressionFactorRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
+void processTermUnaryExpressionRule(ParseTreeNode *node){
+	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+}
+
 void processFunctionDefintionRule(ParseTreeNode *node){
 	auto idNode = node->getNthChild(2);
 	auto idName = idNameFromRule(idNode->getRule());
@@ -314,6 +318,15 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 	writeToAsm(code);
 }
 
+
+
+void processUnaryExpressionNotRule() {
+	string code = "\
+	NOT AX\n\
+	PUSH AX\n";
+	writeToAsm(code);
+}
+
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
@@ -330,6 +343,8 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isFactorVariableRule(rule))processFactorVariableRule(node);
 	else if(isFactorIncOpRule(rule) || isFactorDecOpRule(rule))processFactorIncDecOpRule(node);
 	else if(isUnaryExpressionFactorRule(rule))processUnaryExpressionFactorRule(node);
+	else if(isUnaryExpressionNotRule(rule))processUnaryExpressionNotRule();
+	else if(isTermUnaryExpressionRule(rule))processTermUnaryExpressionRule(node);
 }
 
 void processStatementPrintlnRule(ParseTreeNode *node){

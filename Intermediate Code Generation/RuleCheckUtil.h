@@ -91,7 +91,6 @@ bool isFactorIncOpRule(string rule) { return rule == "factor : variable INCOP ";
 
 bool isFactorDecOpRule(string rule) { return rule == "factor : variable DECOP "; }
 
-
 bool isArgumentListRule(string rule) { return rule == "argument_list : arguments " || rule == "argument_list : "; }
 
 bool isArgumentsRule(string rule) { return rule == "arguments : arguments COMMA logic_expression " || rule == "arguments : logic_expression "; }

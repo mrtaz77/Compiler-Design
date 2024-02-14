@@ -1194,7 +1194,7 @@ argument_list : arguments
 			}
 			| arguments error
 			{
-				initError("arguments of argument list",@1.F_L);
+				initError("arguments of argument list ",@1.F_L);
 				auto errorNode = new PTN("arguments : error",$1->getStartOfNode());
 				$$ = (new PTN("argument_list : arguments ",@$.F_L,@$.L_L))
 				->addChildrenToNode(1,errorNode);
@@ -1209,7 +1209,7 @@ argument_list : arguments
 
 arguments : arguments COMMA logic_expression
 		{
-			initRule("arguments : arguments COMMA logic_expression");
+			initRule("arguments : arguments COMMA logic_expression ");
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,$3);
 			$$->setParameters($1->getParameters());
@@ -1217,7 +1217,7 @@ arguments : arguments COMMA logic_expression
 		}
 		| logic_expression
 		{
-			initRule("arguments : logic_expression");
+			initRule("arguments : logic_expression ");
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 			$$->addParameter($1);
 		}

@@ -207,20 +207,14 @@ void processIdNode(ParseTreeNode* node){
 	auto idName = idNameFromRule(node->getRule());
 	auto id = table->lookUp(idName);
 
-	if(id != nullptr){
-		if(node->isFunctionDefined()) {
-			insertFunctionHeaderCode(id);
-		}
-	}else {
-		// local variable
-		if(stackPointer > -(node->getOffset()) && !node->isParam()) {
-			// local variable declaration
-			string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
-			stackPointer = -node->getOffset();
-			writeToAsm(code);
-		}
+	if(id == nullptr && (stackPointer > -(node->getOffset()) && !node->isParam())) {
+		// local variable declaration
+		string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
+		stackPointer = -node->getOffset();
+		writeToAsm(code);
 	}
 }
+
 
 void processAssignOpNode(ParseTreeNode* node){
 	string code;
@@ -304,7 +298,11 @@ void postProcessFunctionDefintionRule(ParseTreeNode *node){
 }
 
 void preProcessFuncDefinitionRule(ParseTreeNode *node) {
+	auto idNode = node->getNthChild(2);
+	auto idName = idNameFromRule(idNode->getRule());
+	auto id = table->lookUp(idName);
 	returnLabel = getIncreasedLabel();
+	insertFunctionHeaderCode(id);
 }
 
 void processFactorVariableRule(ParseTreeNode *node){
@@ -342,7 +340,45 @@ void processUnaryExpressionNotRule() {
 	writeToAsm(code);
 }
 
+void processFactorFunctionCallRule(ParseTreeNode *node) {
+	auto idName = idNameFromRule(node->getNthChild(1)->getRule());
+	string code = "\
+	CALL " + idName + "\n\
+	PUSH AX\n";
+	writeToAsm(code);
+}
 
+void processArgumentsRule() {
+	writeToAsm("\tPUSH AX\n");
+}
+
+string getJumpFromRelop(string rule) {
+	if(isGreaterOp(rule)) return "JG" ;
+	if(isGreaterEqualOp(rule)) return "JGE" ;
+	if(isLessOp(rule)) return "JL" ;
+	if(isLessEqualOp(rule)) return "JLE" ;
+	if(isEqualOp(rule)) return "JE" ;
+	if(isNotEqualOp(rule)) return "JNE";
+	return "";
+}
+
+void processRelExpressionComparisonRule(ParseTreeNode *node) {
+	auto trueLabel = "L" + to_string(getIncreasedLabel());
+	auto falseLabel = "L" + to_string(getIncreasedLabel());
+	auto exitLabel = "L" + to_string(getIncreasedLabel());
+	string code = "\
+	XCHG AX, DX\n\
+	CMP AX, DX\n\
+	" + getJumpFromRelop(node->getNthChild(2)->getRule()) + " " + trueLabel + "\n\
+	JMP " + falseLabel + "\n\
+" + trueLabel + ":\n\
+	MOV AX, 1" + annotationOfLine(node->getStartOfNode()) + "\
+	JMP " + exitLabel + "\n\
+" + falseLabel + ":\n\
+	MOV AX, 0\n\
+" + exitLabel + "\n";
+	writeToAsm(code);
+}
 
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
@@ -364,6 +400,9 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isUnaryExpressionNotRule(rule))processUnaryExpressionNotRule();
 	else if(isTermUnaryExpressionRule(rule))processTermUnaryExpressionRule(node);
 	else if(isUnaryExpressionAddOpRule(rule))processUnaryExpressionAddOpRule(node);
+	else if(isFactorIDFunctionCallRule(rule))processFactorFunctionCallRule(node);
+	else if(isArgumentsRule(rule))processArgumentsRule();
+	else if(isRelExpressionComparisonRule(rule))processRelExpressionComparisonRule(node);
 }
 
 void processStatementReturnRule(ParseTreeNode* node) {

@@ -46,4 +46,20 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node);
 
 void processTermMulOpUnaryExpressionRule(ParseTreeNode *node);
 
+void processFactorFunctionCallRule(ParseTreeNode *node);
+
 void postOrderTraversal(ParseTreeNode *node);
+
+void processRelExpressionSimpleExpressionRule(ParseTreeNode *node);
+
+void processSimpleExpressionTermRule(ParseTreeNode *node);
+
+void processUnaryExpressionFactorRule(ParseTreeNode *node);
+
+void processTermUnaryExpressionRule(ParseTreeNode *node);
+
+void postProcessFunctionDefintionRule(ParseTreeNode *node);
+
+void processArgumentsRule();
+
+void processRelExpressionComparisonRule(ParseTreeNode *node);

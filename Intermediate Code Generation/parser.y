@@ -11,7 +11,7 @@ parser implementation file*/
 	#include<stdio.h>
 	#include<stdlib.h>
 	#include<string>
-	#include "IcgUtil.h"
+	#include "IcgUtil.cpp"
 
 	FILE *log_out, *error_out, *parse_tree_out;
 	extern FILE* yyin;

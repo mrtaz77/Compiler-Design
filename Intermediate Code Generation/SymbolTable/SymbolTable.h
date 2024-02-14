@@ -60,7 +60,6 @@ public:
     bool exitScope(){
         // never exit the initial scope
         if(currentScope->getParentScope() == nullptr)return false;
-
         ScopeTable* temp = currentScope;
         currentScope = currentScope->getParentScope();
         delete temp;

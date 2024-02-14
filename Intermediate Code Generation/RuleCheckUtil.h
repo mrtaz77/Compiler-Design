@@ -133,3 +133,5 @@ bool isRelop(string rule) {
 	return isGreaterOp(rule) || isGreaterEqualOp(rule) || isLessEqualOp(rule)
 	|| isLessOp(rule) || isEqualOp(rule) || isNotEqualOp(rule); 
 }
+
+bool isReturn(string rule) { return rule == "RETURN : return"; }

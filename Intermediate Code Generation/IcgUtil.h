@@ -304,6 +304,12 @@ void processFactorVariableRule(ParseTreeNode *node){
 	writeToAsm(code);
 }
 
+void processUnaryExpressionAddOpRule(ParseTreeNode *node){
+	if(isMinusOp(node->getNthChild(1)->getRule())){
+		writeToAsm("\tNEG AX\n");
+	} 
+}
+
 void processFactorIncDecOpRule(ParseTreeNode *node){
 	string code;
 	code += "\tMOV AX, "
@@ -317,8 +323,6 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 	+ ", AX\n";
 	writeToAsm(code);
 }
-
-
 
 void processUnaryExpressionNotRule() {
 	string code = "\
@@ -345,6 +349,7 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isUnaryExpressionFactorRule(rule))processUnaryExpressionFactorRule(node);
 	else if(isUnaryExpressionNotRule(rule))processUnaryExpressionNotRule();
 	else if(isTermUnaryExpressionRule(rule))processTermUnaryExpressionRule(node);
+	else if(isUnaryExpressionAddOpRule(rule))processUnaryExpressionAddOpRule(node);
 }
 
 void processStatementPrintlnRule(ParseTreeNode *node){

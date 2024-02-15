@@ -29,6 +29,7 @@ class ParseTreeNode {
 
 	long offset;
 	bool isParameter;
+	string scope;
 
 public:
 
@@ -57,7 +58,8 @@ public:
 		arraySize(other.arraySize),
 		val(other.val),
 		offset(other.offset),
-		isParameter(other.isParameter) {}
+		isParameter(other.isParameter),
+		scope(other.scope) {}
 
 	~ParseTreeNode() {
         delete child;
@@ -116,6 +118,8 @@ public:
 
 	bool isParam() const { return isParameter; }
 
+	string getScope() const { return scope; }
+
     void setStartOfNode(unsigned long start) {
         startOfNode = start;
     }
@@ -171,6 +175,8 @@ public:
 	void setOffset(long offset) { this->offset = offset; }
 
 	void setParam(bool isParameter) { this->isParameter = isParameter; }
+
+	void setScope(string scope) { this->scope = scope; }
 
 	ParseTreeNode* addChild(ParseTreeNode* child) {
 		ParseTreeNode* itr = this->child;

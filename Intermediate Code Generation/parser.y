@@ -290,14 +290,6 @@ file after the Bison-generated value and location types
 		}	
 	}
 
-	unsigned widthFromType(Type_Spec type) {
-		switch(type) {
-			case TYPE_INT: return 2;
-			case TYPE_FLOAT: return 4;
-			default: return -1;
-		}
-	}
-
 	void insertParametersToScope() {
 		unsigned long currentParamOffset = 2;
 		auto params = currentFunction->getNode()->getParameters();
@@ -692,7 +684,7 @@ type_specifier : INT
 
 declaration_list : declaration_list COMMA ID
 				{
-					initRule("declaration_list : declaration_list COMMA ID  ");
+					initRule("declaration_list : declaration_list COMMA ID ");
 					auto commaNode = new PTN("COMMA : ,",@2.F_L);
 					auto idNode = new PTN(symbolToRule($3),@3.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,idNode);

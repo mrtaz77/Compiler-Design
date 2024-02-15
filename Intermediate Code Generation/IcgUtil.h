@@ -30,8 +30,6 @@ void insertFunctionHeaderCode(SymbolInfo* func);
 
 void insertFunctionFooterCode(SymbolInfo* func);
 
-void processIdNode(ParseTreeNode* node);
-
 void processAssignOpNode(ParseTreeNode* node);
 
 void processFactorConstIntRule(ParseTreeNode *node);
@@ -69,3 +67,7 @@ void processStatementIfRule(ParseTreeNode *node);
 void processStatementIfElseRule(ParseTreeNode *node);
 
 void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node);
+
+void processDeclarationListRule(ParseTreeNode *node);
+
+void processVariableDeclaration(ParseTreeNode *node);

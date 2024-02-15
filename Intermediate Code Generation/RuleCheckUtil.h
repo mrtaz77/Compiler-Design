@@ -10,7 +10,6 @@ bool isGlobalVariableDeclaration(string rule) { return rule == "unit : var_decla
 
 bool isFunctionDeclaration(string rule) { return rule == "unit : func_declaration "; }
 
-
 bool isFuncDefinitionRule(string rule) { 
 	return rule == "func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement " 
 	|| rule == "func_definition : type_specifier ID LPAREN RPAREN compound_statement "; 
@@ -29,7 +28,12 @@ bool isVarDeclarationRule(string rule) { return rule == "var_declaration : type_
 
 bool isTypeSpecifierRule(string rule) { return rule == "type_specifier : INT " || rule == "type_specifier : FLOAT " || rule == "type_specifier : VOID "; }
 
-bool isDeclarationListRule(string rule) { return rule == "declaration_list : declaration_list COMMA ID " || rule == "declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD " || rule == "declaration_list : ID " || rule == "declaration_list : ID LTHIRD CONST_INT RTHIRD "; }
+bool isDeclarationListRule(string rule) { 
+	return rule == "declaration_list : declaration_list COMMA ID " 
+	|| rule == "declaration_list : declaration_list COMMA ID LSQUARE CONST_INT RSQUARE " 
+	|| rule == "declaration_list : ID " 
+	|| rule == "declaration_list : ID LSQUARE CONST_INT RSQUARE "; 
+}
 
 bool isStatementsRule(string rule) { return rule == "statements : statement " || rule == "statements : statements statement "; }
 

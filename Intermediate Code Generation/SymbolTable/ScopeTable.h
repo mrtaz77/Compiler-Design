@@ -146,6 +146,8 @@ public:
 			}
 		}
 
+		symbol->getNode()->setScope(id);
+
         if(prev == nullptr)hashTable[hash] = symbol;
         else prev->setNext(symbol);
 

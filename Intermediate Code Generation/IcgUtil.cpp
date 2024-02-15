@@ -30,6 +30,14 @@ string idNameFromRule(string rule){
 	}
 }
 
+unsigned widthFromType(Type_Spec type) {
+	switch(type) {
+		case TYPE_INT: return 2;
+		case TYPE_FLOAT: return 4;
+		default: return -1;
+	}
+}
+
 string varAddress(ParseTreeNode *node) {
 	auto idName = idNameFromRule(node->getRule());
 	auto id = table->lookUp(idName);
@@ -200,20 +208,6 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 	writeToAsm(code);
 }
 
-
-void processIdNode(ParseTreeNode* node){
-	auto idName = idNameFromRule(node->getRule());
-	auto id = table->lookUp(idName);
-
-	if(id == nullptr && (stackPointer > -(node->getOffset()) && !node->isParam())) {
-		// local variable declaration
-		string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
-		stackPointer = -node->getOffset();
-		writeToAsm(code);
-	}
-}
-
-
 void processAssignOpNode(ParseTreeNode* node){
 	string code;
 	auto varNode = node->getNthChild(1);
@@ -353,6 +347,20 @@ void processArgumentsRule() {
 	writeToAsm("\tPUSH AX\n");
 }
 
+void processVariableDeclaration(ParseTreeNode *node) {
+	unsigned long width = widthFromType(node->getType());
+	if(node->isArray()) width *= node->getArraySize();
+	string code = "\tSUB SP, " + to_string(width) + "\n";
+	stackPointer = -node->getOffset();
+	writeToAsm(code);
+}
+
+void processDeclarationListRule(ParseTreeNode *node) {
+	if(node->getScope() == "1")return;
+	if(node->getNumOfChildren() == 1 || node->getNumOfChildren() == 4)processVariableDeclaration(node->getNthChild(1));
+	else processVariableDeclaration(node->getNthChild(3));
+}
+
 string getJumpFromRelop(string rule) {
 	if(isGreaterOp(rule)) return "JG" ;
 	if(isGreaterEqualOp(rule)) return "JGE" ;
@@ -421,7 +429,7 @@ void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node) {
 
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
-	if(idNameFromRule(rule) != "")processIdNode(node);
+	if(isDeclarationListRule(rule))processDeclarationListRule(node);
 	else if(isFuncDefinitionRule(rule))postProcessFunctionDefintionRule(node);
 	else if(isSemiColon(rule))printLabel(getIncreasedLabel());
 	else if(isAddOp(rule))processAddOpNode(node);

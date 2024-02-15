@@ -140,7 +140,7 @@ NEGATE:\n\
     POP AX\n\
     NEG AX\n\
     JMP PRINT\n\
-	println ENDP\n\n";
+	println ENDP\n";
 	writeToAsm(code);
 }
 
@@ -439,6 +439,32 @@ void processStatementIfRule(ParseTreeNode *node) {
 	writeToAsm(falseLabel + ":\n");
 }
 
+void processStatementIfElseRule(ParseTreeNode* node) {
+	postOrderTraversal(node->getNthChild(3));
+	auto trueLabel = "L" + to_string(getIncreasedLabel());
+	auto falseLabel = "L" + to_string(getIncreasedLabel());
+	auto exitLabel = "L" + to_string(getIncreasedLabel());
+
+	string code = "\
+	CMP AX, 1\n\
+	JE " + trueLabel + "\n\
+	JMP " + falseLabel + "\n\
+" + trueLabel + ":\n";
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(5));
+
+	code = "\
+	JMP " + exitLabel + "\n\
+" + falseLabel + ":\n";
+
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(7));
+
+	writeToAsm(exitLabel + ":\n");
+}
+
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
 	if(isGlobalVariableDeclaration(node->getRule()) 
@@ -456,6 +482,11 @@ void postOrderTraversal(ParseTreeNode *node) {
 
 	if(isStatementIfRule(node->getRule())) {
 		processStatementIfRule(node);
+		return;
+	}
+
+	if(isStatementIfElseRule(node->getRule())) {
+		processStatementIfElseRule(node);
 		return;
 	}
 

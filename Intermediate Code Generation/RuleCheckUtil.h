@@ -57,7 +57,9 @@ bool isStatementReturnRule(string rule) { return rule == "statement : RETURN exp
 
 bool isExpressionStatementRule(string rule) { return rule == "expression_statement : SEMICOLON " || rule == "expression_statement : expression SEMICOLON "; }
 
-bool isVariableRule(string rule) { return rule == "variable : ID " || rule == "variable : ID LTHIRD expression RTHIRD "; }
+bool isVariableIdRule(string rule) { return rule == "variable : ID "; }
+
+bool isVariableArrayRule(string rule) { return rule == "variable : ID LSQUARE expression RSQUARE "; }
 
 bool isExpressionRule(string rule) { return rule == "expression : logic_expression " || rule == "expression : variable ASSIGNOP logic_expression "; }
 

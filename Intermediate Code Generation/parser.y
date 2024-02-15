@@ -888,7 +888,10 @@ variable : ID
 				$$->setType(Type_Spec::NAT);
 			}
 			else {
-				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,prevId->getNode());
+				idNode->setType(prevId->getNode()->getType());
+				idNode->setOffset(prevId->getNode()->getOffset());
+				idNode->setScope(prevId->getNode()->getScope());
+				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 				$$->setType(prevId->getNode()->getType());
 				$$->setArraySize(prevId->getNode()->getArraySize());
 				$$->setOffset(prevId->getNode()->getOffset());
@@ -907,8 +910,11 @@ variable : ID
 				$$->setType(Type_Spec::NAT);
 			}
 			else {
+				idNode->setType(prevId->getNode()->getType());
+				idNode->setOffset(prevId->getNode()->getOffset());
+				idNode->setScope(prevId->getNode()->getScope());
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
-				->addChildrenToNode(4,prevId->getNode(),lSquareNode,$3,rSquareNode);
+				->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
 				$$->setType(prevId->getNode()->getType());
 				$$->setOffset(prevId->getNode()->getOffset());
 			}

@@ -71,3 +71,5 @@ void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node);
 void processDeclarationListRule(ParseTreeNode *node);
 
 void processVariableDeclaration(ParseTreeNode *node);
+
+void processVariableArrayRule();

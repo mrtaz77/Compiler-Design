@@ -54,7 +54,7 @@ public:
 
         currentScope->setNumOfChildren(childId);
 
-		newScope->setCurrentOffset(currentScope->getCurrentOffset());
+		if(currentScope->getParentScope() != nullptr)newScope->setCurrentOffset(currentScope->getCurrentOffset());
 
         currentScope = newScope;
     }

@@ -266,8 +266,8 @@ void processTermMulOpUnaryExpressionRule(ParseTreeNode *node){
 	string code;
 	code += "\tXCHG AX, CX\n";
 	code += "\tCWD\n";
-	if(isStarOp(mulOpRule))code += "\tMUL CX\n";
-	else code += "\tDIV CX\n";
+	if(isStarOp(mulOpRule))code += "\tIMUL CX\n";
+	else code += "\tIDIV CX\n";
 	if(isModOp(mulOpRule))code += "\tPUSH DX\n";
 	else code += "\tPUSH AX\n";
 	writeToAsm(code);
@@ -315,7 +315,10 @@ void processFactorVariableRule(ParseTreeNode *node){
 
 void processUnaryExpressionAddOpRule(ParseTreeNode *node){
 	if(isMinusOp(node->getNthChild(1)->getRule())){
-		writeToAsm("\tNEG AX\n");
+		string code = "\
+	NEG AX\n\
+	PUSH AX\n";
+		writeToAsm(code);
 	} 
 }
 

@@ -24,7 +24,8 @@ public:
     SymbolTable(int bucketSize){
 		currentScopeTableId = 0;
         currentScope = new ScopeTable(to_string(++currentScopeTableId), bucketSize);
-    }
+		currentScope->setCurrentOffset(0);
+	}
 
     ~SymbolTable(){
         while(currentScope != nullptr){
@@ -53,6 +54,8 @@ public:
 
         currentScope->setNumOfChildren(childId);
 
+		newScope->setCurrentOffset(currentScope->getCurrentOffset());
+
         currentScope = newScope;
     }
 
@@ -62,6 +65,7 @@ public:
         if(currentScope->getParentScope() == nullptr)return false;
         ScopeTable* temp = currentScope;
         currentScope = currentScope->getParentScope();
+		currentScope->setCurrentOffset(temp->getCurrentOffset());
         delete temp;
         return true;
     }

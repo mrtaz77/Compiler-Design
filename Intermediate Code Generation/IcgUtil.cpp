@@ -348,9 +348,7 @@ void processArgumentsRule() {
 }
 
 void processVariableDeclaration(ParseTreeNode *node) {
-	unsigned long width = widthFromType(node->getType());
-	if(node->isArray()) width *= node->getArraySize();
-	string code = "\tSUB SP, " + to_string(width) + "\n";
+	string code = "\tSUB SP, " + to_string(node->getOffset()+stackPointer) + "\n";
 	stackPointer = -node->getOffset();
 	writeToAsm(code);
 }

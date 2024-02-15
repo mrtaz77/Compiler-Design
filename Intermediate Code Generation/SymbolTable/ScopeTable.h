@@ -90,6 +90,9 @@ public:
     int getNumOfChildren() const { return numOfChildren; }
     void setNumOfChildren(int numOfChildren) { this->numOfChildren = numOfChildren; }
 
+	unsigned long getCurrentOffset() const { return currentOffset; }
+	void setCurrentOffset(unsigned long currentOffset) { this->currentOffset = currentOffset; }
+
     ScopeTable* getParentScope() { return parentScope; }
     void setParentScope(ScopeTable *parentScope) { this->parentScope = parentScope; }
 

@@ -228,6 +228,6 @@ public:
 
 	unsigned long getParameterWidth() {
 		if(!functionDefined) return -1;
-		return parameters[getNumParameters()-1]->getOffset();
+		return 2 * getNumParameters();
 	}
 };

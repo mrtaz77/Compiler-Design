@@ -63,3 +63,5 @@ void postProcessFunctionDefintionRule(ParseTreeNode *node);
 void processArgumentsRule();
 
 void processRelExpressionComparisonRule(ParseTreeNode *node);
+
+void processStatementIfRule(ParseTreeNode *node);

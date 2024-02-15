@@ -19,8 +19,6 @@ unsigned long returnLabel = 0;
 long stackPointer = 0;
 bool printlnUsed = false;
 
-
-
 string idNameFromRule(string rule){
 	if(rule.substr(0, 2) != "ID") return "";
 	else {
@@ -379,7 +377,7 @@ void processRelExpressionComparisonRule(ParseTreeNode *node) {
 	JMP " + exitLabel + "\n\
 " + falseLabel + ":\n\
 	MOV AX, 0\n\
-" + exitLabel + "\n";
+" + exitLabel + ":\n";
 	writeToAsm(code);
 }
 
@@ -425,6 +423,22 @@ void processStatementPrintlnRule(ParseTreeNode *node){
 	processRuleOfNode(node->getNthChild(5));
 }
 
+void processStatementIfRule(ParseTreeNode *node) {
+	postOrderTraversal(node->getNthChild(3));
+	auto trueLabel = "L" + to_string(getIncreasedLabel());
+	auto falseLabel = "L" + to_string(getIncreasedLabel());
+
+	string code = "\
+	CMP AX, 1\n\
+	JE " + trueLabel + "\n\
+	JMP " + falseLabel + "\n\
+" + trueLabel + ":\n";
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(5));
+	writeToAsm(falseLabel + ":\n");
+}
+
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
 	if(isGlobalVariableDeclaration(node->getRule()) 
@@ -437,6 +451,11 @@ void postOrderTraversal(ParseTreeNode *node) {
 
 	if(isStatementReturnRule(node->getRule())) {
 		processStatementReturnRule(node);
+		return;
+	}
+
+	if(isStatementIfRule(node->getRule())) {
+		processStatementIfRule(node);
 		return;
 	}
 

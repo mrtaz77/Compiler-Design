@@ -381,6 +381,44 @@ void processRelExpressionComparisonRule(ParseTreeNode *node) {
 	writeToAsm(code);
 }
 
+void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node) {
+	auto trueLabel = "L" + to_string(getIncreasedLabel());
+	auto falseLabel = "L" + to_string(getIncreasedLabel());
+	auto exitLabel = "L" + to_string(getIncreasedLabel());
+
+	postOrderTraversal(node->getNthChild(1));
+
+	string code = "\tCMP AX, 0\n";
+
+	if(isLogicalAndOp(node->getNthChild(2)->getRule())) {
+		code += "\tJE " + falseLabel + "\n";
+	}else {
+		code += "\tJNE " + trueLabel + "\n";
+	}
+
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(3));
+
+	code = "\tCMP AX, 0\n";
+
+	if(isLogicalAndOp(node->getNthChild(2)->getRule())) {
+		code += "\tJE " + falseLabel + "\n";
+	}else {
+		code += "\tJNE " + trueLabel + "\n";
+	}
+
+	code += "\
+" + trueLabel + ":\n\
+	MOV AX, 1" + annotationOfLine(node->getStartOfNode()) + "\
+	JMP " + exitLabel + "\n\
+" + falseLabel + ":\n\
+	MOV AX, 0\n\
+" + exitLabel + ":\n";
+
+	writeToAsm(code);
+}
+
 void processRuleOfNode(ParseTreeNode *node) {
 	string rule = node->getRule();
 	if(idNameFromRule(rule) != "")processIdNode(node);
@@ -487,6 +525,11 @@ void postOrderTraversal(ParseTreeNode *node) {
 
 	if(isStatementIfElseRule(node->getRule())) {
 		processStatementIfElseRule(node);
+		return;
+	}
+
+	if(isLogicExpressionMultipleRelExpressionsRule(node->getRule())) {
+		processLogicExpressionMultipleRelExpressionRule(node);
 		return;
 	}
 

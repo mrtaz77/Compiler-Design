@@ -67,3 +67,5 @@ void processRelExpressionComparisonRule(ParseTreeNode *node);
 void processStatementIfRule(ParseTreeNode *node);
 
 void processStatementIfElseRule(ParseTreeNode *node);
+
+void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node);

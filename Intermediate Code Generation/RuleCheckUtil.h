@@ -57,7 +57,9 @@ bool isVariableRule(string rule) { return rule == "variable : ID " || rule == "v
 
 bool isExpressionRule(string rule) { return rule == "expression : logic_expression " || rule == "expression : variable ASSIGNOP logic_expression "; }
 
-bool isLogicExpressionRule(string rule) { return rule == "logic_expression : rel_expression " || rule == "logic_expression : rel_expression LOGICOP rel_expression "; }
+bool isLogicExpressionSingleRelExpressionRule(string rule) { return rule == "logic_expression : rel_expression "; }
+
+bool isLogicExpressionMultipleRelExpressionsRule(string rule) { return rule == "logic_expression : rel_expression LOGICOP rel_expression "; }
 
 bool isRelExpressionSimpleExpressionRule(string rule) { return rule == "rel_expression : simple_expression "; }
 
@@ -134,3 +136,9 @@ bool isRelop(string rule) {
 }
 
 bool isReturn(string rule) { return rule == "RETURN : return"; }
+
+bool isLogicalAndOp(string rule) { return rule == "LOGICOP : &&"; }
+
+bool isLogicalOrOp(string rule) { return rule == "LOGICOP : ||"; }
+
+bool isLogicOp(string rule) { return isLogicalAndOp(rule) || isLogicalOrOp(rule); }

@@ -239,21 +239,21 @@ void processAddOpNode(ParseTreeNode *node){
 	// check for ADDOP unary_expression rule
 	string siblingRule = node->getSibling()->getRule();
 	if(isTermUnaryExpressionRule(siblingRule) || isTermMulOpUnaryExpressionRule(siblingRule)) {
-		code += "\tMOV DX, AX\n";
+		code += "\tMOV BX, AX\n";
 	}
 	writeToAsm(code);
 }
 
 void processMulOpNode(){ writeToAsm("\tMOV CX, AX\n"); }
 
-void processRelOpNode(){ writeToAsm("\tMOV DX, AX\n"); };
+void processRelOpNode(){ writeToAsm("\tMOV BX, AX\n"); };
 
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
 	string code;
-	code += "\tXCHG AX, DX\n";
-	if(isPlusOp(addOpRule))code += "\tADD AX, DX\n";
-	else code += "\tSUB AX, DX\n";
+	code += "\tXCHG AX, BX\n";
+	if(isPlusOp(addOpRule))code += "\tADD AX, BX\n";
+	else code += "\tSUB AX, BX\n";
 	code += "\tPUSH AX\n";
 	writeToAsm(code);
 	if(node->getSibling() != nullptr)printPopAx(node);
@@ -368,8 +368,8 @@ void processRelExpressionComparisonRule(ParseTreeNode *node) {
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	auto exitLabel = "L" + to_string(getIncreasedLabel());
 	string code = "\
-	XCHG AX, DX\n\
-	CMP AX, DX\n\
+	XCHG AX, BX\n\
+	CMP AX, BX\n\
 	" + getJumpFromRelop(node->getNthChild(2)->getRule()) + " " + trueLabel + "\n\
 	JMP " + falseLabel + "\n\
 " + trueLabel + ":\n\

@@ -73,3 +73,5 @@ void processDeclarationListRule(ParseTreeNode *node);
 void processVariableDeclaration(ParseTreeNode *node);
 
 void processVariableArrayRule();
+
+void processStatementWhileRule(ParseTreeNode *node);

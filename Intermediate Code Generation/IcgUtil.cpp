@@ -39,6 +39,7 @@ unsigned widthFromType(Type_Spec type) {
 }
 
 string varAddress(ParseTreeNode *node) {
+	// cout << node->print() << " " << node->getOffset() << endl;
 	if(node->getScope() == "1")return idNameFromRule(node->getRule()); // global variable
 	string offsetSign = node->isParam() ? "+" : "-";
 	return "[BP" + offsetSign  + to_string(node->getOffset()) + "]";
@@ -64,6 +65,7 @@ string annotationOfLine(unsigned long lineNo){
 
 void adjustStackPointer() {
 	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
+	stackPointer = 0;
 	writeToAsm(code);
 }
 

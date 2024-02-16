@@ -891,6 +891,7 @@ variable : ID
 				idNode->setType(prevId->getNode()->getType());
 				idNode->setOffset(prevId->getNode()->getOffset());
 				idNode->setScope(prevId->getNode()->getScope());
+				idNode->setParam(prevId->getNode()->isParam());
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,idNode);
 				$$->setType(prevId->getNode()->getType());
 				$$->setArraySize(prevId->getNode()->getArraySize());
@@ -913,6 +914,7 @@ variable : ID
 				idNode->setType(prevId->getNode()->getType());
 				idNode->setOffset(prevId->getNode()->getOffset());
 				idNode->setScope(prevId->getNode()->getScope());
+				idNode->setParam(prevId->getNode()->isParam());
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 				->addChildrenToNode(4,idNode,lSquareNode,$3,rSquareNode);
 				$$->setType(prevId->getNode()->getType());

@@ -296,7 +296,10 @@ void processSimpleExpressionTermRule(ParseTreeNode *node){
 }
 
 void processUnaryExpressionFactorRule(ParseTreeNode *node){
-	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+	if(node->getChild()->getNumOfChildren() > 1 &&
+	!isFactorExpressionRule(node->getChild()->getRule())){
+		printPopAx(node);
+	}
 }
 
 void processTermUnaryExpressionRule(ParseTreeNode *node){

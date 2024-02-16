@@ -566,7 +566,7 @@ void processStatementIfRule(ParseTreeNode *node) {
 }
 
 void processStatementWhileRule(ParseTreeNode* node) {
-	auto loopLabel = "L" + to_string(getIncreasedLabel());
+	auto loopLabel = "L" + to_string(labelCount);
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	writeToAsm(loopLabel + ":\n");
 	postOrderTraversal(node->getNthChild(3));
@@ -578,6 +578,41 @@ void processStatementWhileRule(ParseTreeNode* node) {
 	code = "\
 	JMP " + loopLabel + "\n"
 	+ falseLabel + ":\n";
+	writeToAsm(code);
+}
+
+void processStatementForLoopRule(ParseTreeNode *node) {
+	postOrderTraversal(node->getNthChild(3));
+	auto loopLabel = "L" + to_string(labelCount);
+	auto expressionLabel = "L" + to_string(getIncreasedLabel());
+	auto trueLabel = "L" + to_string(getIncreasedLabel());
+	auto exitLabel = "L" + to_string(getIncreasedLabel());
+
+	postOrderTraversal(node->getNthChild(4));
+
+	string code = "\
+	CMP AX, 0\n\
+	JE " + exitLabel + "\n\
+	JMP " + trueLabel + "\n"
+	+ expressionLabel + ":\n";
+
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(5));
+
+	code = "\
+	POP AX\n\
+	JMP " + loopLabel + "\n"
+	+ trueLabel + ":\n";
+
+	writeToAsm(code);
+
+	postOrderTraversal(node->getNthChild(7));
+
+	code = "\
+	JMP " + expressionLabel + "\n"
+	+ exitLabel + ":\n";
+
 	writeToAsm(code);
 }
 
@@ -643,6 +678,11 @@ void postOrderTraversal(ParseTreeNode *node) {
 
 	if(isStatementWhileRule(node->getRule())) {
 		processStatementWhileRule(node);
+		return;
+	}
+
+	if(isStatementForLoopRule(node->getRule())) {
+		processStatementForLoopRule(node);
 		return;
 	}
 

@@ -1,0 +1,14 @@
+.MODEL SMALL
+.STACK 1000H
+.Data
+	number DB "00000$"
+	a DW 1 DUP (0000H)
+	b DW 1 DUP (0000H)
+.CODE
+main PROC
+	PUSH BP
+	MOV BP, SP
+	MOV AX, a
+	MOV b, AX
+main ENDP
+END main

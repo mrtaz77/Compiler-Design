@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 bison --header parser.y
 echo 'Generated the parser C file as well the header file'
 g++ -w -c -o y.o parser.tab.c

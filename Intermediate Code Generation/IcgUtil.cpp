@@ -566,8 +566,9 @@ void processStatementIfRule(ParseTreeNode *node) {
 }
 
 void processStatementWhileRule(ParseTreeNode* node) {
-	auto loopLabel = "L" + to_string(labelCount);
+	auto loopLabel = "L" + to_string(getIncreasedLabel());
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
+	writeToAsm(loopLabel + ":\n");
 	postOrderTraversal(node->getNthChild(3));
 	string code = "\
 	CMP AX, 0\n\

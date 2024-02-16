@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <c_filename>"
@@ -29,7 +29,6 @@ cp "Sample Input/$c_file" "$output_folder/"
 ./a.out "Sample Input/$c_file" >  "$output_folder/output.txt"
 
 # Move generated output files to the specific directory
-mv *.txt "$output_folder/"
-mv *.asm "$output_folder/"
+mv code.asm recsrc.txt token.txt log.txt optcode.asm error.txt parsetree.txt code.txt "$output_folder/"
 
 echo "Task completed successfully."

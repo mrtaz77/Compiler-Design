@@ -838,7 +838,12 @@ statement : var_declaration
 			auto lParenNode = new PTN("LPAREN : (",@2.F_L);
 			auto id = table->lookUp($3->getName());
 			auto idNode = new PTN(symbolToRule($3),@3.F_L);
-			if(id != nullptr) idNode->setOffset(id->getOffset());
+			if(id != nullptr) {
+				idNode->setOffset(id->getOffset());
+				idNode->setScope(id->getNode()->getScope());
+				idNode->setParam(id->getNode()->isParam());
+				idNode->setType(id->getNode()->getType());
+			}
 			auto rParenNode = new PTN("RPAREN : )",@4.F_L);
 			auto semicolonNode = new PTN("SEMICOLON : ;",@5.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))

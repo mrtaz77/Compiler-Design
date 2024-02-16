@@ -44,7 +44,7 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node);
 
 void processTermMulOpUnaryExpressionRule(ParseTreeNode *node);
 
-void processFactorFunctionCallRule(ParseTreeNode *node);
+void postProcessFactorFunctionCallRule(ParseTreeNode *node);
 
 void postOrderTraversal(ParseTreeNode *node);
 
@@ -77,3 +77,5 @@ void processVariableArrayRule();
 void processStatementWhileRule(ParseTreeNode *node);
 
 void processStatementForLoopRule(ParseTreeNode *node);
+
+void preProcessFunctionCallRule();

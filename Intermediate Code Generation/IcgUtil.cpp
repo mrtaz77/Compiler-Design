@@ -413,11 +413,14 @@ void processUnaryExpressionNotRule() {
 	writeToAsm(code);
 }
 
-void processFactorFunctionCallRule(ParseTreeNode *node) {
+void postProcessFactorFunctionCallRule(ParseTreeNode *node) {
 	auto idName = idNameFromRule(node->getNthChild(1)->getRule());
 	string code = "\
 	CALL " + idName + "\n\
+	POP CX\n\
+	POP BX\n\
 	PUSH AX\n";
+
 	writeToAsm(code);
 }
 
@@ -526,7 +529,7 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isUnaryExpressionNotRule(rule))processUnaryExpressionNotRule();
 	else if(isTermUnaryExpressionRule(rule))processTermUnaryExpressionRule(node);
 	else if(isUnaryExpressionAddOpRule(rule))processUnaryExpressionAddOpRule(node);
-	else if(isFactorIDFunctionCallRule(rule))processFactorFunctionCallRule(node);
+	else if(isFactorIDFunctionCallRule(rule))postProcessFactorFunctionCallRule(node);
 	else if(isArgumentsRule(rule))processArgumentsRule();
 	else if(isRelExpressionComparisonRule(rule))processRelExpressionComparisonRule(node);
 	else if(isVariableArrayRule(rule))processVariableArrayRule();
@@ -641,6 +644,12 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 	writeToAsm(exitLabel + ":\n");
 }
 
+void preProcessFunctionCallRule() {
+	writeToAsm("\
+	PUSH BX\n\
+	PUSH CX\n");
+}
+
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes
 	if(isGlobalVariableDeclaration(node->getRule()) 
@@ -683,6 +692,10 @@ void postOrderTraversal(ParseTreeNode *node) {
 	if(isStatementForLoopRule(node->getRule())) {
 		processStatementForLoopRule(node);
 		return;
+	}
+
+	if(isFactorIDFunctionCallRule(node->getRule())) {
+		preProcessFunctionCallRule();
 	}
 
 

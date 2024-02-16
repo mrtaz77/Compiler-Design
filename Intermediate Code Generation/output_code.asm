@@ -5,110 +5,87 @@
 .STACK 1000H ; ALLOCATE MEMORY IN HEXADECIMAL
 .DATA ; VARIABLE DECLARATION
 	number DB "00000$"
+	a DW 1 DUP (0000H)
+	b DW 1 DUP (0000H)
+	c DW 1 DUP (0000H)
 .CODE
 ;-------------------------------
-;         Function : f1
+;         Function : func_a
 ;-------------------------------
-f1 PROC
+func_a PROC
 	PUSH BP
 	MOV BP, SP
-	MOV AX, [BP+4]		; Line 2
-	NEG AX
+	MOV AX, 7		; Line 4
+	MOV a, AX
 	PUSH AX
-	POP AX		; Line 2
-	JMP L1
+	POP AX
 L2:
 L1:
 	POP BP
-	RET 2
-f1 ENDP
+	RET 0
+func_a ENDP
 ;-------------------------------
-;         Function : f2
+;         Function : foo
 ;-------------------------------
-f2 PROC
+foo PROC
 	PUSH BP
 	MOV BP, SP
-	MOV AX, 1		; Line 6
+	MOV AX, [BP+4]		; Line 8
 	MOV BX, AX
-	MOV AX, [BP+4]		; Line 6
-	MOV BX, AX
-	MOV AX, 1		; Line 6
-	XCHG AX, BX
-	SUB AX, BX
-	PUSH AX
-	POP AX		; Line 6
-	PUSH AX
-	CALL f1
-	PUSH AX
-	POP AX		; Line 6
+	MOV AX, 3		; Line 8
 	XCHG AX, BX
 	ADD AX, BX
 	PUSH AX
-	POP AX		; Line 6
-	JMP L3
+	POP AX		; Line 8
+	MOV [BP+4], AX
+	PUSH AX
+	POP AX
 L4:
+	MOV AX, [BP+4]		; Line 9
+	JMP L3
+L5:
 L3:
 	POP BP
 	RET 2
-f2 ENDP
+foo ENDP
 ;-------------------------------
-;         Function : f3
+;         Function : bar
 ;-------------------------------
-f3 PROC
+bar PROC
 	PUSH BP
 	MOV BP, SP
-	MOV AX, 1		; Line 10
+	MOV AX, 4		; Line 14
+	MOV CX, AX
+	MOV AX, [BP+6]		; Line 14
+	XCHG AX, CX
+	CWD
+	IMUL CX
+	PUSH AX
+	POP AX		; Line 14
 	MOV BX, AX
-	MOV AX, [BP+4]		; Line 10
-	MOV BX, AX
-	MOV AX, 1		; Line 10
-	XCHG AX, BX
-	SUB AX, BX
-	PUSH AX
-	POP AX		; Line 10
-	PUSH AX
-	CALL f2
-	PUSH AX
-	POP AX		; Line 10
-	XCHG AX, BX
-	ADD AX, BX
-	PUSH AX
-	POP AX		; Line 10
-	JMP L5
-L6:
-L5:
-	POP BP
-	RET 2
-f3 ENDP
-;-------------------------------
-;         Function : f4
-;-------------------------------
-f4 PROC
-	PUSH BP
-	MOV BP, SP
-	MOV AX, 1		; Line 14
-	MOV BX, AX
+	MOV AX, 2		; Line 14
+	MOV CX, AX
 	MOV AX, [BP+4]		; Line 14
-	MOV BX, AX
-	MOV AX, 1		; Line 14
-	XCHG AX, BX
-	SUB AX, BX
-	PUSH AX
-	POP AX		; Line 14
-	PUSH AX
-	CALL f3
+	XCHG AX, CX
+	CWD
+	IMUL CX
 	PUSH AX
 	POP AX		; Line 14
 	XCHG AX, BX
 	ADD AX, BX
 	PUSH AX
 	POP AX		; Line 14
-	JMP L7
-L8:
+	MOV c, AX
+	PUSH AX
+	POP AX
 L7:
+	MOV AX, c		; Line 15
+	JMP L6
+L8:
+L6:
 	POP BP
-	RET 2
-f4 ENDP
+	RET 4
+bar ENDP
 ;-------------------------------
 ;         Function : main
 ;-------------------------------
@@ -118,21 +95,122 @@ main PROC
 	PUSH BP
 	MOV BP, SP
 	SUB SP, 2
+	SUB SP, 2
+	SUB SP, 2
+	SUB SP, 2
 L10:
-	MOV AX, 4		; Line 19
-	PUSH AX
-	CALL f4
-	PUSH AX
-	POP AX		; Line 19
+	MOV AX, 5		; Line 22
 	MOV [BP-2], AX
 	PUSH AX
 	POP AX
 L11:
-	MOV AX, [BP-2]		; Line 20
-	CALL println
+	MOV AX, 6		; Line 23
+	MOV [BP-4], AX
+	PUSH AX
+	POP AX
 L12:
+	PUSH BX
+	PUSH CX
+	CALL func_a
+	POP CX
+	POP BX
+	PUSH AX
+	POP AX		; Line 25
+L13:
+	MOV AX, a		; Line 26
+	CALL println
+L14:
+	PUSH BX
+	PUSH CX
+	MOV AX, [BP-2]		; Line 28
+	PUSH AX
+	CALL foo
+	POP CX
+	POP BX
+	PUSH AX
+	POP AX		; Line 28
+	MOV [BP-6], AX
+	PUSH AX
+	POP AX
+L15:
+	MOV AX, [BP-6]		; Line 29
+	CALL println
+L16:
+	PUSH BX
+	PUSH CX
+	MOV AX, [BP-2]		; Line 31
+	PUSH AX
+	MOV AX, [BP-4]		; Line 31
+	PUSH AX
+	CALL bar
+	POP CX
+	POP BX
+	PUSH AX
+	POP AX		; Line 31
+	MOV [BP-8], AX
+	PUSH AX
+	POP AX
+L17:
+	MOV AX, [BP-8]		; Line 32
+	CALL println
+L18:
+	MOV AX, 6		; Line 34
+	MOV CX, AX
+	PUSH BX
+	PUSH CX
+	MOV AX, [BP-2]		; Line 34
+	PUSH AX
+	MOV AX, [BP-4]		; Line 34
+	PUSH AX
+	CALL bar
+	POP CX
+	POP BX
+	PUSH AX
+	POP AX		; Line 34
+	XCHG AX, CX
+	CWD
+	IMUL CX
+	PUSH AX
+	POP AX		; Line 34
+	MOV BX, AX
+	MOV AX, 2		; Line 34
+	XCHG AX, BX
+	ADD AX, BX
+	PUSH AX
+	POP AX		; Line 34
+	MOV BX, AX
+	MOV AX, 3		; Line 34
+	MOV CX, AX
+	PUSH BX
+	PUSH CX
+	MOV AX, [BP-2]		; Line 34
+	PUSH AX
+	CALL foo
+	POP CX
+	POP BX
+	PUSH AX
+	POP AX		; Line 34
+	XCHG AX, CX
+	CWD
+	IMUL CX
+	PUSH AX
+	POP AX		; Line 34
+	XCHG AX, BX
+	SUB AX, BX
+	PUSH AX
+	POP AX		; Line 34
+	MOV [BP-4], AX
+	PUSH AX
+	POP AX
+L19:
+	MOV AX, [BP-4]		; Line 35
+	CALL println
+L20:
+	MOV AX, 0		; Line 38
+	JMP L9
+L21:
 L9:
-	ADD SP, 2
+	ADD SP, 8
 	POP BP
 	MOV AX, 4CH
 	INT 21H

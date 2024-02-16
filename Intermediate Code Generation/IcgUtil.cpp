@@ -39,9 +39,7 @@ unsigned widthFromType(Type_Spec type) {
 }
 
 string varAddress(ParseTreeNode *node) {
-	auto idName = idNameFromRule(node->getRule());
-	auto id = table->lookUp(idName);
-	if(id != nullptr)return id->getName(); // global variable
+	if(node->getScope() == "1")return idNameFromRule(node->getRule()); // global variable
 	string offsetSign = node->isParam() ? "+" : "-";
 	return "[BP" + offsetSign  + to_string(node->getOffset()) + "]";
 }
@@ -266,6 +264,7 @@ void processRelOpNode(){ writeToAsm("\tMOV BX, AX\n"); };
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
 	string code;
+	if(node->getNthChild(3)->getNumOfChildren() > 1)printPopAx(node);
 	code += "\tXCHG AX, BX\n";
 	if(isPlusOp(addOpRule))code += "\tADD AX, BX\n";
 	else code += "\tSUB AX, BX\n";
@@ -486,11 +485,7 @@ void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node) {
 
 	code = "\tCMP AX, 0\n";
 
-	if(isLogicalAndOp(node->getNthChild(2)->getRule())) {
-		code += "\tJE " + falseLabel + "\n";
-	}else {
-		code += "\tJNE " + trueLabel + "\n";
-	}
+	code += "\tJE " + falseLabel + "\n";
 
 	code += "\
 " + trueLabel + ":\n\

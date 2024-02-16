@@ -296,7 +296,7 @@ void processSimpleExpressionTermRule(ParseTreeNode *node){
 }
 
 void processUnaryExpressionFactorRule(ParseTreeNode *node){
-	// if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
+	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
 void processTermUnaryExpressionRule(ParseTreeNode *node){
@@ -569,7 +569,6 @@ void processStatementWhileRule(ParseTreeNode* node) {
 	auto loopLabel = "L" + to_string(labelCount);
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	postOrderTraversal(node->getNthChild(3));
-	printPopAx(node->getNthChild(3));
 	string code = "\
 	CMP AX, 0\n\
 	JE " + falseLabel + "\n";
@@ -601,7 +600,6 @@ void processStatementForLoopRule(ParseTreeNode *node) {
 	postOrderTraversal(node->getNthChild(5));
 
 	code = "\
-	POP AX\n\
 	JMP " + loopLabel + "\n"
 	+ trueLabel + ":\n";
 

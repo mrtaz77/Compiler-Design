@@ -575,11 +575,8 @@ void processStatementIfRule(ParseTreeNode *node) {
 	writeToAsm(code);
 
 	auto currentStackPointer = stackPointer;
-
 	postOrderTraversal(node->getNthChild(5));
-
 	auto newStackPointer = stackPointer;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 	
 	writeToAsm(falseLabel + ":\n");
@@ -594,10 +591,12 @@ void processStatementWhileRule(ParseTreeNode* node) {
 	CMP AX, 0\n\
 	JE " + falseLabel + "\n";
 	writeToAsm(code);
+
 	auto currentStackPointer = stackPointer;
 	postOrderTraversal(node->getNthChild(5));
 	auto newStackPointer = stackPointer;
 	rollbackStackPointer(currentStackPointer,newStackPointer);
+
 	code = "\
 	JMP " + loopLabel + "\n"
 	+ falseLabel + ":\n";
@@ -630,11 +629,8 @@ void processStatementForLoopRule(ParseTreeNode *node) {
 	writeToAsm(code);
 
 	auto currentStackPointer = stackPointer;
-
 	postOrderTraversal(node->getNthChild(7));
-
 	auto newStackPointer = stackPointer;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	code = "\
@@ -658,25 +654,18 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 	writeToAsm(code);
 
 	auto currentStackPointer = stackPointer;
-
 	postOrderTraversal(node->getNthChild(5));
-
 	auto newStackPointer = stackPointer;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	code = "\
 	JMP " + exitLabel + "\n\
 " + falseLabel + ":\n";
-
 	writeToAsm(code);
 
 	currentStackPointer = stackPointer;
-
 	postOrderTraversal(node->getNthChild(7));
-
 	newStackPointer = stackPointer;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	writeToAsm(exitLabel + ":\n");
@@ -684,11 +673,8 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 
 void processCompoundStatementRule(ParseTreeNode* node) {
 	auto currentStackPointer = stackPointer;
-
 	postOrderTraversal(node->getNthChild(1));
-
 	auto newStackPointer = stackPointer;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 }
 

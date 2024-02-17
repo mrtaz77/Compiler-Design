@@ -202,7 +202,10 @@ void insertFunctionFooterCode(SymbolInfo* func) {
 	MOV AX, 4CH\n\
 	INT 21H\n";
 	}else {
-		code += "\tRET " + to_string(func->getNode()->getParameterWidth()) + "\n";
+		code += "\tRET " ;
+		if(func->getNode()->getParameterWidth() > 0)
+			code += to_string(func->getNode()->getParameterWidth());
+		code += "\n";
 	}
 	code += func->getName() + " ENDP\n";
 	writeToAsm(code);

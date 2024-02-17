@@ -79,3 +79,5 @@ void processStatementWhileRule(ParseTreeNode *node);
 void processStatementForLoopRule(ParseTreeNode *node);
 
 void preProcessFunctionCallRule();
+
+void processCompoundStatementRule(ParseTreeNode *node);

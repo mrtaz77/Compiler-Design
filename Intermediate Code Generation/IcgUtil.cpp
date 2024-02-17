@@ -447,7 +447,6 @@ void processVariableDeclaration(ParseTreeNode *node) {
 
 void processDeclarationListRule(ParseTreeNode *node) {
 	if(node->getScope() == "1")return;
-	if(node->getNumOfChildren() == 7) cout << node->print();
 	if(node->getNumOfChildren() == 1 || node->getNumOfChildren() == 4)processVariableDeclaration(node->getNthChild(1));
 	else processVariableDeclaration(node->getNthChild(3));
 }
@@ -674,17 +673,23 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 
 	currentStackPointer = stackPointer;
 
-	cout << currentStackPointer << " " ;
-
 	postOrderTraversal(node->getNthChild(7));
 
 	newStackPointer = stackPointer;
 
-	cout << newStackPointer << endl ;
-
 	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	writeToAsm(exitLabel + ":\n");
+}
+
+void processCompoundStatementRule(ParseTreeNode* node) {
+	auto currentStackPointer = stackPointer;
+
+	postOrderTraversal(node->getNthChild(1));
+
+	auto newStackPointer = stackPointer;
+
+	rollbackStackPointer(currentStackPointer, newStackPointer);
 }
 
 void preProcessFunctionCallRule() {
@@ -693,62 +698,73 @@ void preProcessFunctionCallRule() {
 	PUSH CX\n");
 }
 
-// TODO Handle var_declaration inside compound statement
+bool handleSpecialStatements(ParseTreeNode *node) {
+    // skipping some nodes
+    if (isGlobalVariableDeclaration(node->getRule()) ||
+        isFunctionDeclaration(node->getRule())) return true;
+
+    if (isStatementPrintlnRule(node->getRule())) {
+        processStatementPrintlnRule(node);
+        return true;
+    }
+
+    if (isStatementReturnRule(node->getRule())) {
+        processStatementReturnRule(node);
+        return true;
+    }
+
+    if (isStatementIfRule(node->getRule())) {
+        processStatementIfRule(node);
+        return true;
+    }
+
+    if (isStatementIfElseRule(node->getRule())) {
+        processStatementIfElseRule(node);
+        return true;
+    }
+
+    if (isLogicExpressionMultipleRelExpressionsRule(node->getRule())) {
+        processLogicExpressionMultipleRelExpressionRule(node);
+        return true;
+    }
+
+    if (isFuncDefinitionRule(node->getRule())) {
+        preProcessFuncDefinitionRule(node);
+		return false;
+    }
+
+    if (isStatementWhileRule(node->getRule())) {
+        processStatementWhileRule(node);
+        return true;
+    }
+
+    if (isStatementForLoopRule(node->getRule())) {
+        processStatementForLoopRule(node);
+        return true;
+    }
+
+    if (isFactorIDFunctionCallRule(node->getRule())) {
+        preProcessFunctionCallRule();
+		return false;
+    }
+
+	if(isStatementCompoundStatementRule(node->getRule())) {
+		processCompoundStatementRule(node);
+		return true;
+	}
+
+	return false;
+}
 
 void postOrderTraversal(ParseTreeNode *node) {
-	// skipping some nodes
-	if(isGlobalVariableDeclaration(node->getRule()) 
-	|| isFunctionDeclaration(node->getRule()))return;
+    if(handleSpecialStatements(node))return;
 
-	if(isStatementPrintlnRule(node->getRule())) {
-		processStatementPrintlnRule(node);
-		return;
-	}
-
-	if(isStatementReturnRule(node->getRule())) {
-		processStatementReturnRule(node);
-		return;
-	}
-
-	if(isStatementIfRule(node->getRule())) {
-		processStatementIfRule(node);
-		return;
-	}
-
-	if(isStatementIfElseRule(node->getRule())) {
-		processStatementIfElseRule(node);
-		return;
-	}
-
-	if(isLogicExpressionMultipleRelExpressionsRule(node->getRule())) {
-		processLogicExpressionMultipleRelExpressionRule(node);
-		return;
-	}
-
-	if(isFuncDefinitionRule(node->getRule())) {
-		preProcessFuncDefinitionRule(node);
-	}
-
-	if(isStatementWhileRule(node->getRule())) {
-		processStatementWhileRule(node);
-		return;
-	}
-
-	if(isStatementForLoopRule(node->getRule())) {
-		processStatementForLoopRule(node);
-		return;
-	}
-
-	if(isFactorIDFunctionCallRule(node->getRule())) {
-		preProcessFunctionCallRule();
-	}
-
-
-	for(ParseTreeNode* itr = node->getChild(); itr != nullptr; itr = itr->getSibling()){
-		postOrderTraversal(itr);
-	}
-	processRuleOfNode(node);
+    for (ParseTreeNode *itr = node->getChild(); itr != nullptr; itr = itr->getSibling()) {
+        postOrderTraversal(itr);
+    }
+    processRuleOfNode(node);
 }
+
 
 
 void generateASM(ParseTreeNode *node){

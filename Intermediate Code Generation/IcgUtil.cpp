@@ -39,7 +39,6 @@ unsigned widthFromType(Type_Spec type) {
 }
 
 string varAddress(ParseTreeNode *node) {
-	// cout << node->print() << " " << node->getOffset() << endl;
 	if(node->getScope() == "1")return idNameFromRule(node->getRule()); // global variable
 	string offsetSign = node->isParam() ? "+" : "-";
 	return "[BP" + offsetSign  + to_string(node->getOffset()) + "]";
@@ -63,10 +62,19 @@ string annotationOfLine(unsigned long lineNo){
 	return code;
 }
 
-void adjustStackPointer() {
+void resetStackPointer() {
 	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
 	stackPointer = 0;
 	writeToAsm(code);
+}
+
+void rollbackStackPointer(unsigned long currentStackPointer, unsigned long newStackPointer) {
+	if(newStackPointer < currentStackPointer){ 
+		string code = "\tADD SP, "
+		+ to_string(currentStackPointer - newStackPointer) + "\n";
+		writeToAsm(code);
+		stackPointer = currentStackPointer;
+	}
 }
 
 void printPopAx(ParseTreeNode *node) {
@@ -194,7 +202,7 @@ void insertFunctionHeaderCode(SymbolInfo* func) {
 void insertFunctionFooterCode(SymbolInfo* func) {
 	printLabel(returnLabel);
 	if(stackPointer != 0) {
-		adjustStackPointer();
+		resetStackPointer();
 	}
 	string code = "\tPOP BP\n";
 	if(func->getName() == "main") {
@@ -567,7 +575,14 @@ void processStatementIfRule(ParseTreeNode *node) {
 " + trueLabel + ":\n";
 	writeToAsm(code);
 
+	auto currentStackPointer = stackPointer;
+
 	postOrderTraversal(node->getNthChild(5));
+
+	auto newStackPointer = stackPointer;
+
+	rollbackStackPointer(currentStackPointer, newStackPointer);
+	
 	writeToAsm(falseLabel + ":\n");
 }
 
@@ -580,7 +595,10 @@ void processStatementWhileRule(ParseTreeNode* node) {
 	CMP AX, 0\n\
 	JE " + falseLabel + "\n";
 	writeToAsm(code);
+	auto currentStackPointer = stackPointer;
 	postOrderTraversal(node->getNthChild(5));
+	auto newStackPointer = stackPointer;
+	rollbackStackPointer(currentStackPointer,newStackPointer);
 	code = "\
 	JMP " + loopLabel + "\n"
 	+ falseLabel + ":\n";
@@ -612,7 +630,13 @@ void processStatementForLoopRule(ParseTreeNode *node) {
 
 	writeToAsm(code);
 
+	auto currentStackPointer = stackPointer;
+
 	postOrderTraversal(node->getNthChild(7));
+
+	auto newStackPointer = stackPointer;
+
+	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	code = "\
 	JMP " + expressionLabel + "\n"
@@ -634,7 +658,13 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 " + trueLabel + ":\n";
 	writeToAsm(code);
 
+	auto currentStackPointer = stackPointer;
+
 	postOrderTraversal(node->getNthChild(5));
+
+	auto newStackPointer = stackPointer;
+
+	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	code = "\
 	JMP " + exitLabel + "\n\
@@ -642,7 +672,17 @@ void processStatementIfElseRule(ParseTreeNode* node) {
 
 	writeToAsm(code);
 
+	currentStackPointer = stackPointer;
+
+	cout << currentStackPointer << " " ;
+
 	postOrderTraversal(node->getNthChild(7));
+
+	newStackPointer = stackPointer;
+
+	cout << newStackPointer << endl ;
+
+	rollbackStackPointer(currentStackPointer, newStackPointer);
 
 	writeToAsm(exitLabel + ":\n");
 }
@@ -652,6 +692,8 @@ void preProcessFunctionCallRule() {
 	PUSH BX\n\
 	PUSH CX\n");
 }
+
+// TODO Handle var_declaration inside compound statement
 
 void postOrderTraversal(ParseTreeNode *node) {
 	// skipping some nodes

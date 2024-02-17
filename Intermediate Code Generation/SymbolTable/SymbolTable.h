@@ -65,8 +65,7 @@ public:
         if(currentScope->getParentScope() == nullptr)return false;
         ScopeTable* temp = currentScope;
         currentScope = currentScope->getParentScope();
-		currentScope->setCurrentOffset(temp->getCurrentOffset());
-        delete temp;
+		delete temp;
         return true;
     }
 

@@ -8,7 +8,7 @@ void printHeaderComment(std::string comment);
 
 std::string annotationOfLine(unsigned long lineNo);
 
-void adjustStackPointer();
+void resetStackPointer();
 
 void printPopAx(ParseTreeNode *node);
 

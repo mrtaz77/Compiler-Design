@@ -1,6 +1,6 @@
 #pragma once
 
-#define ASM_FILE "output_code.asm"
+#define ASM_FILE "code.asm"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -8,8 +8,6 @@
 #include "SymbolTable/SymbolTable.h"
 #include "RuleCheckUtil.h"
 #include "IcgUtil.h"
-
-// TODO handle array as factor
 
 extern SymbolTable *table;
 ParseTreeNode *root;
@@ -104,15 +102,15 @@ END main";
 string printNewlineCode() {
 	return "\
 	PUSH AX\n\
-    PUSH DX\n\
-    MOV AH, 2\n\
-    MOV DL, 0DH\n\
-    INT 21H\n\
-    MOV AH, 2\n\
-    MOV DL, 0AH\n\
-    INT 21H\n\
-    POP DX\n\
-    POP AX\n";
+	PUSH DX\n\
+	MOV AH, 2\n\
+	MOV DL, 0DH\n\
+	INT 21H\n\
+	MOV AH, 2\n\
+	MOV DL, 0AH\n\
+	INT 21H\n\
+	POP DX\n\
+	POP AX\n";
 }
 
 void printOutput() {
@@ -120,44 +118,44 @@ void printOutput() {
 	string code = "\
 ;-------------------------------\n\
 println proc\n\
-    PUSH AX\n\
-    PUSH BX\n\
-    PUSH CX\n\
-    PUSH DX\n\
-    PUSH SI\n\
-    LEA SI, number\n\
-    MOV BX, 10\n\
-    ADD SI, 4\n\
-    CMP AX, 0\n\
-    JNGE NEGATE\n\
+	PUSH AX\n\
+	PUSH BX\n\
+	PUSH CX\n\
+	PUSH DX\n\
+	PUSH SI\n\
+	LEA SI, number\n\
+	MOV BX, 10\n\
+	ADD SI, 4\n\
+	CMP AX, 0\n\
+	JNGE NEGATE\n\
 PRINT:\n\
-    XOR DX, DX\n\
-    DIV BX\n\
-    MOV [SI], DL\n\
-    ADD [SI], '0'\n\
-    DEC SI\n\
-    CMP AX, 0\n\
-    JNE PRINT\n\
-    INC SI\n\
-    LEA DX, SI\n\
-    MOV AH, 9\n\
-    INT 21H\n"
+	XOR DX, DX\n\
+	DIV BX\n\
+	MOV [SI], DL\n\
+	ADD [SI], '0'\n\
+	DEC SI\n\
+	CMP AX, 0\n\
+	JNE PRINT\n\
+	INC SI\n\
+	LEA DX, SI\n\
+	MOV AH, 9\n\
+	INT 21H\n"
 	+ printNewlineCode()
 	+ "\
-    POP SI\n\
-    POP DX\n\
-    POP CX\n\
-    POP BX\n\
-    POP AX\n\
-    RET\n\
+	POP SI\n\
+	POP DX\n\
+	POP CX\n\
+	POP BX\n\
+	POP AX\n\
+	RET\n\
 NEGATE:\n\
-    PUSH AX\n\
-    MOV AH, 2\n\
-    MOV DL, '-'\n\
-    INT 21H\n\
-    POP AX\n\
-    NEG AX\n\
-    JMP PRINT\n\
+	PUSH AX\n\
+	MOV AH, 2\n\
+	MOV DL, '-'\n\
+	INT 21H\n\
+	POP AX\n\
+	NEG AX\n\
+	JMP PRINT\n\
 	println ENDP\n";
 	writeToAsm(code);
 }
@@ -686,54 +684,54 @@ void preProcessFunctionCallRule() {
 }
 
 bool handleSpecialStatements(ParseTreeNode *node) {
-    // skipping some nodes
-    if (isGlobalVariableDeclaration(node->getRule()) ||
-        isFunctionDeclaration(node->getRule())) return true;
+	// skipping some nodes
+	if (isGlobalVariableDeclaration(node->getRule()) ||
+		isFunctionDeclaration(node->getRule())) return true;
 
-    if (isStatementPrintlnRule(node->getRule())) {
-        processStatementPrintlnRule(node);
-        return true;
-    }
+	if (isStatementPrintlnRule(node->getRule())) {
+		processStatementPrintlnRule(node);
+		return true;
+	}
 
-    if (isStatementReturnRule(node->getRule())) {
-        processStatementReturnRule(node);
-        return true;
-    }
+	if (isStatementReturnRule(node->getRule())) {
+		processStatementReturnRule(node);
+		return true;
+	}
 
-    if (isStatementIfRule(node->getRule())) {
-        processStatementIfRule(node);
-        return true;
-    }
+	if (isStatementIfRule(node->getRule())) {
+		processStatementIfRule(node);
+		return true;
+	}
 
-    if (isStatementIfElseRule(node->getRule())) {
-        processStatementIfElseRule(node);
-        return true;
-    }
+	if (isStatementIfElseRule(node->getRule())) {
+		processStatementIfElseRule(node);
+		return true;
+	}
 
-    if (isLogicExpressionMultipleRelExpressionsRule(node->getRule())) {
-        processLogicExpressionMultipleRelExpressionRule(node);
-        return true;
-    }
+	if (isLogicExpressionMultipleRelExpressionsRule(node->getRule())) {
+		processLogicExpressionMultipleRelExpressionRule(node);
+		return true;
+	}
 
-    if (isFuncDefinitionRule(node->getRule())) {
-        preProcessFuncDefinitionRule(node);
+	if (isFuncDefinitionRule(node->getRule())) {
+		preProcessFuncDefinitionRule(node);
 		return false;
-    }
+	}
 
-    if (isStatementWhileRule(node->getRule())) {
-        processStatementWhileRule(node);
-        return true;
-    }
+	if (isStatementWhileRule(node->getRule())) {
+		processStatementWhileRule(node);
+		return true;
+	}
 
-    if (isStatementForLoopRule(node->getRule())) {
-        processStatementForLoopRule(node);
-        return true;
-    }
+	if (isStatementForLoopRule(node->getRule())) {
+		processStatementForLoopRule(node);
+		return true;
+	}
 
-    if (isFactorIDFunctionCallRule(node->getRule())) {
-        preProcessFunctionCallRule();
+	if (isFactorIDFunctionCallRule(node->getRule())) {
+		preProcessFunctionCallRule();
 		return false;
-    }
+	}
 
 	if(isStatementCompoundStatementRule(node->getRule())) {
 		processCompoundStatementRule(node);
@@ -744,15 +742,13 @@ bool handleSpecialStatements(ParseTreeNode *node) {
 }
 
 void postOrderTraversal(ParseTreeNode *node) {
-    if(handleSpecialStatements(node))return;
+	if(handleSpecialStatements(node))return;
 
-    for (ParseTreeNode *itr = node->getChild(); itr != nullptr; itr = itr->getSibling()) {
-        postOrderTraversal(itr);
-    }
-    processRuleOfNode(node);
+	for (ParseTreeNode *itr = node->getChild(); itr != nullptr; itr = itr->getSibling()) {
+		postOrderTraversal(itr);
+	}
+	processRuleOfNode(node);
 }
-
-
 
 void generateASM(ParseTreeNode *node){
 	root = node;

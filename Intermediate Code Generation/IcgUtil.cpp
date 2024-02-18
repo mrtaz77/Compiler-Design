@@ -321,19 +321,19 @@ void processTermUnaryExpressionRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
-void postProcessFunctionDefintionRule(ParseTreeNode *node){
+SymbolInfo* getIdFromFunctionDefinitionNode(ParseTreeNode *node) {
 	auto idNode = node->getNthChild(2);
 	auto idName = idNameFromRule(idNode->getRule());
-	auto id = table->lookUp(idName);
-	insertFunctionFooterCode(id);
+	return table->lookUp(idName);
+}
+
+void postProcessFunctionDefintionRule(ParseTreeNode *node){
+	insertFunctionFooterCode(getIdFromFunctionDefinitionNode(node));
 }
 
 void preProcessFuncDefinitionRule(ParseTreeNode *node) {
-	auto idNode = node->getNthChild(2);
-	auto idName = idNameFromRule(idNode->getRule());
-	auto id = table->lookUp(idName);
 	returnLabel = getIncreasedLabel();
-	insertFunctionHeaderCode(id);
+	insertFunctionHeaderCode(getIdFromFunctionDefinitionNode(node));
 }
 
 void processFactorVariableRule(ParseTreeNode *node){

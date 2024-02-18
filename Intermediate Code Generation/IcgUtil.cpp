@@ -276,7 +276,7 @@ void processAddOpNode(ParseTreeNode *node){
 
 void processMulOpNode(){ writeToAsm("\tPUSH AX\n"); }
 
-void processRelOpNode(){ writeToAsm("\tMOV BX, AX\n"); };
+void processRelOpNode(){ writeToAsm("\tPUSH AX\n"); };
 
 void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
@@ -485,6 +485,7 @@ void processRelExpressionComparisonRule(ParseTreeNode *node) {
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	auto exitLabel = "L" + to_string(getIncreasedLabel());
 	string code = "\
+	POP BX\n\
 	XCHG AX, BX\n\
 	CMP AX, BX\n\
 	" + getJumpOnFalseOfRelop(node->getNthChild(2)->getRule()) + " " + falseLabel + "\n\

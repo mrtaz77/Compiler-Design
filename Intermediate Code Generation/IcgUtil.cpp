@@ -10,7 +10,6 @@
 #include "IcgUtil.h"
 
 // TODO handle array as factor
-// TODO optimize if else
 
 extern SymbolTable *table;
 ParseTreeNode *root;
@@ -564,14 +563,11 @@ void processStatementPrintlnRule(ParseTreeNode *node){
 
 void processStatementIfRule(ParseTreeNode *node) {
 	postOrderTraversal(node->getNthChild(3));
-	auto trueLabel = "L" + to_string(getIncreasedLabel());
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 
 	string code = "\
-	CMP AX, 1\n\
-	JE " + trueLabel + "\n\
-	JMP " + falseLabel + "\n\
-" + trueLabel + ":\n";
+	CMP AX, 0\n\
+	JE " + falseLabel + "\n";
 	writeToAsm(code);
 
 	auto currentStackPointer = stackPointer;
@@ -632,15 +628,12 @@ void processStatementForLoopRule(ParseTreeNode *node) {
 
 void processStatementIfElseRule(ParseTreeNode* node) {
 	postOrderTraversal(node->getNthChild(3));
-	auto trueLabel = "L" + to_string(getIncreasedLabel());
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	auto exitLabel = "L" + to_string(getIncreasedLabel());
 
 	string code = "\
-	CMP AX, 1\n\
-	JE " + trueLabel + "\n\
-	JMP " + falseLabel + "\n\
-" + trueLabel + ":\n";
+	CMP AX, 0\n\
+	JE " + falseLabel + "\n";
 	writeToAsm(code);
 
 	auto currentStackPointer = stackPointer;

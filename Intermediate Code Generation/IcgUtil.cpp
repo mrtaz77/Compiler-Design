@@ -10,7 +10,6 @@
 #include "IcgUtil.h"
 
 // TODO handle array as factor
-// TODO optimize for loops
 // TODO optimize if else
 
 extern SymbolTable *table;
@@ -455,30 +454,27 @@ void processDeclarationListRule(ParseTreeNode *node) {
 	else processVariableDeclaration(node->getNthChild(3));
 }
 
-string getJumpFromRelop(string rule) {
-	if(isGreaterOp(rule)) return "JG" ;
-	if(isGreaterEqualOp(rule)) return "JGE" ;
-	if(isLessOp(rule)) return "JL" ;
-	if(isLessEqualOp(rule)) return "JLE" ;
-	if(isEqualOp(rule)) return "JE" ;
-	if(isNotEqualOp(rule)) return "JNE";
+string getJumpOnFalseOfRelop(string rule) {
+	if(isGreaterOp(rule)) return "JLE" ;
+	if(isGreaterEqualOp(rule)) return "JL" ;
+	if(isLessOp(rule)) return "JGE" ;
+	if(isLessEqualOp(rule)) return "JG" ;
+	if(isEqualOp(rule)) return "JNE" ;
+	if(isNotEqualOp(rule)) return "JE";
 	return "";
 }
 
 void processRelExpressionComparisonRule(ParseTreeNode *node) {
-	auto trueLabel = "L" + to_string(getIncreasedLabel());
 	auto falseLabel = "L" + to_string(getIncreasedLabel());
 	auto exitLabel = "L" + to_string(getIncreasedLabel());
 	string code = "\
 	XCHG AX, BX\n\
 	CMP AX, BX\n\
-	" + getJumpFromRelop(node->getNthChild(2)->getRule()) + " " + trueLabel + "\n\
-	JMP " + falseLabel + "\n\
-" + trueLabel + ":\n\
+	" + getJumpOnFalseOfRelop(node->getNthChild(2)->getRule()) + " " + falseLabel + "\n\
 	MOV AX, 1" + annotationOfLine(node->getStartOfNode()) + "\
 	JMP " + exitLabel + "\n\
 " + falseLabel + ":\n\
-	MOV AX, 0\n\
+	MOV AX, 0"+ annotationOfLine(node->getStartOfNode()) +"\
 " + exitLabel + ":\n";
 	writeToAsm(code);
 }

@@ -68,14 +68,19 @@ bool areConsecutiveMovsToSameOperand(const string& currentLine, const string& ne
 }
 
 bool isRedundantAddOrSub(const string& currentLine) {
-	if(currentLine.find("ADD [SI], '0'") != string::npos) return false;
 	if((currentLine.find("ADD") != string::npos ||
 	currentLine.find("SUB") != string::npos) &&
 	currentLine.find(",") != string::npos ) {
 		size_t commaPos = currentLine.find(",");
-		string substrAfterComma = currentLine.substr(commaPos + 2);  // Extract substring after comma
-
-        return atoi(substrAfterComma.c_str()) == 0;
+		string substrAfterComma = currentLine.substr(commaPos + 1);
+		substrAfterComma.erase(substrAfterComma.find_last_not_of(" \t") + 1);
+		bool isInteger = true;
+		for (char c : substrAfterComma) {
+			if (!isdigit(c)) {
+				return false;
+			}
+		}
+		return atoi(substrAfterComma.c_str()) == 0;
 	}
 	return false;
 }

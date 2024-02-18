@@ -1059,7 +1059,7 @@ term : unary_expression
 			}
 		}
 		if($2->getName() == "%" || $2->getName() == "/") {
-			if(atof($3->getVal().c_str()) == 0){
+			if(strlen($3->getVal().c_str()) != 0 && atof($3->getVal().c_str()) == 0){
 				string error = "Warning: division by zero";
 				semanticError(error,@3.F_L);
 			}
@@ -1238,7 +1238,6 @@ arguments : arguments COMMA logic_expression
 #define LOG_FILE "log.txt"
 #define PARSE_TREE_FILE "parsetree.txt"
 #define ERROR_FILE "error.txt"
-
 
 int main(int argc,char *argv[])
 {

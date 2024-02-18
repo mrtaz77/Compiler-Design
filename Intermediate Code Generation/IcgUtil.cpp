@@ -269,12 +269,12 @@ void processAddOpNode(ParseTreeNode *node){
 	// check for ADDOP unary_expression rule
 	string siblingRule = node->getSibling()->getRule();
 	if(isTermUnaryExpressionRule(siblingRule) || isTermMulOpUnaryExpressionRule(siblingRule)) {
-		code += "\tMOV BX, AX\n";
+		code += "\tPUSH AX\n";
 	}
 	writeToAsm(code);
 }
 
-void processMulOpNode(){ writeToAsm("\tMOV CX, AX\n"); }
+void processMulOpNode(){ writeToAsm("\tPUSH AX\n"); }
 
 void processRelOpNode(){ writeToAsm("\tMOV BX, AX\n"); };
 
@@ -282,7 +282,9 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 	string addOpRule = node->getNthChild(2)->getRule();
 	string code;
 	if(node->getNthChild(3)->getNumOfChildren() > 1)printPopAx(node);
-	code += "\tXCHG AX, BX\n";
+	code += "\
+	POP BX\n\
+	XCHG AX, BX\n";
 	if(isPlusOp(addOpRule))code += "\tADD AX, BX\n";
 	else code += "\tSUB AX, BX\n";
 	code += "\tPUSH AX\n";
@@ -293,8 +295,10 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 void processTermMulOpUnaryExpressionRule(ParseTreeNode *node){
 	string mulOpRule = node->getNthChild(2)->getRule();
 	string code;
-	code += "\tXCHG AX, CX\n";
-	code += "\tCWD\n";
+	code += "\
+	POP CX\n\
+	XCHG AX, CX\n\
+	CWD\n";
 	if(isStarOp(mulOpRule))code += "\tIMUL CX\n";
 	else code += "\tIDIV CX\n";
 	if(isModOp(mulOpRule))code += "\tPUSH DX\n";

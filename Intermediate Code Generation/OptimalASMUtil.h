@@ -68,6 +68,7 @@ bool areConsecutiveMovsToSameOperand(const string& currentLine, const string& ne
 }
 
 bool isRedundantAddOrSub(const string& currentLine) {
+	if(currentLine.find("ADD [SI], '0'") != string::npos) return false;
 	if((currentLine.find("ADD") != string::npos ||
 	currentLine.find("SUB") != string::npos) &&
 	currentLine.find(",") != string::npos ) {
@@ -76,6 +77,7 @@ bool isRedundantAddOrSub(const string& currentLine) {
 
         return atoi(substrAfterComma.c_str()) == 0;
 	}
+	return false;
 }
 
 bool areConsecutivePushPopOfSameOperand(const string& currentLine, const string& nextLine) {
@@ -89,6 +91,7 @@ bool areConsecutivePushPopOfSameOperand(const string& currentLine, const string&
 
 		return pushOp == popOp;
 	}
+	return false;
 }
 
 
@@ -98,13 +101,19 @@ void writeOptimizedCodeToFile(vector<string>& lines) {
 	}
 }
 
+string removeCommentFromLine(string line) {
+	if(line.find(";") != string::npos) {
+		return line.substr(0, line.find(";")-1);
+	}
+	return line;
+}
+
 void optimizeASMLines(vector<string>& lines) {
 	cout << "Before optimization lines : " << lines.size() << endl;
 
 	for(int i=0; i<lines.size() - 1; i++) {
-		// cout << "Lines " << i << " and " << (i+1) << endl;
-		string currentLine = lines[i];
-        string nextLine = lines[i + 1];
+		string currentLine = removeCommentFromLine(lines[i]);
+		string nextLine = removeCommentFromLine(lines[i+1]);
 
         if (areConsecutiveMovsBetweenSameOperands(currentLine, nextLine)) {
             lines.erase(lines.begin() + i + 1);

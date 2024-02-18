@@ -243,9 +243,8 @@ void processAssignOpNode(ParseTreeNode* node){
 		else {
 			code += "\tMOV AX, " + to_string(varNode->getOffset()) + "\n\
 	SUB AX, BX\n\
-	MOV BX, AX\n\
+	MOV SI, AX\n\
 	POP AX\n\
-	MOV SI, BX\n\
 	NEG SI\n\
 	MOV [BP+SI], AX\n";
 		}
@@ -358,9 +357,8 @@ void processFactorVariableRule(ParseTreeNode *node){
 		else {
 			code += to_string(varNode->getOffset()) + "\n\
 	SUB AX, BX\n\
-	MOV BX, AX\n\
+	MOV SI, AX\n\
 	POP AX\n\
-	MOV SI, BX\n\
 	NEG SI\n\
 	MOV AX, [BP+SI]\n";
 		}
@@ -409,9 +407,8 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 		else {
 			code += "\tMOV AX, " + to_string(varNode->getOffset()) + "\n\
 	SUB AX, BX\n\
-	MOV BX, AX\n\
+	MOV SI, AX\n\
 	POP AX\n\
-	MOV SI, BX\n\
 	NEG SI\n\
 	MOV [BP+SI], AX\n";
 		}

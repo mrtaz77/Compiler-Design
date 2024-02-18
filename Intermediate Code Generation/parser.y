@@ -58,6 +58,9 @@ parser implementation file*/
 %right NOT
 %right INCOP DECOP
 
+%destructor { if($$ != nullptr)$$->~ParseTreeNode();} <parseTreeNode>
+%destructor { if($$ != nullptr)$$->~SymbolInfo();} <symbolInfo>
+
 /* Code in the parser header file and the parser implementation 
 file after the Bison-generated value and location types 
 (YYSTYPE and YYLTYPE in C), and token definitions */

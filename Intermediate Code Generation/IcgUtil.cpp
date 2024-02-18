@@ -234,7 +234,7 @@ void processAssignOpNode(ParseTreeNode* node){
 	PUSH AX\n\
 	MOV AX, " + to_string(widthFromType(varNode->getNthChild(1)->getType()));
 	code += "\n\
-	MUL BX\n\
+	IMUL BX\n\
 	MOV BX, AX\n";
 		auto id = table->lookUp(idNameFromRule(varNode->getNthChild(1)->getRule()));
 		if(id != nullptr){
@@ -248,8 +248,13 @@ void processAssignOpNode(ParseTreeNode* node){
 	NEG SI\n\
 	MOV [BP+SI], AX\n";
 		}
+		code+= "\
+	POP CX\n\
+	POP BX\n";
 	}
-	code += "\tPUSH AX\n\tPOP AX\n";
+	code += "\
+	PUSH AX\n\
+	POP AX\n";
 	writeToAsm(code);
 }
 
@@ -334,6 +339,30 @@ void preProcessFuncDefinitionRule(ParseTreeNode *node) {
 	insertFunctionHeaderCode(getIdFromFunctionDefinitionNode(node));
 }
 
+void printCodeForArrayVariable(ParseTreeNode *node) {
+	string code;
+	auto varNode = node->getNthChild(1);
+	code += "\
+	POP BX\n\
+	MOV AX, " + to_string(widthFromType(varNode->getNthChild(1)->getType())) + annotationOfLine(node->getStartOfNode());
+	code += "\
+	IMUL BX\n\
+	MOV BX, AX\n\
+	MOV AX, ";
+	auto id = table->lookUp(idNameFromRule(varNode->getNthChild(1)->getRule()));
+	if(id != nullptr){
+		code += id->getName() + "[BX]\n";
+	}
+	else {
+		code += to_string(varNode->getOffset()) + "\n\
+	SUB AX, BX\n\
+	MOV SI, AX\n\
+	NEG SI\n\
+	MOV AX, [BP+SI]\n";
+	}
+	writeToAsm(code);
+}
+
 void processFactorVariableRule(ParseTreeNode *node){
 	string code;
 	auto varNode = node->getNthChild(1);
@@ -343,25 +372,10 @@ void processFactorVariableRule(ParseTreeNode *node){
 		code += "\tMOV AX, " + varAddress(varNode->getNthChild(1))
 		+ annotationOfLine(node->getStartOfNode());
 	}else {
+		printCodeForArrayVariable(node);
 		code += "\
-	POP BX\n\
-	MOV AX, " + to_string(widthFromType(varNode->getNthChild(1)->getType())) + annotationOfLine(node->getStartOfNode());
-	code += "\
-	MUL BX\n\
-	MOV BX, AX\n\
-	MOV AX, ";
-		auto id = table->lookUp(idNameFromRule(varNode->getNthChild(1)->getRule()));
-		if(id != nullptr){
-			code += id->getName() + "[BX]\n";
-		}
-		else {
-			code += to_string(varNode->getOffset()) + "\n\
-	SUB AX, BX\n\
-	MOV SI, AX\n\
-	POP AX\n\
-	NEG SI\n\
-	MOV AX, [BP+SI]\n";
-		}
+	POP CX\n\
+	POP BX\n";
 	}
 	writeToAsm(code);
 }
@@ -382,8 +396,9 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 	POP CX\n\
 	PUSH CX\n";
 		writeToAsm(code);
+		printCodeForArrayVariable(node);
 	}
-	processFactorVariableRule(node);
+	else processFactorVariableRule(node);
 	code = "\tPUSH AX\n";
 	if(node->getRule().find("INCOP") != string::npos)code +="\tINC AX\n";
 	else code += "\tDEC AX\n";
@@ -393,12 +408,11 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 		code += "\tMOV " + varAddress(varNode->getNthChild(1))  + ", AX\n";
 	}else {
 		code += "\
-	PUSH CX\n\
-	POP BX\n\
+	MOV BX, CX\n\
 	PUSH AX\n\
 	MOV AX, " + to_string(widthFromType(varNode->getNthChild(1)->getType()));
 	code += "\n\
-	MUL BX\n\
+	IMUL BX\n\
 	MOV BX, AX\n";
 		auto id = table->lookUp(idNameFromRule(varNode->getNthChild(1)->getRule()));
 		if(id != nullptr){
@@ -412,6 +426,11 @@ void processFactorIncDecOpRule(ParseTreeNode *node){
 	NEG SI\n\
 	MOV [BP+SI], AX\n";
 		}
+		code += "\
+	POP AX\n\
+	POP CX\n\
+	POP BX\n\
+	PUSH AX\n";
 	}
 	writeToAsm(code);
 }
@@ -470,7 +489,7 @@ void processRelExpressionComparisonRule(ParseTreeNode *node) {
 	MOV AX, 1" + annotationOfLine(node->getStartOfNode()) + "\
 	JMP " + exitLabel + "\n\
 " + falseLabel + ":\n\
-	MOV AX, 0"+ annotationOfLine(node->getStartOfNode()) +"\
+	XOR AX, AX"+ annotationOfLine(node->getStartOfNode()) +"\
 " + exitLabel + ":\n";
 	writeToAsm(code);
 }
@@ -503,7 +522,7 @@ void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node) {
 	MOV AX, 1" + annotationOfLine(node->getStartOfNode()) + "\
 	JMP " + exitLabel + "\n\
 " + falseLabel + ":\n\
-	MOV AX, 0\n\
+	XOR AX, AX\n\
 " + exitLabel + ":\n";
 
 	writeToAsm(code);
@@ -511,6 +530,8 @@ void processLogicExpressionMultipleRelExpressionRule(ParseTreeNode *node) {
 
 void processVariableArrayRule() {
 	string code = "\
+	PUSH BX\n\
+	PUSH CX\n\
 	PUSH AX\n";
 	writeToAsm(code);
 }

@@ -80,7 +80,7 @@ file after the Bison-generated value and location types
 	#define PTN ParseTreeNode
 	vector<SymbolInfo*> ids,parameters;
 	bool parameterRedefined = false;
-	bool returnFlag = false;
+	unsigned long returnLine = -1;
 
 	int yyparse(void);
 	int yylex(void);
@@ -274,8 +274,6 @@ file after the Bison-generated value and location types
 		else if(prevFuncNode->isFunctionDefined())alreadyDefined(prevFunction);
 		else {
 			if(!((prevFuncNode->getType() == type) && (prevFuncNode->getNumParameters() == func->getNode()->getNumParameters())))conflictingTypes(prevFunction);
-			else if(type == Type_Spec::TYPE_VOID && returnFlag)returnFromVoid(func);
-			else if(type != Type_Spec::TYPE_VOID && !returnFlag)noReturnFromFunction(func);
 			else {
 				auto error = parameterTypeMismatch(prevFunction);
 				if(!error) {
@@ -359,6 +357,13 @@ file after the Bison-generated value and location types
 
 	void printSymbolTable() {
 		fprintf(log_out,"%s",table->printAllScopes().c_str());
+	}
+
+	void checkReturnFromFunction() {
+		auto type = currentFunction->getNode()->getType();
+		if(type == Type_Spec::TYPE_VOID && returnLine != -1)returnFromVoid(currentFunction);
+		else if(type != Type_Spec::TYPE_VOID && returnLine == -1)noReturnFromFunction(currentFunction);
+		returnLine = -1;
 	}
 
 	void insertVariables(Type_Spec type){
@@ -513,6 +518,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(6,$1,$2->getNode(),lParenNode,$4,rParenNode,$7);
 			$$->setType($1->getType());
+			checkReturnFromFunction();
 			table->insert($2);
 		}
 		| type_specifier ID LPAREN RPAREN {
@@ -527,6 +533,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(5,$1,$2->getNode(),lParenNode,rParenNode,$6);
 			$$->setType($1->getType());
+			checkReturnFromFunction();
 			table->insert($2);
 		}
 		| type_specifier ID LPAREN parameter_list error RPAREN compound_statement
@@ -860,7 +867,7 @@ statement : var_declaration
 			auto semicolonNode = new PTN("SEMICOLON : ;",@3.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(3,returnNode,$2,semicolonNode);	
-			returnFlag = true;			
+			returnLine = @1.F_L;			
 		}
 		;
 
@@ -951,7 +958,6 @@ expression : logic_expression
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 			$$->setType($1->getType());
 			$$->setArraySize($1->getArraySize());
-			$$->setVal($1->getVal());
 		}
 		| variable ASSIGNOP logic_expression
 		{

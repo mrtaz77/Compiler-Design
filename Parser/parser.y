@@ -81,7 +81,7 @@ file after the Bison-generated value and location types
 	#define PTN ParseTreeNode
 	vector<SymbolInfo*> ids,parameters;
 	bool parameterRedefined = false;
-	bool returnFlag = false;
+	unsigned long returnLine = -1;
 
 	int yyparse(void);
 	int yylex(void);
@@ -271,8 +271,6 @@ file after the Bison-generated value and location types
 		else if(prevFuncNode->isFunctionDefined())alreadyDefined(prevFunction);
 		else {
 			if(!((prevFuncNode->getType() == type) && (prevFuncNode->getNumParameters() == func->getNode()->getNumParameters())))conflictingTypes(prevFunction);
-			else if(type == Type_Spec::TYPE_VOID && returnFlag)returnFromVoid(func);
-			else if(type != Type_Spec::TYPE_VOID && !returnFlag)noReturnFromFunction(func);
 			else {
 				auto error = parameterTypeMismatch(prevFunction);
 				if(!error) {
@@ -362,6 +360,13 @@ file after the Bison-generated value and location types
 
 	void printSymbolTable() {
 		fprintf(log_out,"%s",table->printAllScopes().c_str());
+	}
+
+	void checkReturnFromFunction() {
+		auto type = currentFunction->getNode()->getType();
+		if(type == Type_Spec::TYPE_VOID && returnLine != -1)returnFromVoid(currentFunction);
+		else if(type != Type_Spec::TYPE_VOID && returnLine == -1)noReturnFromFunction(currentFunction);
+		returnLine = -1;
 	}
 
 	void insertVariables(Type_Spec type){
@@ -510,6 +515,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(6,$1,$2->getNode(),lParenNode,$4,rParenNode,$7);
 			$$->setType($1->getType());
+			checkReturnFromFunction();
 			table->insert($2);
 		}
 		| type_specifier ID LPAREN RPAREN {
@@ -524,6 +530,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(5,$1,$2->getNode(),lParenNode,rParenNode,$6);
 			$$->setType($1->getType());
+			checkReturnFromFunction();
 			table->insert($2);
 		}
 		| type_specifier ID LPAREN parameter_list error RPAREN compound_statement
@@ -948,6 +955,7 @@ logic_expression : rel_expression
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
 					$$->setArraySize($1->getArraySize());
+					$$->setVal($1->getVal());
 				}
 				| rel_expression LOGICOP rel_expression
 				{
@@ -968,6 +976,7 @@ rel_expression : simple_expression
 				$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 				$$->setType($1->getType());
 				$$->setArraySize($1->getArraySize());
+				$$->setVal($1->getVal());
 			}
 			| simple_expression RELOP simple_expression
 			{
@@ -988,6 +997,7 @@ simple_expression : term
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 					$$->setType($1->getType());
 					$$->setArraySize($1->getArraySize());
+					$$->setVal($1->getVal());
 				}
 				| simple_expression ADDOP term
 				{
@@ -1005,6 +1015,7 @@ term : unary_expression
 		$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 		$$->setType($1->getType());
 		$$->setArraySize($1->getArraySize());
+		$$->setVal($1->getVal());
 	}
 	| term MULOP unary_expression
 	{
@@ -1021,7 +1032,7 @@ term : unary_expression
 			}
 		}
 		if($2->getName() == "%" || $2->getName() == "/") {
-			if(atof($3->getVal().c_str()) == 0){
+			if(strlen($3->getVal().c_str()) != 0 && atof($3->getVal().c_str()) == 0){
 				string error = "Warning: division by zero";
 				semanticError(error,@3.F_L);
 			}
@@ -1040,7 +1051,7 @@ unary_expression : ADDOP unary_expression
 				}
 				| NOT unary_expression
 				{
-					initRule("NOT unary_expression ");
+					initRule("unary_expression : NOT unary_expression ");
 					auto notNode = new PTN("NOT : !",@1.F_L);
 					$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(2,notNode,$2);
 					$$->setType($2->getType());
@@ -1073,14 +1084,15 @@ factor : variable
 			->addChildrenToNode(4,idNode,lParenNode,$3,rParenNode);
 
 			auto id = table->lookUp($1->getName());
-			if(id == nullptr){
+			// added checking for recursive function
+			if((id == nullptr) && !(currentFunction->getName() == $1->getName())){
 				string error = "Undeclared function \'"
 								+ $1->getName() + "\'";
 				semanticError(error,@1.F_L);
 				$$->setType(Type_Spec::NAT);
 			}
 			else {
-				auto idNode = id->getNode();
+				auto idNode = (id == nullptr) ? currentFunction->getNode() : id->getNode();
 				$$->setType(idNode->getType());
 
 				if(!idNode->isFunctionDeclared()){
@@ -1101,7 +1113,7 @@ factor : variable
 								+ "\'";
 					semanticError(error,@1.F_L);
 				}
-				else argumentTypeMismatch(id,$3);
+				else argumentTypeMismatch(id == nullptr ? currentFunction : id,$3);
 			}
 		}
 		| LPAREN expression RPAREN
@@ -1163,7 +1175,7 @@ argument_list : arguments
 			}
 			| arguments error
 			{
-				initError("arguments of argument list",@1.F_L);
+				initError("arguments of argument list ",@1.F_L);
 				auto errorNode = new PTN("arguments : error",$1->getStartOfNode());
 				$$ = (new PTN("argument_list : arguments ",@$.F_L,@$.L_L))
 				->addChildrenToNode(1,errorNode);
@@ -1178,7 +1190,7 @@ argument_list : arguments
 
 arguments : arguments COMMA logic_expression
 		{
-			initRule("arguments : arguments COMMA logic_expression");
+			initRule("arguments : arguments COMMA logic_expression ");
 			auto commaNode = new PTN("COMMA : ,",@2.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(3,$1,commaNode,$3);
 			$$->setParameters($1->getParameters());
@@ -1186,7 +1198,7 @@ arguments : arguments COMMA logic_expression
 		}
 		| logic_expression
 		{
-			initRule("arguments : logic_expression");
+			initRule("arguments : logic_expression ");
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))->addChildrenToNode(1,$1);
 			$$->addParameter($1);
 		}
@@ -1199,7 +1211,6 @@ arguments : arguments COMMA logic_expression
 #define LOG_FILE "log.txt"
 #define PARSE_TREE_FILE "parsetree.txt"
 #define ERROR_FILE "error.txt"
-
 
 int main(int argc,char *argv[])
 {

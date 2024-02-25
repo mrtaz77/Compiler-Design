@@ -63,9 +63,11 @@ string annotationOfLine(unsigned long lineNo){
 }
 
 void resetStackPointer() {
-	string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
-	stackPointer = 0;
-	writeToAsm(code);
+	if(stackPointer != 0) {
+		string code = "\tADD SP, " + to_string(-stackPointer) + "\n";
+		stackPointer = 0;
+		writeToAsm(code);
+	}
 }
 
 void rollbackStackPointer(unsigned long currentStackPointer, unsigned long newStackPointer) {
@@ -201,9 +203,7 @@ void insertFunctionHeaderCode(SymbolInfo* func) {
 
 void insertFunctionFooterCode(SymbolInfo* func) {
 	printLabel(returnLabel);
-	if(stackPointer != 0) {
-		resetStackPointer();
-	}
+	resetStackPointer();
 	string code = "\tPOP BP\n";
 	if(func->getName() == "main") {
 		code += "\
@@ -567,6 +567,7 @@ void processRuleOfNode(ParseTreeNode *node) {
 
 void processStatementReturnRule(ParseTreeNode* node) {
 	postOrderTraversal(node->getNthChild(2));
+	resetStackPointer();
 	writeToAsm("\tJMP L" + to_string(returnLabel) + "\n");
 	printLabel(getIncreasedLabel());
 }

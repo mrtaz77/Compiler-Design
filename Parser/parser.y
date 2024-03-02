@@ -62,6 +62,7 @@ parser implementation file*/
 %destructor { if($$ != nullptr)$$->~ParseTreeNode();} <parseTreeNode>
 %destructor { if($$ != nullptr)$$->~SymbolInfo();} <symbolInfo>
 
+
 /* Code in the parser header file and the parser implementation 
 file after the Bison-generated value and location types 
 (YYSTYPE and YYLTYPE in C), and token definitions */
@@ -853,7 +854,7 @@ statement : var_declaration
 			auto semicolonNode = new PTN("SEMICOLON : ;",@3.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(3,returnNode,$2,semicolonNode);	
-			returnFlag = true;			
+			returnLine = @1.F_L;			
 		}
 		;
 

@@ -17,6 +17,7 @@ parser implementation file*/
 	extern FILE* yyin;
 	extern int yylineno;
 	extern unsigned long errorCount;
+	extern unsigned long warningCount;
 
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
 	SymbolInfo *currentFunction;
@@ -867,7 +868,7 @@ statement : var_declaration
 			auto semicolonNode = new PTN("SEMICOLON : ;",@3.F_L);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(3,returnNode,$2,semicolonNode);	
-			returnLine = @1.F_L;			
+			returnLine = @1.F_L;
 		}
 		;
 

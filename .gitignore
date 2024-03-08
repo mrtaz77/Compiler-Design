@@ -1,16 +1,13 @@
 #added
 .lh
 .vscode
-*.txt
 .cph
 *.bin
 *.zip
 2005020/
-input.*
 Sample Input/
 Asm Codes/
 Sample Output/
-Test cases/
 
 # Prerequisites
 *.d

@@ -18,9 +18,23 @@ Road to a working c++ compiler
 - __Challenges__
 	- Extensive usage of pointers. 
 	- As long as any memory allocated by new is deleted in the correct order everything works.
-	- Carefully tokenized input file based on whitespaces.
+	- Carefully tokenized input file based on whitespace.
 	- The sdbm hash specified [here](http://www.cse.yorku.ca/~oz/hash.html) uses unsigned long as return data type. This leads to error as the resulting hash may go beyond the range of unsigned long. 
-	**Used unsigned long long instead**
+	**Used unsigned long long instead.**
+```cpp
+unsigned long long sdbm_hash(string str) {
+        unsigned long long hash = 0;
+        unsigned long long i = 0;
+        unsigned long long len = str.length();
+
+        for (i = 0; i < len; i++)
+        {
+            hash = ((str[i]) + (hash << 6) + (hash << 16) - hash);
+        }
+
+        return hash%total_buckets;
+    }
+```
 
 ## Offline 2
 - [Lexical Analysis](/Lexical%20Analyzer/)

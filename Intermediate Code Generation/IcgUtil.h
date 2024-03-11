@@ -16,9 +16,9 @@ void headerCode();
 
 void footerCode();
 
-std::string printNewlineCode();
+std::string getNewlineCode();
 
-void printOutput();
+void writeCodeForPrintln();
 
 void declareGlobalVariablesInASM();
 

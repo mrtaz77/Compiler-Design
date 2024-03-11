@@ -101,7 +101,7 @@ END main";
 	writeToAsm(code);
 }
 
-string printNewlineCode() {
+string getNewlineCode() {
 	return "\
 	PUSH AX\n\
 	PUSH DX\n\
@@ -115,7 +115,7 @@ string printNewlineCode() {
 	POP AX\n";
 }
 
-void printOutput() {
+void writeCodeForPrintln() {
 	printHeaderComment("print library");
 	string code = "\
 ;-------------------------------\n\
@@ -142,7 +142,7 @@ PRINT:\n\
 	LEA DX, SI\n\
 	MOV AH, 9\n\
 	INT 21H\n"
-	+ printNewlineCode()
+	+ getNewlineCode()
 	+ "\
 	POP SI\n\
 	POP DX\n\
@@ -307,23 +307,11 @@ void processTermMulOpUnaryExpressionRule(ParseTreeNode *node){
 	if(node->getSibling() != nullptr)printPopAx(node);
 }
 
-void processRelExpressionSimpleExpressionRule(ParseTreeNode *node){
-	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
-}
-
-void processSimpleExpressionTermRule(ParseTreeNode *node){
-	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
-}
-
 void processUnaryExpressionFactorRule(ParseTreeNode *node){
 	if(node->getChild()->getNumOfChildren() > 1 &&
 	!isFactorExpressionRule(node->getChild()->getRule())){
 		printPopAx(node);
 	}
-}
-
-void processTermUnaryExpressionRule(ParseTreeNode *node){
-	if(node->getChild()->getNumOfChildren() > 1)printPopAx(node);
 }
 
 SymbolInfo* getIdFromFunctionDefinitionNode(ParseTreeNode *node) {
@@ -765,7 +753,7 @@ void generateASM(ParseTreeNode *node){
 	headerCode();
 	declareGlobalVariablesInASM();
 	postOrderTraversal(node);
-	if(printlnUsed)printOutput();
+	if(printlnUsed)writeCodeForPrintln();
 	footerCode();
 	fclose(asm_out);
 }

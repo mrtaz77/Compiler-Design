@@ -550,19 +550,22 @@ void processRuleOfNode(ParseTreeNode *node) {
 	else if(isAssignOpOperation(rule))processAssignOpNode(node);
 	else if(isFactorConstIntRule(rule))processFactorConstIntRule(node);
 	else if(isSimpleExpressionAddOpTermRule(rule))processSimpleExpressionAddOpTermRule(node);
-	else if(isRelExpressionSimpleExpressionRule(rule))processRelExpressionSimpleExpressionRule(node);
 	else if(isTermMulOpUnaryExpressionRule(rule))processTermMulOpUnaryExpressionRule(node);
-	else if(isSimpleExpressionTermRule(rule))processSimpleExpressionTermRule(node);
 	else if(isFactorVariableRule(rule))processFactorVariableRule(node);
 	else if(isFactorIncOpRule(rule) || isFactorDecOpRule(rule))processFactorIncDecOpRule(node);
 	else if(isUnaryExpressionFactorRule(rule))processUnaryExpressionFactorRule(node);
 	else if(isUnaryExpressionNotRule(rule))processUnaryExpressionNotRule();
-	else if(isTermUnaryExpressionRule(rule))processTermUnaryExpressionRule(node);
 	else if(isUnaryExpressionAddOpRule(rule))processUnaryExpressionAddOpRule(node);
 	else if(isFactorIDFunctionCallRule(rule))postProcessFactorFunctionCallRule(node);
 	else if(isArgumentsRule(rule))processArgumentsRule();
 	else if(isRelExpressionComparisonRule(rule))processRelExpressionComparisonRule(node);
 	else if(isVariableArrayRule(rule))processVariableArrayRule();
+	else if(
+		(isRelExpressionSimpleExpressionRule(rule)
+		|| isSimpleExpressionTermRule(rule)
+		|| isTermUnaryExpressionRule(rule))
+		&& node->getChild()->getNumOfChildren() > 1
+	)printPopAx(node);
 }
 
 void processStatementReturnRule(ParseTreeNode* node) {

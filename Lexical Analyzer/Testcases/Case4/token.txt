@@ -1,0 +1,14 @@
+<MULTI LINE STRING, this is a valid string with valid characters  " ' 	>
+<MULTI LINE STRING, But this is not a valid string this should show a warning right here k  lets see what happens>
+<SINGLE LINE STRING, hello l now>
+<IF, if>
+<ELSE, else>
+<DO, do>
+<WHILE, while>
+<SEMICOLON, ;>
+<LCURL, {>
+<LCURL, {>
+<LCURL, {>
+<RCURL, }>
+<RCURL, }>
+<RCURL, }>

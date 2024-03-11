@@ -1,0 +1,10 @@
+<CONST_FLOAT, .3>
+<LCURL, {>
+<ID, a>
+<LCURL, {>
+<ID, a>
+<MULTI LINE STRING, a string finishedproperly>
+<ID, a>
+<RCURL, }>
+<ID, a>
+<RCURL, }>

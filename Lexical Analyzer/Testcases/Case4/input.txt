@@ -1,0 +1,32 @@
+		// here
+  /* or there */
+
+"this is a valid string\
+ with valid characters\
+\a \b \" \' \t"
+
+"But this is not a valid string\
+ this should show a warning\
+ right here \k \
+ lets see what happens"
+
+"hello \l now"
+if else do while 
+'\';
+{
+
+
+
+
+
+	{
+				// this\
+				should
+		{
+
+/* not be an
+ error */
+
+		}
+	}
+}

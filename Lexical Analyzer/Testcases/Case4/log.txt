@@ -1,0 +1,42 @@
+Line# 1: Token <SINGLE LINE COMMENT> Lexeme // here found
+Line# 2: Token <MULTI LINE COMMENT> Lexeme /* or there */ found
+Line# 4: Token <MULTI LINE STRING> Lexeme "this is a valid string\
+ with valid characters\
+\a \b \" \' \t" found
+Line# 10: Warning, unknown escape sequence '\k' in string
+Line# 8: Token <MULTI LINE STRING> Lexeme "But this is not a valid string\
+ this should show a warning\
+ right here \k \
+ lets see what happens" found
+Line# 13: Warning, unknown escape sequence '\l' in string
+Line# 13: Token <SINGLE LINE STRING> Lexeme "hello \l now" found
+Line# 14: Token <IF> Lexeme if found
+Line# 14: Token <ELSE> Lexeme else found
+Line# 14: Token <DO> Lexeme do found
+Line# 14: Token <WHILE> Lexeme while found
+Error at line# 15: UNFINISHED_CONST_CHAR '\'
+Line# 15: Token <SEMICOLON> Lexeme ; found
+Line# 16: Token <LCURL> Lexeme { found
+Line# 22: Token <LCURL> Lexeme { found
+Line# 23: Token <SINGLE LINE COMMENT> Lexeme // this\
+				should found
+Line# 25: Token <LCURL> Lexeme { found
+Line# 27: Token <MULTI LINE COMMENT> Lexeme /* not be an
+ error */ found
+Line# 30: Token <RCURL> Lexeme } found
+Line# 31: Token <RCURL> Lexeme } found
+Line# 32: Token <RCURL> Lexeme } found
+	ScopeTable# 1
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10
+Total lines: 32
+Total errors: 1
+Total warnings: 2

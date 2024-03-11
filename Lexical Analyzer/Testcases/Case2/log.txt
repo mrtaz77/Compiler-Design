@@ -1,0 +1,811 @@
+Line# 1: Token <MULTI LINE COMMENT> Lexeme /* This is a multiline comment \t \n
+#include <stdio.h>\n "tsr'tss
+*/ found
+Line# 5: Token <SINGLE LINE COMMENT> Lexeme // Function declaration found
+Line# 6: Token <VOID> Lexeme void found
+Line# 6: Token <ID> Lexeme myFunction found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10
+Line# 6: Token <LPAREN> Lexeme ( found
+Line# 6: Token <RPAREN> Lexeme ) found
+Line# 6: Token <SEMICOLON> Lexeme ; found
+Line# 7: warning, 0 of tabs needed but got 1 tabs.
+Line# 7: Token <DOUBLE> Lexeme double found
+Line# 7: Token <ID> Lexeme globalVariable found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2
+	3
+	4
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 7: Token <ASSIGNOP> Lexeme = found
+Line# 7: Token <CONST_FLOAT> Lexeme 1000.2484e-7 found
+Line# 7: Token <SEMICOLON> Lexeme ; found
+Line# 8: warning, 0 of tabs needed but got 1 tabs.
+Line# 8: Token <DOUBLE> Lexeme double found
+Line# 8: Token <ID> Lexeme globalVariable2 found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 8: Token <ASSIGNOP> Lexeme = found
+Line# 8: Token <CONST_FLOAT> Lexeme .32e-7 found
+Line# 8: Token <SEMICOLON> Lexeme ; found
+Line# 10: Token <INT> Lexeme int found
+Line# 10: Token <ID> Lexeme main found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 10: Token <LPAREN> Lexeme ( found
+Line# 10: Token <RPAREN> Lexeme ) found
+Line# 10: Token <LCURL> Lexeme { found
+Line# 11: Token <SINGLE LINE COMMENT> Lexeme // Single-line comment\
+check kortesi found
+Line# 13: Token <SINGLE LINE COMMENT> Lexeme //this is another Single line comment\     found
+Line# 14: Token <DOUBLE> Lexeme double found
+Line# 14: Token <ID> Lexeme dblConstant found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9 --> (dblConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 14: Token <ASSIGNOP> Lexeme = found
+Line# 14: Token <CONST_FLOAT> Lexeme .32e-2 found
+Line# 14: Token <SEMICOLON> Lexeme ; found
+Line# 15: Token <INT> Lexeme int found
+Line# 15: Token <ID> Lexeme integerConstant found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 15: Token <ASSIGNOP> Lexeme = found
+Line# 15: Token <CONST_INT> Lexeme 10 found
+Line# 15: Token <SEMICOLON> Lexeme ; found
+Line# 16: Token <FLOAT> Lexeme float found
+Line# 16: Token <ID> Lexeme floatConstant found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 16: Token <ASSIGNOP> Lexeme = found
+Line# 16: Token <CONST_FLOAT> Lexeme 3.14 found
+Line# 16: Token <SEMICOLON> Lexeme ; found
+Line# 17: Token <SINGLE LINE COMMENT> Lexeme //this is another Single line comment\
+	char charConstant = 'A'; found
+Line# 19: Token <CHAR> Lexeme char found
+Line# 19: Token <ID> Lexeme stringConstant found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 19: Token <LSQUARE> Lexeme [ found
+Line# 19: Token <RSQUARE> Lexeme ] found
+Line# 19: Token <ASSIGNOP> Lexeme = found
+Error at line# 21: UNFINISHED_STRING "Hello, World!\
+Testing flex\
+Ki ashe output
+Line# 22: warning, 1 of tabs needed but got 0 tabs.
+Error at line# 22: UNFINISHED_STRING ";
+Line# 24: Token <SINGLE LINE COMMENT> Lexeme // If-else statement found
+Line# 25: Token <IF> Lexeme if found
+Line# 25: Token <LPAREN> Lexeme ( found
+Line# 25: Token <ID> Lexeme integerConstant found
+	integerConstant already exists in the current ScopeTable
+Line# 25: Token <RELOP> Lexeme > found
+Line# 25: Token <CONST_INT> Lexeme 5 found
+Line# 25: Token <RPAREN> Lexeme ) found
+Line# 25: Token <LCURL> Lexeme { found
+Line# 26: Token <ID> Lexeme printf found
+	ScopeTable# 1.1.1
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 26: Token <LPAREN> Lexeme ( found
+Line# 26: Token <SINGLE LINE STRING> Lexeme "Integer is greater than 5.\n" found
+Line# 26: Token <RPAREN> Lexeme ) found
+Line# 26: Token <SEMICOLON> Lexeme ; found
+Line# 27: Token <RCURL> Lexeme } found
+Line# 27: Token <ELSE> Lexeme else found
+Line# 27: Token <LCURL> Lexeme { found
+Line# 28: Token <ID> Lexeme printf found
+	ScopeTable# 1.1.2
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 28: Token <LPAREN> Lexeme ( found
+Line# 28: Token <SINGLE LINE STRING> Lexeme "Integer is less than or equal to 5.\n" found
+Line# 28: Token <RPAREN> Lexeme ) found
+Line# 28: Token <SEMICOLON> Lexeme ; found
+Line# 29: Token <RCURL> Lexeme } found
+Line# 31: Token <SINGLE LINE COMMENT> Lexeme // For loop found
+Line# 32: Token <FOR> Lexeme for found
+Line# 32: Token <LPAREN> Lexeme ( found
+Line# 32: Token <INT> Lexeme int found
+Line# 32: Token <ID> Lexeme i found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 32: Token <ASSIGNOP> Lexeme = found
+Line# 32: Token <CONST_INT> Lexeme 0 found
+Line# 32: Token <SEMICOLON> Lexeme ; found
+Line# 32: Token <ID> Lexeme i found
+	i already exists in the current ScopeTable
+Line# 32: Token <RELOP> Lexeme < found
+Line# 32: Token <CONST_INT> Lexeme 5 found
+Line# 32: Token <SEMICOLON> Lexeme ; found
+Line# 32: Token <ID> Lexeme i found
+	i already exists in the current ScopeTable
+Line# 32: Token <INCOP> Lexeme ++ found
+Line# 32: Token <RPAREN> Lexeme ) found
+Line# 32: Token <LCURL> Lexeme { found
+Line# 33: Token <ID> Lexeme printf found
+	ScopeTable# 1.1.3
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 33: Token <LPAREN> Lexeme ( found
+Line# 33: Token <SINGLE LINE STRING> Lexeme "Iteration %d\n" found
+Line# 33: Token <COMMA> Lexeme , found
+Line# 33: Token <ID> Lexeme i found
+	ScopeTable# 1.1.3
+	1
+	2
+	3
+	4
+	5
+	6 --> (i,ID)
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 33: Token <RPAREN> Lexeme ) found
+Line# 33: Token <SEMICOLON> Lexeme ; found
+Line# 34: Token <RCURL> Lexeme } found
+Line# 36: Token <SINGLE LINE COMMENT> Lexeme // While loop found
+Line# 37: Token <INT> Lexeme int found
+Line# 37: Token <ID> Lexeme counter found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 37: Token <ASSIGNOP> Lexeme = found
+Line# 37: Token <CONST_INT> Lexeme 0 found
+Line# 37: Token <SEMICOLON> Lexeme ; found
+Line# 38: Token <WHILE> Lexeme while found
+Line# 38: Token <LPAREN> Lexeme ( found
+Line# 38: Token <ID> Lexeme counter found
+	counter already exists in the current ScopeTable
+Line# 38: Token <RELOP> Lexeme < found
+Line# 38: Token <CONST_INT> Lexeme 3 found
+Line# 38: Token <RPAREN> Lexeme ) found
+Line# 38: Token <LCURL> Lexeme { found
+Line# 39: Token <ID> Lexeme printf found
+	ScopeTable# 1.1.4
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 39: Token <LPAREN> Lexeme ( found
+Line# 39: Token <SINGLE LINE STRING> Lexeme "Counter value: %d\n" found
+Line# 39: Token <COMMA> Lexeme , found
+Line# 39: Token <ID> Lexeme counter found
+	ScopeTable# 1.1.4
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9 --> (counter,ID)
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 39: Token <RPAREN> Lexeme ) found
+Line# 39: Token <SEMICOLON> Lexeme ; found
+Line# 40: Token <ID> Lexeme counter found
+	counter already exists in the current ScopeTable
+Line# 40: Token <INCOP> Lexeme ++ found
+Line# 40: Token <SEMICOLON> Lexeme ; found
+Line# 41: Token <RCURL> Lexeme } found
+Line# 43: Token <SINGLE LINE COMMENT> Lexeme // Switch statement found
+Line# 44: Token <SWITCH> Lexeme switch found
+Line# 44: Token <LPAREN> Lexeme ( found
+Line# 44: Token <ID> Lexeme charConstant found
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7 --> (charConstant,ID)
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 44: Token <RPAREN> Lexeme ) found
+Line# 44: Token <LCURL> Lexeme { found
+Line# 45: Token <CASE> Lexeme case found
+Line# 45: Token <CONST_CHAR> Lexeme A found
+Error at line# 45: UNRECOGNIZED_CHAR :
+Line# 46: warning, 2 of tabs needed but got 3 tabs.
+Line# 46: Token <ID> Lexeme printf found
+	ScopeTable# 1.1.5
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1.1
+	1
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7 --> (charConstant,ID)
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 46: Token <LPAREN> Lexeme ( found
+Line# 46: Token <SINGLE LINE STRING> Lexeme "Char constant is A.\n" found
+Line# 46: Token <RPAREN> Lexeme ) found
+Line# 46: Token <SEMICOLON> Lexeme ; found
+Line# 47: warning, 2 of tabs needed but got 3 tabs.
+Line# 47: Token <BREAK> Lexeme break found
+Line# 47: Token <SEMICOLON> Lexeme ; found
+Line# 48: Token <CASE> Lexeme case found
+Line# 48: Token <CONST_CHAR> Lexeme B found
+Error at line# 48: UNRECOGNIZED_CHAR :
+Line# 49: warning, 2 of tabs needed but got 3 tabs.
+Line# 49: Token <ID> Lexeme printf found
+	printf already exists in the current ScopeTable
+Line# 49: Token <LPAREN> Lexeme ( found
+Line# 49: Token <SINGLE LINE STRING> Lexeme "Char constant is B.\n" found
+Line# 49: Token <RPAREN> Lexeme ) found
+Line# 49: Token <SEMICOLON> Lexeme ; found
+Line# 50: warning, 2 of tabs needed but got 3 tabs.
+Line# 50: Token <BREAK> Lexeme break found
+Line# 50: Token <SEMICOLON> Lexeme ; found
+Line# 51: Token <DEFAULT> Lexeme default found
+Error at line# 51: UNRECOGNIZED_CHAR :
+Line# 52: warning, 2 of tabs needed but got 3 tabs.
+Line# 52: Token <ID> Lexeme printf found
+	printf already exists in the current ScopeTable
+Line# 52: Token <LPAREN> Lexeme ( found
+Line# 52: Token <SINGLE LINE STRING> Lexeme "Char constant is not A or B.\n" found
+Line# 52: Token <RPAREN> Lexeme ) found
+Line# 52: Token <SEMICOLON> Lexeme ; found
+Line# 53: Token <RCURL> Lexeme } found
+Line# 55: Token <SINGLE LINE COMMENT> Lexeme // Function call found
+Line# 56: Token <ID> Lexeme myFunction found
+	ScopeTable# 1.1
+	1 --> (myFunction,ID)
+	2
+	3
+	4
+	5
+	6 --> (stringConstant,ID) --> (i,ID)
+	7 --> (charConstant,ID)
+	8
+	9 --> (dblConstant,ID) --> (integerConstant,ID) --> (floatConstant,ID) --> (counter,ID)
+	10
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 56: Token <LPAREN> Lexeme ( found
+Line# 56: Token <RPAREN> Lexeme ) found
+Line# 56: Token <SEMICOLON> Lexeme ; found
+Line# 58: Token <RETURN> Lexeme return found
+Line# 58: Token <CONST_INT> Lexeme 0 found
+Line# 58: Token <SEMICOLON> Lexeme ; found
+Line# 59: Token <RCURL> Lexeme } found
+Line# 61: Token <SINGLE LINE COMMENT> Lexeme // Function definition found
+Line# 62: Token <VOID> Lexeme void found
+Line# 62: Token <ID> Lexeme myFunction found
+	myFunction already exists in the current ScopeTable
+Line# 62: Token <LPAREN> Lexeme ( found
+Line# 62: Token <RPAREN> Lexeme ) found
+Line# 62: Token <LCURL> Lexeme { found
+Line# 63: Token <ID> Lexeme printf found
+	ScopeTable# 1.2
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+	10 --> (printf,ID)
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 63: Token <LPAREN> Lexeme ( found
+Line# 63: Token <SINGLE LINE STRING> Lexeme "Inside myFunction()\n" found
+Line# 63: Token <RPAREN> Lexeme ) found
+Line# 63: Token <SEMICOLON> Lexeme ; found
+Line# 64: Token <RCURL> Lexeme } found
+Line# 65: Token <CHAR> Lexeme char found
+Line# 65: Token <ID> Lexeme str found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID) --> (str,ID)
+	5
+	6 --> (globalVariable,ID)
+	7
+	8
+	9
+	10
+Line# 65: Token <LSQUARE> Lexeme [ found
+Line# 65: Token <CONST_INT> Lexeme 100 found
+Line# 65: Token <RSQUARE> Lexeme ] found
+Line# 65: Token <ASSIGNOP> Lexeme = found
+Line# 65: Token <MULTI LINE STRING> Lexeme "I have a \" test\" function.so i\
+asked \
+\"how to test\"" found
+Line# 67: Token <SEMICOLON> Lexeme ; found
+Line# 68: Token <SINGLE LINE COMMENT> Lexeme //checking for comment /* nested \
+test*/ comment found
+Line# 70: Token <SINGLE LINE COMMENT> Lexeme //checking for comment /* nested found
+Line# 71: Token <ID> Lexeme dhhds found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID) --> (str,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7
+	8
+	9
+	10
+Line# 71: Token <ID> Lexeme scguefhhgdfs found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7
+	8
+	9
+	10
+Line# 71: Token <ID> Lexeme sfdgdfshudgfes found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7
+	8
+	9
+	10
+Line# 72: Token <ID> Lexeme test found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7 --> (test,ID)
+	8
+	9
+	10
+Line# 72: Token <MULOP> Lexeme * found
+Line# 72: Token <MULOP> Lexeme / found
+Line# 72: Token <ID> Lexeme comment found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7 --> (test,ID)
+	8 --> (comment,ID)
+	9
+	10
+Error at line# 74: INVALID_ID_SUFFIX_NUM_PREFIX 12.1ef
+Error at line# 75: INVALID_ID_SUFFIX_NUM_PREFIX 12.efg
+Error at line# 76: INVALID_ID_SUFFIX_NUM_PREFIX 12abcd
+Error at line# 77: UNFINISHED_CONST_CHAR '\n
+Error at line# 78: TOO_MANY_DECIMAL_POINTS ..
+Error at line# 79: ILLFORMED_NUMBER 1E.2113
+Error at line# 80: ILLFORMED_NUMBER 1e1.2113
+Error at line# 81: UNFINISHED_CONST_CHAR 'a
+Line# 81: Token <ID> Lexeme bcd found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID)
+	7 --> (test,ID)
+	8 --> (comment,ID)
+	9
+	10 --> (bcd,ID)
+Error at line# 82: TOO_MANY_DECIMAL_POINTS 1.2.3E1
+Line# 82: Token <CONST_FLOAT> Lexeme .2 found
+Error at line# 83: EMPTY_CONST_CHAR ''
+Line# 83: Token <ID> Lexeme A found
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID) --> (A,ID)
+	7 --> (test,ID)
+	8 --> (comment,ID)
+	9
+	10 --> (bcd,ID)
+Error at line# 84: TOO_MANY_DECIMAL_POINTS ..
+Error at line# 85: TOO_MANY_DECIMAL_POINTS ...
+Error at line# 86: UNRECOGNIZED_CHAR '''
+Error at line# 87: UNRECOGNIZED_CHAR '\?'
+Error at line# 88: UNRECOGNIZED_CHAR '\x'
+Line# 89: Token <CONST_CHAR> Lexeme  found
+Error at line# 90: TOO_MANY_DECIMAL_POINTS ..
+Error at line# 90: UNFINISHED_CONST_CHAR '.
+Error at line# 90: UNRECOGNIZED_CHAR .
+	ScopeTable# 1
+	1 --> (myFunction,ID)
+	2 --> (globalVariable2,ID) --> (sfdgdfshudgfes,ID)
+	3
+	4 --> (main,ID) --> (str,ID) --> (scguefhhgdfs,ID)
+	5
+	6 --> (globalVariable,ID) --> (dhhds,ID) --> (A,ID)
+	7 --> (test,ID)
+	8 --> (comment,ID)
+	9
+	10 --> (bcd,ID)
+Total lines: 90
+Total errors: 23
+Total warnings: 8

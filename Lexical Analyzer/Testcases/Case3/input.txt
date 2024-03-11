@@ -1,0 +1,29 @@
+	1abc2.3
+'\na'
+'a\'
+{
+	/* this is a multi line comment
+	*** / ** which is not finished/
+	until now *****/
+a
+	{
+// a comment \
+dragged on	  
+a
+		// is this working now \t may be  		  	
+			  	
+
+"a string finished\
+properly"
+a
+	}
+	"a string with error\
+	 
+	"
+a
+}
+
+/* this is not a finished multi line comment
+*
+/
+but it is now */

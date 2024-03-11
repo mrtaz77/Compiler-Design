@@ -186,7 +186,6 @@ unsigned long getIncreasedLabel() {
 	return ++labelCount;
 }
 
-
 void insertFunctionHeaderCode(SymbolInfo* func) {
 	printHeaderComment("Function : " +func->getName());
 	string code = func->getName() + " PROC\n";

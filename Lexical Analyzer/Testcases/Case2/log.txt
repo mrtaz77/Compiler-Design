@@ -18,7 +18,7 @@ Line# 6: Token <ID> Lexeme myFunction found
 Line# 6: Token <LPAREN> Lexeme ( found
 Line# 6: Token <RPAREN> Lexeme ) found
 Line# 6: Token <SEMICOLON> Lexeme ; found
-Line# 7: warning, 0 of tabs needed but got 1 tabs.
+Line# 7: Warning, 0 of tabs needed but got 1 tabs.
 Line# 7: Token <DOUBLE> Lexeme double found
 Line# 7: Token <ID> Lexeme globalVariable found
 	ScopeTable# 1
@@ -35,7 +35,7 @@ Line# 7: Token <ID> Lexeme globalVariable found
 Line# 7: Token <ASSIGNOP> Lexeme = found
 Line# 7: Token <CONST_FLOAT> Lexeme 1000.2484e-7 found
 Line# 7: Token <SEMICOLON> Lexeme ; found
-Line# 8: warning, 0 of tabs needed but got 1 tabs.
+Line# 8: Warning, 0 of tabs needed but got 1 tabs.
 Line# 8: Token <DOUBLE> Lexeme double found
 Line# 8: Token <ID> Lexeme globalVariable2 found
 	ScopeTable# 1
@@ -184,7 +184,7 @@ Line# 19: Token <ASSIGNOP> Lexeme = found
 Error at line# 21: UNFINISHED_STRING "Hello, World!\
 Testing flex\
 Ki ashe output
-Line# 22: warning, 1 of tabs needed but got 0 tabs.
+Line# 22: Warning, 1 of tabs needed but got 0 tabs.
 Error at line# 22: UNFINISHED_STRING ";
 Line# 24: Token <SINGLE LINE COMMENT> Lexeme // If-else statement found
 Line# 25: Token <IF> Lexeme if found
@@ -534,7 +534,7 @@ Line# 44: Token <LCURL> Lexeme { found
 Line# 45: Token <CASE> Lexeme case found
 Line# 45: Token <CONST_CHAR> Lexeme A found
 Error at line# 45: UNRECOGNIZED_CHAR :
-Line# 46: warning, 2 of tabs needed but got 3 tabs.
+Line# 46: Warning, 2 of tabs needed but got 3 tabs.
 Line# 46: Token <ID> Lexeme printf found
 	ScopeTable# 1.1.5
 	1
@@ -573,25 +573,25 @@ Line# 46: Token <LPAREN> Lexeme ( found
 Line# 46: Token <SINGLE LINE STRING> Lexeme "Char constant is A.\n" found
 Line# 46: Token <RPAREN> Lexeme ) found
 Line# 46: Token <SEMICOLON> Lexeme ; found
-Line# 47: warning, 2 of tabs needed but got 3 tabs.
+Line# 47: Warning, 2 of tabs needed but got 3 tabs.
 Line# 47: Token <BREAK> Lexeme break found
 Line# 47: Token <SEMICOLON> Lexeme ; found
 Line# 48: Token <CASE> Lexeme case found
 Line# 48: Token <CONST_CHAR> Lexeme B found
 Error at line# 48: UNRECOGNIZED_CHAR :
-Line# 49: warning, 2 of tabs needed but got 3 tabs.
+Line# 49: Warning, 2 of tabs needed but got 3 tabs.
 Line# 49: Token <ID> Lexeme printf found
 	printf already exists in the current ScopeTable
 Line# 49: Token <LPAREN> Lexeme ( found
 Line# 49: Token <SINGLE LINE STRING> Lexeme "Char constant is B.\n" found
 Line# 49: Token <RPAREN> Lexeme ) found
 Line# 49: Token <SEMICOLON> Lexeme ; found
-Line# 50: warning, 2 of tabs needed but got 3 tabs.
+Line# 50: Warning, 2 of tabs needed but got 3 tabs.
 Line# 50: Token <BREAK> Lexeme break found
 Line# 50: Token <SEMICOLON> Lexeme ; found
 Line# 51: Token <DEFAULT> Lexeme default found
 Error at line# 51: UNRECOGNIZED_CHAR :
-Line# 52: warning, 2 of tabs needed but got 3 tabs.
+Line# 52: Warning, 2 of tabs needed but got 3 tabs.
 Line# 52: Token <ID> Lexeme printf found
 	printf already exists in the current ScopeTable
 Line# 52: Token <LPAREN> Lexeme ( found

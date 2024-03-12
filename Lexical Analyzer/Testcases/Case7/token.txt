@@ -58,7 +58,7 @@
 <LSQUARE, [>
 <RSQUARE, ]>
 <ASSIGNOP, =>
-<SINGLE LINE STRING, hello  world>
+<SINGLE LINE STRING, hello	world>
 <SEMICOLON, ;>
 <ID, printf>
 <LPAREN, (>

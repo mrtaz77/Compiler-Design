@@ -1,4 +1,4 @@
-Line# 1: warning, 0 of tabs needed but got 1 tabs.
+Line# 1: Warning, 0 of tabs needed but got 1 tabs.
 Error at line# 1: INVALID_ID_SUFFIX_NUM_PREFIX 1abc2
 Line# 1: Token <CONST_FLOAT> Lexeme .3 found
 Error at line# 2: MULTICHAR_CONST_CHAR '\na'
@@ -9,7 +9,7 @@ Line# 4: Token <LCURL> Lexeme { found
 Line# 5: Token <MULTI LINE COMMENT> Lexeme /* this is a multi line comment
 	*** / ** which is not finished/
 	until now *****/ found
-Line# 8: warning, 1 of tabs needed but got 0 tabs.
+Line# 8: Warning, 1 of tabs needed but got 0 tabs.
 Line# 8: Token <ID> Lexeme a found
 	ScopeTable# 1.1
 	1
@@ -36,7 +36,7 @@ Line# 8: Token <ID> Lexeme a found
 Line# 9: Token <LCURL> Lexeme { found
 Line# 10: Token <SINGLE LINE COMMENT> Lexeme // a comment \
 dragged on	   found
-Line# 12: warning, 2 of tabs needed but got 0 tabs.
+Line# 12: Warning, 2 of tabs needed but got 0 tabs.
 Line# 12: Token <ID> Lexeme a found
 	ScopeTable# 1.1.1
 	1
@@ -72,17 +72,17 @@ Line# 12: Token <ID> Lexeme a found
 	9
 	10
 Line# 13: Token <SINGLE LINE COMMENT> Lexeme // is this working now \t may be  		  	 found
-Line# 16: warning, 2 of tabs needed but got 0 tabs.
+Line# 16: Warning, 2 of tabs needed but got 0 tabs.
 Line# 16: Token <MULTI LINE STRING> Lexeme "a string finished\
 properly" found
-Line# 18: warning, 2 of tabs needed but got 0 tabs.
+Line# 18: Warning, 2 of tabs needed but got 0 tabs.
 Line# 18: Token <ID> Lexeme a found
 	a already exists in the current ScopeTable
 Line# 19: Token <RCURL> Lexeme } found
 Error at line# 21: UNFINISHED_STRING "a string with error\
 	 
 Error at line# 22: UNFINISHED_STRING "
-Line# 23: warning, 1 of tabs needed but got 0 tabs.
+Line# 23: Warning, 1 of tabs needed but got 0 tabs.
 Line# 23: Token <ID> Lexeme a found
 	a already exists in the current ScopeTable
 Line# 24: Token <RCURL> Lexeme } found

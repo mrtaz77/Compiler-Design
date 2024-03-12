@@ -122,11 +122,11 @@ void checkIndentation(string indent){
 
 	if(space > 0){
 		warningCount++;
-		fprintf(log_out, "Line# %d: Warning, tab requrired but got space.\n",yylineno);
+		fprintf(log_out, "Line# %d: Warning, tab required but got space.\n",yylineno);
 	}
 	else if(tab != expectedTab){
 		warningCount++;
-		fprintf(log_out, "Line# %d: warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
+		fprintf(log_out, "Line# %d: Warning, %d of tabs needed but got %d tabs.\n",yylineno,expectedTab,tab);
 	}
 }
 

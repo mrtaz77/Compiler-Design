@@ -81,7 +81,7 @@ file after the Bison-generated value and location types
 %code {
 	#define PTN ParseTreeNode
 	vector<SymbolInfo*> ids,parameters;
-	bool parameterRedefined = false;
+	bool parameterRedefinedPreviously = false;
 	unsigned long returnLine = -1;
 
 	int yyparse(void);
@@ -118,7 +118,7 @@ file after the Bison-generated value and location types
 		for(unsigned long i = 0; i < parameters.size(); i++) {
 			auto currParam = parameters[i];
 			if(currParam->getName() == parameter->getName()){
-				parameterRedefined = true;
+				parameterRedefinedPreviously = true;
 				string error = "Redefinition of parameter \'" + parameter->getName() + "\'";
 				semanticError(error,parameter->getNode()->getStartOfNode());
 				return true;
@@ -259,7 +259,7 @@ file after the Bison-generated value and location types
 			isAnyParameterUnnamed();
 		}
 		parameters.clear();
-		parameterRedefined = false;
+		parameterRedefinedPreviously = false;
 		if(table->lookUp(func->getName()) == nullptr) {
 			if(!defineNow)table->insert(func);
 			return;
@@ -565,7 +565,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 			$4->setNode(idNode);
 			$$ = (new PTN(current_rule,@$.F_L,@$.L_L))
 			->addChildrenToNode(4,$1,commaNode,$3,idNode);
-			if(!isParameterRedefined($4) && !parameterRedefined)parameters.push_back($4);
+			if(!(parameterRedefinedPreviously || isParameterRedefined($4)))parameters.push_back($4);
 		}
 		| parameter_list COMMA type_specifier
 		{

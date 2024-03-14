@@ -294,6 +294,7 @@ void processSimpleExpressionAddOpTermRule(ParseTreeNode *node){
 void processTermMulOpUnaryExpressionRule(ParseTreeNode *node){
 	string mulOpRule = node->getNthChild(2)->getRule();
 	string code;
+	if(node->getNthChild(3)->getNumOfChildren() > 1)printPopAx(node);
 	code += "\
 	POP CX\n\
 	XCHG AX, CX\n\

@@ -20,9 +20,6 @@ parser implementation file*/
 	extern unsigned long errorCount;
 
 	SymbolTable *table = new SymbolTable(BUCKET_SIZE);
-	SymbolInfo *currentFunction;
-
-	string current_rule = "";
 
 	void yyerror(char *error) {
 		fprintf(log_out, "Error at line no %d : syntax error\n",yylineno);
@@ -83,6 +80,8 @@ file after the Bison-generated value and location types
 	vector<SymbolInfo*> ids,parameters;
 	bool parameterRedefinedPreviously = false;
 	unsigned long returnLine = -1;
+	SymbolInfo *currentFunction;
+	string current_rule = "";
 
 	int yyparse(void);
 	int yylex(void);

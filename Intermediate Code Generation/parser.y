@@ -557,6 +557,12 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			$$ = (new PTN("func_definition : type_specifier ID LPAREN RPAREN compound_statement ",@$.F_L,@$.L_L))
 			->addChildrenToNode(6,$1,idNode,lParenNode,errorNode,rParenNode,$6);
 		}
+		| error compound_statement
+		{
+			initError("function definition",@$.F_L);
+			$$ = (new PTN("func_definition : type_specifier ID LPAREN RPAREN compound_statement ",@$.F_L,@$.L_L))
+			->addChildrenToNode(1,$2);
+		}
 		;
 
 parameter_list : parameter_list COMMA type_specifier ID

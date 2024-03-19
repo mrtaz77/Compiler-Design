@@ -16,7 +16,7 @@ FILE *asm_out;
 
 unsigned long labelCount = 0;
 unsigned long returnLabel = 0;
-long stackPointer = 0;
+long long stackPointer = 0;
 bool printlnUsed = false;
 
 string idNameFromRule(string rule){
@@ -70,7 +70,7 @@ void resetStackPointer() {
 	}
 }
 
-void rollbackStackPointer(unsigned long currentStackPointer, unsigned long newStackPointer) {
+void rollbackStackPointer(long long currentStackPointer,long long newStackPointer) {
 	if(newStackPointer < currentStackPointer){ 
 		string code = "\tADD SP, "
 		+ to_string(currentStackPointer - newStackPointer) + "\n";

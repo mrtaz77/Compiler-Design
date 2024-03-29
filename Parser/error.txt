@@ -1,0 +1,2 @@
+Line# 9: Warning: possible loss of data in assignment of FLOAT to INT
+Line# 10: Warning: possible loss of data in assignment of FLOAT to INT

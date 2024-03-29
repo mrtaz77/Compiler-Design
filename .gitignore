@@ -5,9 +5,7 @@
 *.bin
 *.zip
 2005020/
-Sample Input/
 Asm Codes/
-Sample Output/
 
 # Prerequisites
 *.d

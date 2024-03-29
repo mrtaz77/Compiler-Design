@@ -1,0 +1,147 @@
+start : program 	<Line: 1-11>
+ program : program unit 	<Line: 1-11>
+  program : unit 	<Line: 1-4>
+   unit : func_definition 	<Line: 1-4>
+    func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement 	<Line: 1-4>
+     type_specifier : INT	<Line: 1-1>
+      INT : int	<Line: 1>
+     ID : factorial	<Line: 1>
+     LPAREN : (	<Line: 1>
+     parameter_list : type_specifier ID 	<Line: 1-1>
+      type_specifier : INT	<Line: 1-1>
+       INT : int	<Line: 1>
+      ID : n	<Line: 1>
+     RPAREN : )	<Line: 1>
+     compound_statement : LCURL statements RCURL 	<Line: 1-4>
+      LCURL : {	<Line: 1>
+      statements : statement 	<Line: 2-3>
+       statement : IF LPAREN expression RPAREN statement ELSE statement 	<Line: 2-3>
+        IF : if	<Line: 2>
+        LPAREN : (	<Line: 2>
+        expression : logic_expression 	<Line: 2-2>
+         logic_expression : rel_expression 	<Line: 2-2>
+          rel_expression : simple_expression RELOP simple_expression 	<Line: 2-2>
+           simple_expression : term 	<Line: 2-2>
+            term : unary_expression 	<Line: 2-2>
+             unary_expression : factor 	<Line: 2-2>
+              factor : variable 	<Line: 2-2>
+               variable : ID 	<Line: 2-2>
+                ID : n	<Line: 2>
+           RELOP : ==	<Line: 2>
+           simple_expression : term 	<Line: 2-2>
+            term : unary_expression 	<Line: 2-2>
+             unary_expression : factor 	<Line: 2-2>
+              factor : CONST_INT 	<Line: 2-2>
+               CONST_INT : 1	<Line: 2>
+        RPAREN : )	<Line: 2>
+        statement : RETURN expression SEMICOLON 	<Line: 2-2>
+         RETURN : return	<Line: 2>
+         expression : logic_expression 	<Line: 2-2>
+          logic_expression : rel_expression 	<Line: 2-2>
+           rel_expression : simple_expression 	<Line: 2-2>
+            simple_expression : term 	<Line: 2-2>
+             term : unary_expression 	<Line: 2-2>
+              unary_expression : factor 	<Line: 2-2>
+               factor : CONST_INT 	<Line: 2-2>
+                CONST_INT : 1	<Line: 2>
+         SEMICOLON : ;	<Line: 2>
+        ELSE : else	<Line: 3>
+        statement : RETURN expression SEMICOLON 	<Line: 3-3>
+         RETURN : return	<Line: 3>
+         expression : logic_expression 	<Line: 3-3>
+          logic_expression : rel_expression 	<Line: 3-3>
+           rel_expression : simple_expression 	<Line: 3-3>
+            simple_expression : term 	<Line: 3-3>
+             term : term MULOP unary_expression 	<Line: 3-3>
+              term : unary_expression 	<Line: 3-3>
+               unary_expression : factor 	<Line: 3-3>
+                factor : ID LPAREN argument_list RPAREN 	<Line: 3-3>
+                 ID : factorial	<Line: 3>
+                 LPAREN : (	<Line: 3>
+                 argument_list : arguments	<Line: 3-3>
+                  arguments : logic_expression 	<Line: 3-3>
+                   logic_expression : rel_expression 	<Line: 3-3>
+                    rel_expression : simple_expression 	<Line: 3-3>
+                     simple_expression : simple_expression ADDOP term 	<Line: 3-3>
+                      simple_expression : term 	<Line: 3-3>
+                       term : unary_expression 	<Line: 3-3>
+                        unary_expression : factor 	<Line: 3-3>
+                         factor : variable 	<Line: 3-3>
+                          variable : ID 	<Line: 3-3>
+                           ID : n	<Line: 3>
+                      ADDOP : -	<Line: 3>
+                      term : unary_expression 	<Line: 3-3>
+                       unary_expression : factor 	<Line: 3-3>
+                        factor : CONST_INT 	<Line: 3-3>
+                         CONST_INT : 1	<Line: 3>
+                 RPAREN : )	<Line: 3>
+              MULOP : *	<Line: 3>
+              unary_expression : factor 	<Line: 3-3>
+               factor : variable 	<Line: 3-3>
+                variable : ID 	<Line: 3-3>
+                 ID : n	<Line: 3>
+         SEMICOLON : ;	<Line: 3>
+      RCURL : }	<Line: 4>
+  unit : func_definition 	<Line: 6-11>
+   func_definition : type_specifier ID LPAREN RPAREN compound_statement 	<Line: 6-11>
+    type_specifier : INT	<Line: 6-6>
+     INT : int	<Line: 6>
+    ID : main	<Line: 6>
+    LPAREN : (	<Line: 6>
+    RPAREN : )	<Line: 6>
+    compound_statement : LCURL statements RCURL 	<Line: 6-11>
+     LCURL : {	<Line: 6>
+     statements : statements statement 	<Line: 7-10>
+      statements : statements statement 	<Line: 7-9>
+       statements : statements statement 	<Line: 7-8>
+        statements : statement 	<Line: 7-7>
+         statement : var_declaration 	<Line: 7-7>
+          var_declaration : type_specifier declaration_list SEMICOLON 	<Line: 7-7>
+           type_specifier : INT	<Line: 7-7>
+            INT : int	<Line: 7>
+           declaration_list : ID 	<Line: 7-7>
+            ID : a	<Line: 7>
+           SEMICOLON : ;	<Line: 7>
+        statement : expression_statement 	<Line: 8-8>
+         expression_statement : expression SEMICOLON 	<Line: 8-8>
+          expression : variable ASSIGNOP logic_expression 	<Line: 8-8>
+           variable : ID 	<Line: 8-8>
+            ID : a	<Line: 8>
+           ASSIGNOP : =	<Line: 8>
+           logic_expression : rel_expression 	<Line: 8-8>
+            rel_expression : simple_expression 	<Line: 8-8>
+             simple_expression : term 	<Line: 8-8>
+              term : unary_expression 	<Line: 8-8>
+               unary_expression : factor 	<Line: 8-8>
+                factor : ID LPAREN argument_list RPAREN 	<Line: 8-8>
+                 ID : factorial	<Line: 8>
+                 LPAREN : (	<Line: 8>
+                 argument_list : arguments	<Line: 8-8>
+                  arguments : logic_expression 	<Line: 8-8>
+                   logic_expression : rel_expression 	<Line: 8-8>
+                    rel_expression : simple_expression 	<Line: 8-8>
+                     simple_expression : term 	<Line: 8-8>
+                      term : unary_expression 	<Line: 8-8>
+                       unary_expression : factor 	<Line: 8-8>
+                        factor : CONST_INT 	<Line: 8-8>
+                         CONST_INT : 4	<Line: 8>
+                 RPAREN : )	<Line: 8>
+          SEMICOLON : ;	<Line: 8>
+       statement : PRINTLN LPAREN ID RPAREN SEMICOLON 	<Line: 9-9>
+        PRINTLN : println	<Line: 9>
+        LPAREN : (	<Line: 9>
+        ID : a	<Line: 9>
+        RPAREN : )	<Line: 9>
+        SEMICOLON : ;	<Line: 9>
+      statement : RETURN expression SEMICOLON 	<Line: 10-10>
+       RETURN : return	<Line: 10>
+       expression : logic_expression 	<Line: 10-10>
+        logic_expression : rel_expression 	<Line: 10-10>
+         rel_expression : simple_expression 	<Line: 10-10>
+          simple_expression : term 	<Line: 10-10>
+           term : unary_expression 	<Line: 10-10>
+            unary_expression : factor 	<Line: 10-10>
+             factor : CONST_INT 	<Line: 10-10>
+              CONST_INT : 0	<Line: 10>
+       SEMICOLON : ;	<Line: 10>
+     RCURL : }	<Line: 11>

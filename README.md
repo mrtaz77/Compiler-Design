@@ -5,6 +5,14 @@ Road to a working c++ compiler
 - [**Offline 3 Parser**](#offline-3)
 - [**Offline 4 Intermediate Code Generator**](#offline-4)
 
+## Dependency
+flex 2.6.4 and bison 3.8.2
+```
+sudo apt-get update 
+sudo apt install flex
+sudo apt install bison
+```
+
 ## Offline 1
 - [SymbolTable](/SymbolTable/)
     - [Specification](/Specifications/Symbol%20Table%20Implementation.pdf)
@@ -40,12 +48,6 @@ unsigned long long sdbm_hash(string str) {
 - [Lexical Analysis](/Lexical%20Analyzer/)
 	- [Specification](/Specifications/spec.pdf)
 	- [Scanner made using flex](/Lexical%20Analyzer/scanner.l)
-- __Dependency__
-	- flex 
-```
-sudo apt-get update 
-sudo apt install flex
-```
 - __How to run__
 	- Navigate to the [folder](/Lexical%20Analyzer/) 
 	- Open a new file with the name "input.txt" and paste the file to be scanned.
@@ -55,11 +57,18 @@ sudo apt install flex
 - [Syntax and Semantic Analysis](/Parser/)
 	- [Specification](/Specifications/CSE310_July_2023_YACC_Assignment_Spec.pdf)
 	- [Grammar rules](/Specifications/BisonAssignmentGrammar.PDF)
-	- Useful Links
-		- **Usage YYLTYPE yylloc**
-			- [Location Type](https://www.gnu.org/software/bison/manual/html_node/Location-Type.html)
-		- **Usage %code**
-			- [Prologue alternatives](https://www.gnu.org/software/bison/manual/html_node/Prologue-Alternatives.html)
-			- [%code summary](https://www.gnu.org/software/bison/manual/html_node/_0025code-Summary.html)
-		- **Usage %printer**
-			- [Printing Semantic Values](https://www.gnu.org/software/bison/manual/html_node/Printer-Decl.html#:~:text=The%20%25printer%20directive%20defines%20code,(see%20Freeing%20Discarded%20Symbols).&text=Invoke%20the%20braced%20code%20whenever%20the%20parser%20displays%20one%20of%20the%20symbols%20.)
+	- [Parser made using bison](/Parser/parser.y)
+	- [Scanner modified for parsing](/Parser/scanner.l)
+- Useful Links
+	- **Usage YYLTYPE yylloc**
+		- [Location Type](https://www.gnu.org/software/bison/manual/html_node/Location-Type.html)
+		- [%locations](https://www.youtube.com/watch?v=FSS6FrSNVis)
+	- **Usage %code**
+		- [Prologue alternatives](https://www.gnu.org/software/bison/manual/html_node/Prologue-Alternatives.html)
+		- [%code summary](https://www.gnu.org/software/bison/manual/html_node/_0025code-Summary.html)
+	- **Usage %printer**
+		- [Printing Semantic Values](https://www.gnu.org/software/bison/manual/html_node/Printer-Decl.html#:~:text=The%20%25printer%20directive%20defines%20code,(see%20Freeing%20Discarded%20Symbols).&text=Invoke%20the%20braced%20code%20whenever%20the%20parser%20displays%20one%20of%20the%20symbols%20.)
+- __How to run__
+	- Navigate to the [folder](/Parser/) 
+	- Open a new file with the name "input.c" and paste the file to be scanned.
+	- Run the [script](/Parser/command.sh)

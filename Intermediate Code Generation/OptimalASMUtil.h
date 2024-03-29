@@ -4,6 +4,7 @@
 #include<stdlib.h>
 #include<cstring>
 #include<vector>
+#include <algorithm>
 using namespace std;
 
 FILE *optimized_asm_out;
@@ -73,13 +74,24 @@ bool isRedundantAddOrSub(const string& currentLine) {
 	currentLine.find(",") != string::npos ) {
 		size_t commaPos = currentLine.find(",");
 		string substrAfterComma = currentLine.substr(commaPos + 1);
-		substrAfterComma.erase(substrAfterComma.find_last_not_of(" \t") + 1);
+		
+		// Remove leading whitespaces
+        substrAfterComma.erase(substrAfterComma.begin(), find_if_not(substrAfterComma.begin(), substrAfterComma.end(), [](unsigned char c) {
+            return isspace(c);
+        }));
+        
+        // Remove trailing whitespaces
+        substrAfterComma.erase(find_if_not(substrAfterComma.rbegin(), substrAfterComma.rend(), [](unsigned char c) {
+            return isspace(c);
+        }).base(), substrAfterComma.end());
+		
 		bool isInteger = true;
 		for (char c : substrAfterComma) {
 			if (!isdigit(c)) {
 				return false;
 			}
 		}
+		cout << ":" << substrAfterComma << ":" << endl;
 		return atoi(substrAfterComma.c_str()) == 0;
 	}
 	return false;

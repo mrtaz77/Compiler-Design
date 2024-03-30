@@ -187,7 +187,7 @@ public:
         for(i = 1; i <= total_buckets; i++){
             SymbolInfo *itr = hashTable[i-1];
             if(itr == nullptr) {
-				str += "\n";
+				// str += "\n";
 				continue;
 			}
             str += TAB + to_string(i) + "--> ";

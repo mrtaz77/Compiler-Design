@@ -79,7 +79,6 @@ bool isRedundantAddOrSub(const string& currentLine) {
         substrAfterComma.erase(substrAfterComma.begin(), find_if_not(substrAfterComma.begin(), substrAfterComma.end(), [](unsigned char c) {
             return isspace(c);
         }));
-        
         // Remove trailing whitespaces
         substrAfterComma.erase(find_if_not(substrAfterComma.rbegin(), substrAfterComma.rend(), [](unsigned char c) {
             return isspace(c);
@@ -91,7 +90,6 @@ bool isRedundantAddOrSub(const string& currentLine) {
 				return false;
 			}
 		}
-		cout << ":" << substrAfterComma << ":" << endl;
 		return atoi(substrAfterComma.c_str()) == 0;
 	}
 	return false;

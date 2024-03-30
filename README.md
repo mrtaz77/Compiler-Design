@@ -72,3 +72,15 @@ unsigned long long sdbm_hash(string str) {
 	- Navigate to the [folder](/Parser/) 
 	- Open a new file with the name "input.c" and paste the file to be scanned.
 	- Run the [script](/Parser/command.sh)
+
+
+## Offline 4
+- [Intermediate Code Generation](/Intermediate%20Code%20Generation/)
+	- [Specification](/Specifications/CSE_310_July_2023_ICG_Spec.pdf)
+	- [Parser modified for ICG](/Intermediate%20Code%20Generation/parser.y)
+	- [ICG](/Intermediate%20Code%20Generation/IcgUtil.cpp)
+	- [Optimizer](/Intermediate%20Code%20Generation/OptimalASMUtil.h)
+- __How to run__
+	- Navigate to the [folder](/Intermediate%20Code%20Generation/) 
+	- Open a new file with the name "input.c" and paste the file to be scanned.
+	- Run the [script](/Intermediate%20Code%20Generation/command.sh)

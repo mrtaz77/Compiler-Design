@@ -1,5 +1,5 @@
 # Compiler-Design
-Road to a working c++ compiler
+Road to a working c compiler
 - [**Offline 1 SymbolTable**](#offline-1)
 - [**Offline 2 Lexical Analyzer**](#offline-2)
 - [**Offline 3 Parser**](#offline-3)

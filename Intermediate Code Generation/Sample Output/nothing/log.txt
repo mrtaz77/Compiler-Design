@@ -1,0 +1,5 @@
+Error at line no 1 : syntax error
+
+Total lines: 1
+
+Total errors: 0

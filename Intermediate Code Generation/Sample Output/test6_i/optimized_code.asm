@@ -1,0 +1,346 @@
+;-------------------------------
+;         asm code generator
+;-------------------------------
+.MODEL SMALL ; SCOPE OF CODE
+.STACK 1000H ; ALLOCATE MEMORY IN HEXADECIMAL
+.DATA ; VARIABLE DECLARATION
+	number DB "00000$"
+	w DW 10 DUP (0000H)
+.CODE
+;-------------------------------
+;         Function : main
+;-------------------------------
+main PROC
+	MOV AX, @DATA
+	MOV DS, AX
+	PUSH BP
+	MOV BP, SP
+	SUB SP, 2
+L2:
+	SUB SP, 20
+L3:
+	MOV AX, 0		; Line 6
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	MOV AX, 2		; Line 6
+	NEG AX
+	POP BX
+	PUSH AX
+	MOV AX, 2
+	IMUL BX
+	MOV BX, AX
+	POP AX
+	MOV w[BX], AX
+	POP CX
+	POP BX
+L4:
+	MOV AX, 0		; Line 7
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	MOV AX, 0		; Line 7
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	POP BX
+	MOV AX, 2		; Line 7
+	IMUL BX
+	MOV BX, AX
+	MOV AX, w[BX]
+	POP CX
+	POP BX
+	POP BX
+	PUSH AX
+	MOV AX, 2
+	IMUL BX
+	MOV BX, AX
+	MOV AX, 22
+	SUB AX, BX
+	MOV SI, AX
+	POP AX
+	NEG SI
+	MOV [BP+SI], AX
+	POP CX
+	POP BX
+L5:
+	MOV AX, 0		; Line 8
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	POP BX
+	MOV AX, 2		; Line 8
+	IMUL BX
+	MOV BX, AX
+	MOV AX, 22
+	SUB AX, BX
+	MOV SI, AX
+	NEG SI
+	MOV AX, [BP+SI]
+	POP CX
+	POP BX
+	MOV [BP-2], AX
+L6:
+	MOV AX, [BP-2]		; Line 9
+	CALL println
+L7:
+	MOV AX, 1		; Line 10
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	MOV AX, 0		; Line 10
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	POP CX
+	PUSH CX
+	POP BX
+	MOV AX, 2		; Line 10
+	IMUL BX
+	MOV BX, AX
+	MOV AX, w[BX]
+	PUSH AX
+	INC AX
+	MOV BX, CX
+	PUSH AX
+	MOV AX, 2
+	IMUL BX
+	MOV BX, AX
+	POP AX
+	MOV w[BX], AX
+	POP AX
+	POP CX
+	POP BX
+	POP BX
+	PUSH AX
+	MOV AX, 2
+	IMUL BX
+	MOV BX, AX
+	MOV AX, 22
+	SUB AX, BX
+	MOV SI, AX
+	POP AX
+	NEG SI
+	MOV [BP+SI], AX
+	POP CX
+	POP BX
+L8:
+	MOV AX, 1		; Line 11
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	POP BX
+	MOV AX, 2		; Line 11
+	IMUL BX
+	MOV BX, AX
+	MOV AX, 22
+	SUB AX, BX
+	MOV SI, AX
+	NEG SI
+	MOV AX, [BP+SI]
+	POP CX
+	POP BX
+	MOV [BP-2], AX
+L9:
+	MOV AX, [BP-2]		; Line 12
+	CALL println
+L10:
+	MOV AX, 0		; Line 13
+	PUSH BX
+	PUSH CX
+	PUSH AX
+	POP BX
+	MOV AX, 2		; Line 13
+	IMUL BX
+	MOV BX, AX
+	MOV AX, w[BX]
+	POP CX
+	POP BX
+	MOV [BP-2], AX
+L11:
+	MOV AX, [BP-2]		; Line 14
+	CALL println
+L12:
+	MOV AX, [BP-2]		; Line 16
+	PUSH AX
+	MOV AX, 0		; Line 16
+	POP BX
+	XCHG AX, BX
+	ADD AX, BX
+	MOV [BP-2], AX
+L13:
+	MOV AX, [BP-2]		; Line 17
+	PUSH AX
+	MOV AX, 0		; Line 17
+	POP BX
+	XCHG AX, BX
+	SUB AX, BX
+	MOV [BP-2], AX
+L14:
+	MOV AX, [BP-2]		; Line 18
+	PUSH AX
+	MOV AX, 1		; Line 18
+	POP CX
+	XCHG AX, CX
+	CWD
+	IMUL CX
+	MOV [BP-2], AX
+L15:
+	MOV AX, [BP-2]		; Line 19
+	CALL println
+L16:
+	MOV AX, [BP-2]		; Line 21
+	PUSH AX
+	MOV AX, 0		; Line 21
+	POP BX
+	XCHG AX, BX
+	CMP AX, BX
+	JLE L23
+	MOV AX, 1		; Line 21
+	JMP L24
+L23:
+	XOR AX, AX		; Line 21
+L24:
+	CMP AX, 0
+	JE L21
+	MOV AX, [BP-2]		; Line 21
+	PUSH AX
+	MOV AX, 10		; Line 21
+	POP BX
+	XCHG AX, BX
+	CMP AX, BX
+	JGE L25
+	MOV AX, 1		; Line 21
+	JMP L26
+L25:
+	XOR AX, AX		; Line 21
+L26:
+	CMP AX, 0
+	JE L21
+L20:
+	MOV AX, 1		; Line 21
+	JMP L22
+L21:
+	XOR AX, AX
+L22:
+	CMP AX, 0
+	JNE L17
+	MOV AX, [BP-2]		; Line 21
+	PUSH AX
+	MOV AX, 0		; Line 21
+	POP BX
+	XCHG AX, BX
+	CMP AX, BX
+	JGE L30
+	MOV AX, 1		; Line 21
+	JMP L31
+L30:
+	XOR AX, AX		; Line 21
+L31:
+	CMP AX, 0
+	JE L28
+	MOV AX, [BP-2]		; Line 21
+	PUSH AX
+	MOV AX, 10		; Line 21
+	NEG AX
+	POP BX
+	XCHG AX, BX
+	CMP AX, BX
+	JLE L32
+	MOV AX, 1		; Line 21
+	JMP L33
+L32:
+	XOR AX, AX		; Line 21
+L33:
+	CMP AX, 0
+	JE L28
+L27:
+	MOV AX, 1		; Line 21
+	JMP L29
+L28:
+	XOR AX, AX
+L29:
+	CMP AX, 0
+	JE L18
+L17:
+	MOV AX, 1		; Line 21
+	JMP L19
+L18:
+	XOR AX, AX
+L19:
+	CMP AX, 0
+	JE L34
+	MOV AX, 100		; Line 22
+	MOV [BP-2], AX
+L36:
+	JMP L35
+L34:
+	MOV AX, 200		; Line 24
+	MOV [BP-2], AX
+L37:
+L35:
+	MOV AX, [BP-2]		; Line 25
+	CALL println
+L38:
+	MOV AX, 0		; Line 27
+	ADD SP, 22
+	JMP L1
+L39:
+L1:
+	POP BP
+	MOV AX, 4CH
+	INT 21H
+main ENDP
+;-------------------------------
+;         print library
+;-------------------------------
+;-------------------------------
+println proc
+	PUSH AX
+	PUSH BX
+	PUSH CX
+	PUSH DX
+	PUSH SI
+	LEA SI, number
+	MOV BX, 10
+	ADD SI, 4
+	CMP AX, 0
+	JNGE NEGATE
+PRINT:
+	XOR DX, DX
+	DIV BX
+	MOV [SI], DL
+	ADD [SI], '0'
+	DEC SI
+	CMP AX, 0
+	JNE PRINT
+	INC SI
+	LEA DX, SI
+	MOV AH, 9
+	INT 21H
+	PUSH AX
+	PUSH DX
+	MOV AH, 2
+	MOV DL, 0DH
+	INT 21H
+	MOV AH, 2
+	MOV DL, 0AH
+	INT 21H
+	POP DX
+	POP AX
+	POP SI
+	POP DX
+	POP CX
+	POP BX
+	POP AX
+	RET
+NEGATE:
+	PUSH AX
+	MOV AH, 2
+	MOV DL, '-'
+	INT 21H
+	POP AX
+	NEG AX
+	JMP PRINT
+	println ENDP
+END main

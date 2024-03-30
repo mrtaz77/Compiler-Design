@@ -1,0 +1,2 @@
+Before optimization lines : 150
+After optimization lines : 142
